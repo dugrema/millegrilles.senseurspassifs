@@ -1,14 +1,33 @@
 // Gestion evenements socket.io pour /millegrilles
 const debug = require('debug')('millegrilles:senseurspassifs:appSocketIo');
 
+const routingKeysPrive = [
+  'transaction.SenseursPassifs.#.majNoeud',
+  'transaction.SenseursPassifs.#.majSenseur',
+  'evenement.SenseursPassifs.#.lecture',
+  'appSocketio.nodejs',  // Juste pour trouver facilement sur exchange - debug
+]
+
 // Enregistre les evenements prive sur le socket
 async function enregistrerPrive(socket, amqpdao) {
   debug("Enregistrer evenements prives sur socket %s", socket.id)
-  socket.on('disconnect', ()=>{deconnexion(socket)})
+  socket.on('disconnect', ()=>{
+    deconnexion(socket)
+  })
 
   // Operation niveau prive
   socket.on('getListeNoeuds', cb => {getListeNoeuds(socket, cb)})
-  socket.on('getListeSenseursNoeud', (params, cb) => {getListeSenseursNoeud(socket, params, cb)})
+  socket.on('getListeSenseursNoeud', (noeud_id, cb) => {getListeSenseursNoeud(socket, noeud_id, cb)})
+  socket.on('changerNomNoeud', (params, cb) => {changerNomNoeud(socket, params, cb)})
+  socket.on('changerSecuriteNoeud', (params, cb) => {changerSecuriteNoeud(socket, params, cb)})
+  socket.on('setAuthTokenBlynk', (params, cb) => {setAuthTokenBlynk(socket, params, cb)})
+  socket.on('setServerBlynk', (params, cb) => {setServerBlynk(socket, params, cb)})
+  socket.on('setSecuriteSenseur', (params, cb) => {setSecuriteSenseur(socket, params, cb)})
+  socket.on('setNomSenseur', (params, cb) => {setNomSenseur(socket, params, cb)})
+  socket.on('setVpinSenseur', (params, cb) => {setVpinSenseur(socket, params, cb)})
+
+  socket.on('subscribe', params=>{subscribe(socket, params)})
+  socket.on('unsubscribe', params=>{subscribe(socket, params)})
 
   // Ajouter join pour les idmg actifs de l'usager
   // socket.idmgsActifs.forEach( idmg => {
@@ -42,6 +61,18 @@ function deconnexion(socket) {
   console.debug("Deconnexion socket id:%s", socket.id)
 }
 
+function subscribe(socket, params) {
+  const routingKeys = params.routingKeys
+  const exchange = params.exchange || '2.prive'
+  return socket.senseursPassifsDao.subscribe(socket, routingKeys, exchange)
+}
+
+// function unsubscribe(socket, params) {
+//   const routingKeys = params.routingKeys
+//   const exchange = params.exchange || '2.prive'
+//   const dao = socket.senseursPassifsDao.unsubscribe(socket, routingKeys, exchange)
+// }
+
 async function getListeNoeuds(socket, cb) {
   const dao = socket.senseursPassifsDao
   try {
@@ -64,6 +95,44 @@ async function getListeSenseursNoeud(socket, noeud_id, cb) {
     cb({err: 'Erreur: ' + err})
   }
 }
+
+async function changerNomNoeud(socket, params, cb) {
+
+}
+
+async function changerSecuriteNoeud(socket, params, cb) {
+  const {noeud_id, securite} = params
+  debug("changerSecuriteNoeud:\n%O", params)
+  const dao = socket.senseursPassifsDao
+  try {
+    const noeuds = await dao.changerSecuriteNoeud(noeud_id, securite)
+    cb(noeuds)
+  } catch(err) {
+    debug("Erreur changerSecuriteNoeud\n%O", err)
+    cb({err: 'Erreur: ' + err})
+  }
+}
+
+async function setAuthTokenBlynk(socket, params, cb) {
+
+}
+
+async function setServerBlynk(socket, params, cb) {
+
+}
+
+async function setSecuriteSenseur(socket, params, cb) {
+
+}
+
+async function setNomSenseur(socket, params, cb) {
+
+}
+
+async function setVpinSenseur(socket, params, cb) {
+
+}
+
 
 // function recevoirNouveauMessageAMQ(socket, routingKey, message) {
 //   debug("Message AMQ recu, routingKey : ", routingKey)
