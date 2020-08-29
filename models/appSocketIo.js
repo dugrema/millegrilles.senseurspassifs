@@ -7,7 +7,8 @@ async function enregistrerPrive(socket, amqpdao) {
   socket.on('disconnect', ()=>{deconnexion(socket)})
 
   // Operation niveau prive
-  socket.on('getInfoUsager', cb => {getInfoUsager(socket, cb)})
+  socket.on('getListeNoeuds', cb => {getListeNoeuds(socket, cb)})
+  socket.on('getListeSenseursNoeud', (params, cb) => {getListeSenseursNoeud(socket, params, cb)})
 
   // Ajouter join pour les idmg actifs de l'usager
   // socket.idmgsActifs.forEach( idmg => {
@@ -35,6 +36,33 @@ function enregistrerEvenementsProteges(socket, opts) {
     //ajouterListenerProtege('listener...', ()=>{})
   }
 
+}
+
+function deconnexion(socket) {
+  console.debug("Deconnexion socket id:%s", socket.id)
+}
+
+async function getListeNoeuds(socket, cb) {
+  const dao = socket.senseursPassifsDao
+  try {
+    const noeuds = await dao.getListeNoeuds()
+    cb(noeuds)
+  } catch(err) {
+    debug("Erreur getListeNoeuds\n%O", err)
+    cb({err: 'Erreur: ' + err})
+  }
+}
+
+async function getListeSenseursNoeud(socket, noeud_id, cb) {
+  debug("getListeSenseursNoeud:\n%s", noeud_id)
+  const dao = socket.senseursPassifsDao
+  try {
+    const noeuds = await dao.getListeSenseursNoeud(noeud_id)
+    cb(noeuds)
+  } catch(err) {
+    debug("Erreur getListeSenseursNoeuds\n%O", err)
+    cb({err: 'Erreur: ' + err})
+  }
 }
 
 // function recevoirNouveauMessageAMQ(socket, routingKey, message) {

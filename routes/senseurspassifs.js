@@ -24,7 +24,6 @@ function initialiser(fctRabbitMQParIdmg, opts) {
 
     // Injecter comptesUsagers
     socket.nomUsager = socket.handshake.headers['user-prive']
-    socket.idmgsActifs = socket.handshake.headers['idmgs-actifs'].split(',')
     socket.estProprietaire = socket.handshake.headers['est-proprietaire'] || false
     socket.hostname = socket.handshake.headers.host
 

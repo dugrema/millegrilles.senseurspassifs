@@ -1,4 +1,4 @@
-const debug = require('debug')('millegrilles:messagerie:messageriedao')
+const debug = require('debug')('millegrilles:senseurspassifs:dao')
 
 class SenseursPassifsDao {
 
@@ -7,44 +7,27 @@ class SenseursPassifsDao {
     this.idmg = amqDao.pki.idmg
   }
 
-  getListeContacts = async nomUsager => {
-    const domaineAction = 'Messagerie.chargerCompte'
-    const requete = {'nom_usager': nomUsager}
+  getListeNoeuds = async _ => {
+    const domaineAction = 'SenseursPassifs.listeNoeuds'
     debug("Transaction, domaineAction : ", domaineAction)
-    debug(requete)
 
-    const listeContacts = await this.amqDao.transmettreRequete(
-      domaineAction, requete, {decoder: true})
+    const listeSenseurs = await this.amqDao.transmettreRequete(
+      domaineAction, {}, {decoder: true}
+    )
 
-    return listeContacts.contacts
+    return listeSenseurs
   }
 
-  getSommaireMessages = async (nomUsager, idmgsActifs) => {
-    const domaineAction = 'Messagerie.sommaireMessagesParIdmg'
-    const requete = {'idmgs': idmgsActifs}
-    debug("Transaction, domaineAction : ", domaineAction)
-    debug(requete)
+  getListeSenseursNoeud = async (noeud_id) => {
+    const domaineAction = 'SenseursPassifs.listeSenseursPourNoeud'
+    const params = { noeud_id }
+    debug("Transaction, domaineAction : %s, %O", domaineAction, params)
 
-    const sommaireMessage = await this.amqDao.transmettreRequete(
-      domaineAction, requete, {decoder: true})
+    const listeSenseurs = await this.amqDao.transmettreRequete(
+      domaineAction, params, {decoder: true}
+    )
 
-    return sommaireMessage
-  }
-
-  getMessagesUsagerParSource = async (nomUsager, idmgsActifsUsager, idmgsContact) => {
-    const domaineAction = 'Messagerie.messagesUsagerParSource'
-    const requete = {
-      nom_usager: nomUsager,
-      idmgs_destination: idmgsActifsUsager,
-      idmgs_source: idmgsContact,
-    }
-    debug("Transaction, domaineAction : ", domaineAction)
-    debug(requete)
-
-    const listeMessages = await this.amqDao.transmettreRequete(
-      domaineAction, requete, {decoder: true})
-
-    return listeMessages
+    return listeSenseurs
   }
 
 }
