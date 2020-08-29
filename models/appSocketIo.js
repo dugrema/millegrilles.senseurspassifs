@@ -114,11 +114,27 @@ async function changerSecuriteNoeud(socket, params, cb) {
 }
 
 async function setAuthTokenBlynk(socket, params, cb) {
-
+  try {
+    const {noeud_id, authToken} = params
+    debug("setServerBlynk:\n%O", params)
+    const dao = socket.senseursPassifsDao
+    dao.setAuthTokenBlynk(noeud_id, authToken)
+    cb(true)
+  } catch(err) {
+    cb({err: "Erreur : " + err})
+  }
 }
 
 async function setServerBlynk(socket, params, cb) {
-
+  try {
+    const {noeud_id, host, port} = params
+    debug("setServerBlynk:\n%O", params)
+    const dao = socket.senseursPassifsDao
+    dao.setServerBlynk(noeud_id, host, port)
+    cb(true)
+  } catch(err) {
+    cb({err: "Erreur : " + err})
+  }
 }
 
 async function setSecuriteSenseur(socket, params, cb) {

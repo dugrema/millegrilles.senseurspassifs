@@ -71,8 +71,8 @@ class SenseursPassifsDao {
     const params = { noeud_id, blynk_auth: authToken }
     debug("setAuthTokenBlynk, domaineAction : %s, %O", domaineAction, params)
 
-    const listeSenseurs = await this.amqDao.transmettreRequete(
-      domaineAction, params, {decoder: true}
+    const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
+      params, domaineAction
     )
 
     return listeSenseurs
@@ -83,11 +83,9 @@ class SenseursPassifsDao {
     const params = { noeud_id, blynk_host: host, blynk_port: port }
     debug("setServerBlynk, domaineAction : %s, %O", domaineAction, params)
 
-    const listeSenseurs = await this.amqDao.transmettreRequete(
-      domaineAction, params, {decoder: true}
+    const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
+      params, domaineAction,
     )
-
-    return listeSenseurs
   }
 
   setSecuriteSenseur = async securite => {
