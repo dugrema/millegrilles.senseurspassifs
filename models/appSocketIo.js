@@ -23,7 +23,7 @@ async function enregistrerPrive(socket, amqpdao) {
   socket.on('setAuthTokenBlynk', (params, cb) => {setAuthTokenBlynk(socket, params, cb)})
   socket.on('setServerBlynk', (params, cb) => {setServerBlynk(socket, params, cb)})
   socket.on('setSecuriteSenseur', (params, cb) => {setSecuriteSenseur(socket, params, cb)})
-  socket.on('setNomSenseur', (params, cb) => {setNomSenseur(socket, params, cb)})
+  socket.on('changerNomSenseur', (params, cb) => {changerNomSenseur(socket, params, cb)})
   socket.on('setVpinSenseur', (params, cb) => {setVpinSenseur(socket, params, cb)})
 
   socket.on('subscribe', params=>{subscribe(socket, params)})
@@ -101,8 +101,8 @@ async function changerNomNoeud(socket, params, cb) {
   debug("changerNomNoeud:\n%O", params)
   const dao = socket.senseursPassifsDao
   try {
-    const reponse = await dao.changerNomNoeud(noeud_id, nom)
-    cb(reponse)
+    await dao.changerNomNoeud(noeud_id, nom)
+    cb(true)
   } catch(err) {
     debug("Erreur changerNomNoeud\n%O", err)
     cb({err: 'Erreur: ' + err})
@@ -150,8 +150,17 @@ async function setSecuriteSenseur(socket, params, cb) {
 
 }
 
-async function setNomSenseur(socket, params, cb) {
-
+async function changerNomSenseur(socket, params, cb) {
+  const {uuid_senseur, nom} = params
+  debug("changerNomSenseur:\n%O", params)
+  const dao = socket.senseursPassifsDao
+  try {
+    await dao.changerNomSenseur(uuid_senseur, nom)
+    cb(true)
+  } catch(err) {
+    debug("Erreur changerNomSenseur\n%O", err)
+    cb({err: 'Erreur: ' + err})
+  }
 }
 
 async function setVpinSenseur(socket, params, cb) {

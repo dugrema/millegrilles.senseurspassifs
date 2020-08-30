@@ -92,8 +92,14 @@ class SenseursPassifsDao {
 
   }
 
-  setNomSenseur = async nomSenseur => {
+  changerNomSenseur = async (uuid_senseur, nomSenseur) => {
+    const domaineAction = 'SenseursPassifs.majSenseur'
+    const params = { uuid_senseur, descriptif: nomSenseur }
+    debug("changerNomNoeud, domaineAction : %s, %O", domaineAction, params)
 
+    const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
+      params, domaineAction
+    )
   }
 
   setVpinSenseur = async (uuid_senseur, vpins) => {
