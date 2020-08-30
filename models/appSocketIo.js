@@ -146,7 +146,15 @@ async function setNomSenseur(socket, params, cb) {
 }
 
 async function setVpinSenseur(socket, params, cb) {
-
+  try {
+    const {uuid_senseur, blynkVPins} = params
+    debug("setVpinSenseur:\n%O", params)
+    const dao = socket.senseursPassifsDao
+    dao.setVpinSenseur(uuid_senseur, blynkVPins)
+    cb(true)
+  } catch(err) {
+    cb({err: "Erreur : " + err})
+  }
 }
 
 

@@ -96,8 +96,21 @@ class SenseursPassifsDao {
 
   }
 
-  setVpinSenseur = async (noeud_id, vpin) => {
+  setVpinSenseur = async (uuid_senseur, vpins) => {
+    const domaineAction = 'SenseursPassifs.majSenseur'
 
+    // Mapper pour la transaction : { senseurs: {'temp': {'blynk_vpin': NN} } }
+    const senseurs = {}
+    for(let app in vpins) {
+      senseurs[app] = {'blynk_vpin': vpins[app]}
+    }
+
+    const params = { uuid_senseur, senseurs }
+    debug("setVpinSenseur, domaineAction : %s, %O", domaineAction, params)
+
+    const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
+      params, domaineAction,
+    )
   }
 
 }
