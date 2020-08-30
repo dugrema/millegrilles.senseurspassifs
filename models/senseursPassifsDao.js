@@ -47,8 +47,8 @@ class SenseursPassifsDao {
     const params = { noeud_id, descriptif: nomNoeud }
     debug("changerNomNoeud, domaineAction : %s, %O", domaineAction, params)
 
-    const listeSenseurs = await this.amqDao.transmettreRequete(
-      domaineAction, params, {decoder: true}
+    const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
+      params, domaineAction
     )
 
     return listeSenseurs
@@ -99,6 +99,10 @@ class SenseursPassifsDao {
   setVpinSenseur = async (uuid_senseur, vpins) => {
     const domaineAction = 'SenseursPassifs.majSenseur'
 
+    if(Object.keys(vpins).length === 0) {
+      throw new Error("Il faut fournir au moins une vpin a modifier")
+    }
+
     // Mapper pour la transaction : { senseurs: {'temp': {'blynk_vpin': NN} } }
     const senseurs = {}
     for(let app in vpins) {
@@ -108,7 +112,7 @@ class SenseursPassifsDao {
     const params = { uuid_senseur, senseurs }
     debug("setVpinSenseur, domaineAction : %s, %O", domaineAction, params)
 
-    const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
+    await this.amqDao.transmettreTransactionFormattee(
       params, domaineAction,
     )
   }

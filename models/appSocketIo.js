@@ -97,7 +97,16 @@ async function getListeSenseursNoeud(socket, noeud_id, cb) {
 }
 
 async function changerNomNoeud(socket, params, cb) {
-
+  const {noeud_id, nom} = params
+  debug("changerNomNoeud:\n%O", params)
+  const dao = socket.senseursPassifsDao
+  try {
+    const reponse = await dao.changerNomNoeud(noeud_id, nom)
+    cb(reponse)
+  } catch(err) {
+    debug("Erreur changerNomNoeud\n%O", err)
+    cb({err: 'Erreur: ' + err})
+  }
 }
 
 async function changerSecuriteNoeud(socket, params, cb) {
@@ -150,10 +159,11 @@ async function setVpinSenseur(socket, params, cb) {
     const {uuid_senseur, blynkVPins} = params
     debug("setVpinSenseur:\n%O", params)
     const dao = socket.senseursPassifsDao
-    dao.setVpinSenseur(uuid_senseur, blynkVPins)
+    await dao.setVpinSenseur(uuid_senseur, blynkVPins)
     cb(true)
   } catch(err) {
-    cb({err: "Erreur : " + err})
+    console.error("Erreur set vpin: %O", err)
+    cb({err: "Erreur : " + err.message?err.message:err})
   }
 }
 
