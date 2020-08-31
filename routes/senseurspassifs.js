@@ -53,9 +53,10 @@ function ajouterStaticRoute(route) {
   var folderStatic =
     process.env.MG_SENSEURSPASSIFS_STATIC_RES ||
     process.env.MG_STATIC_RES ||
-    'static/messagerie'
+    'static/senseurspassifs'
 
   route.use(express.static(folderStatic))
+  debug("Route %s pour senseurspassifs initialisee", folderStatic)
 }
 
 function routeInfo(req, res, next) {
@@ -69,57 +70,5 @@ function routeInfo(req, res, next) {
   const reponse = {idmgCompte, nomUsager, hostname: host}
   return res.send(reponse)
 }
-
-// Configure les routes pour retransmettre les evenements vers les sockets
-// enregistres.
-// function configurerRouteNouveauxMessages(serverIo, amqpdao) {
-//   amqpdao.routingKeyManager.addRoutingKeyCallback(
-//     (routingKey, json_message, opts) => {
-//       recevoirNouveauMessage(serverIo, routingKey, json_message, opts)
-//     },
-//     [
-//       'evenement.Messagerie.messages.message_instantanne',
-//       'evenement.Messagerie.messages.message_courriel',
-//     ],
-//     {exchange: '2.prive'}
-//   )
-// }
-
-// function configurerRouteComptes(serverIo, amqpdao) {
-//   amqpdao.routingKeyManager.addRoutingKeyCallback(
-//     (routingKey, json_message, opts) => {
-//       recevoirCompte(serverIo, routingKey, json_message, opts)
-//     },
-//     [
-//       'evenement.Messagerie.comptes',
-//       'evenement.Messagerie.comptes.compteUsager',
-//     ],
-//     {exchange: '2.prive'}
-//   )
-// }
-
-// function recevoirNouveauMessage(serverIo, routingKey, json_message, opts) {
-//   debug("Nouveau message recu, routingKey : %s", routingKey)
-//   // debug(json_message)
-//   const idmgDestination = json_message.idmg_destination
-//   const idmgSource = json_message.idmg_source
-//
-//   const conserverChamps = ['date_envoi', 'idmg_destination', 'idmg_source', 'message', 'securite', '_mg-creation', 'uuid-transaction']
-//   const messageFiltre = {}
-//   for(let key in json_message) {
-//     if(conserverChamps.includes(key)) {
-//       messageFiltre[key] = json_message[key]
-//     }
-//   }
-//
-//   debug("Emettre message vers idmg : %s, %s", idmgDestination, idmgSource)
-//   // debug("Message filtre")
-//   // debug(messageFiltre)
-//
-//   serverIo.to(idmgDestination).emit('nouveauMessage', messageFiltre)
-//   serverIo.to(idmgSource).emit('nouveauMessage', messageFiltre)
-// }
-
-
 
 module.exports = {initialiser}
