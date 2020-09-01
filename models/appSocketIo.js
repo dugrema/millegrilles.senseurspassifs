@@ -8,6 +8,28 @@ const routingKeysPrive = [
   'appSocketio.nodejs',  // Juste pour trouver facilement sur exchange - debug
 ]
 
+function configurationEvenements(socket) {
+  const configurationEvenements = {
+    listenersPrives: [
+      {eventName: 'getListeNoeuds', callback: cb => {getListeNoeuds(socket, cb)}},
+      {eventName: 'getListeSenseursNoeud', callback: (noeud_id, cb) => {getListeSenseursNoeud(socket, noeud_id, cb)}},
+      {eventName: 'subscribe', callback: params=>{subscribe(socket, params)}},
+      {eventName: 'unsubscribe', callback: params=>{subscribe(socket, params)}},
+    ],
+    listenersProteges: [
+      {eventName: 'changerNomNoeud', callback: (params, cb) => {changerNomNoeud(socket, params, cb)}},
+      {eventName: 'changerSecuriteNoeud', callback: (params, cb) => {changerSecuriteNoeud(socket, params, cb)}},
+      {eventName: 'setAuthTokenBlynk', callback: (params, cb) => {setAuthTokenBlynk(socket, params, cb)}},
+      {eventName: 'setServerBlynk', callback: (params, cb) => {setServerBlynk(socket, params, cb)}},
+      {eventName: 'setSecuriteSenseur', callback: (params, cb) => {setSecuriteSenseur(socket, params, cb)}},
+      {eventName: 'changerNomSenseur', callback: (params, cb) => {changerNomSenseur(socket, params, cb)}},
+      {eventName: 'setVpinSenseur', callback: (params, cb) => {setVpinSenseur(socket, params, cb)}},
+    ]
+  }
+
+  return configurationEvenements
+}
+
 // Enregistre les evenements prive sur le socket
 async function enregistrerPrive(socket, amqpdao) {
   debug("Enregistrer evenements prives sur socket %s", socket.id)
@@ -28,12 +50,6 @@ async function enregistrerPrive(socket, amqpdao) {
 
   socket.on('subscribe', params=>{subscribe(socket, params)})
   socket.on('unsubscribe', params=>{subscribe(socket, params)})
-
-  // Ajouter join pour les idmg actifs de l'usager
-  // socket.idmgsActifs.forEach( idmg => {
-  //   debug("Joindre room du IDMG actif %s", idmg)
-  //   socket.join(idmg)
-  // })
 
 }
 
@@ -237,7 +253,5 @@ function downgradePrive(socket, params) {
 // }
 
 module.exports = {
-  enregistrerPrive,
-  downgradePrive,
-  enregistrerEvenementsProteges,
+  configurationEvenements
 }

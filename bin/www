@@ -2,10 +2,27 @@
 
 const debug = require('debug')('millegrilles:coupdoeil:www')
 const express = require('express')
+const session = require('express-session')
+const MemoryStore = require('memorystore')(session)
+const socketioSession = require('express-socket.io-session')
 
 const amqpdao = require('../models/amqpdao')
-const {initialiser: initialiserServer} = require('millegrilles.common/lib/server2')
+const {initialiser: initialiserServer} = require('millegrilles.common/lib/server3')
 const {initialiser: initialiserSenseursPassifs} = require('../routes/senseurspassifs')
+
+const secretCookiesPassword = 'moncookiesecret98321'
+const hostname = process.env.HOST
+
+const sessionMiddleware = session({
+  secret: secretCookiesPassword,
+  cookie: { path: '/', domain: hostname, sameSite: 'strict', secure: true, maxAge: 3600000 },
+  store: new MemoryStore({
+    checkPeriod: 3600000 // prune expired entries every 1h
+  }),
+  proxy: true,
+  resave: false,
+})
+const socketioSessionMiddleware = socketioSession(sessionMiddleware, {autoSave: true})
 
 async function init() {
 
@@ -16,8 +33,9 @@ async function init() {
   function stubDev(req, res, next) {
     req.mq = instAmqpdao
     req.idmg = idmg
-    if(!req.session) req.session = {}
     req.session.estProprietaire = true
+    req.session.idmgCompte = idmg
+
     next()
   }
 
@@ -35,32 +53,59 @@ async function init() {
 
   // Initalier les apps individuelles, mapper dans dict (cle est path relatif)
   const senseurspassifs = await initialiserSenseursPassifs(fctRabbitMQParIdmg, {idmg})
-  const devRoute = devRouteStub(fctRabbitMQParIdmg, {idmg})
-  const mappingApps = {devRoute, senseurspassifs}
+  const devRoute = devRouteStub(instAmqpdao, {idmg})
+
+  const mappingApps = [
+    {path: 'devRoute', ...devRoute},
+    {path: 'senseurspassifs', ...senseurspassifs},
+  ]
 
   const root = express()
+  root.use(sessionMiddleware)
   root.use(stubDev)
-  const serverInstance = initialiserServer(root, mappingApps, {pathSocketio: 'senseurspassifs', mqList})
+
+  const serverInstance = initialiserServer(
+    root, mappingApps,
+    {
+      pathSocketio: 'senseurspassifs',
+      sessionMiddleware: socketioSessionMiddleware,
+      fctRabbitMQParIdmg,
+      mqList
+    },
+  )
 
 }
 
-function devRouteStub(fctRabbitMQParIdmg, opts) {
+function devRouteStub(instAmqpdao, opts) {
   const routeTest = express()
   // Aucune fonctionnalite n'est disponible via REST, tout est sur socket.io
   routeTest.get('/index.html', (req, res)=>{res.end("Allo")})
   routeTest.use(function(req, res, next) {res.sendStatus(404)});
 
-  // Ajouter parametres pour Socket.IO
-  const socketio = {addSocket: devAddSocket}
+  // Ajouter parametres de hook commun pour Socket.IO (dev)
+  const socketio = {
+    callbackPreSetup: socketio=>preconfigSocketioCallback(socketio, instAmqpdao),
+  }
 
   return {route: routeTest, socketio}
 }
 
-// Fonction qui permet d'activer Socket.IO pour l'application
-function devAddSocket(socket) {
-  debug("devAddSocket, ID %s", socket.id)
-  socket.estProprietaire = true
-  socket.modeProtege = true
+function preconfigSocketioCallback(socketIo, instAmqpdao) {
+  debug("Callback, preconfig socket.io avec middleware")
+  socketIo.use((socket, next)=>{
+    debug("Ajout dev params dans req sur socket.io")
+
+    socket.handshake.session.idmgCompte = instAmqpdao.pki.idmg
+
+    socket.estProprietaire = true
+
+    socket.on('upgradeProtege', socket.upgradeProtege)
+    socket.on('downgradePrive', socket.downgradePrive)
+    socket.on('changerApplication', socket.changerApplication)
+
+    next()
+  })
+
 }
 
 init()

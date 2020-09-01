@@ -1,7 +1,7 @@
 const debug = require('debug')('millegrilles:senseurspassifs:route');
 const express = require('express')
 
-const {enregistrerPrive, enregistrerProtege } = require('../models/appSocketIo')
+const { configurationEvenements } = require('../models/appSocketIo')
 const { SenseursPassifsDao } = require('../models/senseursPassifsDao')
 
 function initialiser(fctRabbitMQParIdmg, opts) {
@@ -19,29 +19,13 @@ function initialiser(fctRabbitMQParIdmg, opts) {
 
   debug("Route /senseurspassifs de SenseursPassifs est initialisee")
 
-  function addSocket(socket) {
-    debug("Socket.IO connexion d'un nouveau socket, id: %s", socket.id)
-
-    // Injecter comptesUsagers
-    socket.nomUsager = socket.handshake.headers['user-prive']
-    socket.estProprietaire = socket.handshake.headers['est-proprietaire'] || false
-    socket.hostname = socket.handshake.headers.host
-
+  function middleware(socket, next) {
+    debug("Middleware senseurspassifs socket.io, injection senseursPassifsDao")
     socket.senseursPassifsDao = senseursPassifsDao
-
-    debug("Socket.IO usager %s, serveur %s", socket.nomUsager, socket.hostname)
-
-    enregistrerPrive(socket, amqpdao)
+    next()
   }
 
-  function callbackSetup(server) {
-    debug("Appel callback setup avec server")
-    // configurerRouteNouveauxMessages(server, amqpdao)
-    // configurerRouteComptes(server, amqpdao)
-  }
-
-  // Fonction qui permet d'activer Socket.IO pour l'application
-  const socketio = {addSocket, callbackSetup} //, session: socketioSessionMiddleware}
+  const socketio = {middleware, configurationEvenements}
 
   // Retourner dictionnaire avec route pour server.js
   return {route, socketio}
