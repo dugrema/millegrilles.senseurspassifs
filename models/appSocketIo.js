@@ -14,7 +14,7 @@ function configurationEvenements(socket) {
       {eventName: 'getListeNoeuds', callback: cb => {getListeNoeuds(socket, cb)}},
       {eventName: 'getListeSenseursNoeud', callback: (noeud_id, cb) => {getListeSenseursNoeud(socket, noeud_id, cb)}},
       {eventName: 'subscribe', callback: params=>{subscribe(socket, params)}},
-      {eventName: 'unsubscribe', callback: params=>{subscribe(socket, params)}},
+      {eventName: 'unsubscribe', callback: params=>{unsubscribe(socket, params)}},
     ],
     listenersProteges: [
       {eventName: 'changerNomNoeud', callback: (params, cb) => {changerNomNoeud(socket, params, cb)}},
@@ -49,7 +49,7 @@ async function enregistrerPrive(socket, amqpdao) {
   socket.on('setVpinSenseur', (params, cb) => {setVpinSenseur(socket, params, cb)})
 
   socket.on('subscribe', params=>{subscribe(socket, params)})
-  socket.on('unsubscribe', params=>{subscribe(socket, params)})
+  socket.on('unsubscribe', params=>{unsubscribe(socket, params)})
 
 }
 
