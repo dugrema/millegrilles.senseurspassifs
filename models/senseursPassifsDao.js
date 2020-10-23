@@ -66,16 +66,22 @@ class SenseursPassifsDao {
     return listeSenseurs
   }
 
+  setActiviteBlynk = async (noeud_id, activite) => {
+    const domaineAction = 'SenseursPassifs.majNoeud'
+    const params = { noeud_id, blynk_actif: activite }
+    debug("setActiviteBlynk, domaineAction : %s, %O", domaineAction, params)
+    return await this.amqDao.transmettreTransactionFormattee(
+      params, domaineAction
+    )
+  }
+
   setAuthTokenBlynk = async (noeud_id, authToken) => {
     const domaineAction = 'SenseursPassifs.majNoeud'
     const params = { noeud_id, blynk_auth: authToken }
     debug("setAuthTokenBlynk, domaineAction : %s, %O", domaineAction, params)
-
-    const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
+    return await this.amqDao.transmettreTransactionFormattee(
       params, domaineAction
     )
-
-    return listeSenseurs
   }
 
   setServerBlynk = async (noeud_id, host, port) => {
@@ -83,6 +89,25 @@ class SenseursPassifsDao {
     const params = { noeud_id, blynk_host: host, blynk_port: port }
     debug("setServerBlynk, domaineAction : %s, %O", domaineAction, params)
 
+    const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
+      params, domaineAction,
+    )
+  }
+
+  setActiviteLcd = async (noeud_id, activite) => {
+    const domaineAction = 'SenseursPassifs.majNoeud'
+    const params = { noeud_id, lcd_actif: activite }
+    debug("setServerBlynk, domaineAction : %s, %O", domaineAction, params)
+
+    const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
+      params, domaineAction,
+    )
+  }
+
+  setVpinLcd = async (noeud_id, lcd_vpin_onoff, lcd_vpin_navigation) => {
+    const domaineAction = 'SenseursPassifs.majNoeud'
+    const params = { noeud_id, lcd_vpin_onoff, lcd_vpin_navigation }
+    debug("setServerBlynk, domaineAction : %s, %O", domaineAction, params)
     const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
       params, domaineAction,
     )

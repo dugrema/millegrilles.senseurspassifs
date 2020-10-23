@@ -102,6 +102,8 @@ function preconfigSocketioCallback(socketIo, instAmqpdao) {
     socket.on('upgradeProtege', socket.upgradeProtege)
     socket.on('downgradePrive', socket.downgradePrive)
     socket.on('changerApplication', socket.changerApplication)
+    socket.on('subscribe', socket.subscribe)
+    socket.on('unsubscribe', socket.unsubscribe)
 
     next()
   })
