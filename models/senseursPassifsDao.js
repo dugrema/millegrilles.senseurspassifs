@@ -113,6 +113,15 @@ class SenseursPassifsDao {
     )
   }
 
+  setAffichageLcd = async (noeud_id, lcd_affichage) => {
+    const domaineAction = 'SenseursPassifs.majNoeud'
+    const params = { noeud_id, lcd_affichage }
+    debug("setAffichageLcd, domaineAction : %s, %O", domaineAction, params)
+    const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
+      params, domaineAction,
+    )
+  }
+
   setSecuriteSenseur = async securite => {
 
   }

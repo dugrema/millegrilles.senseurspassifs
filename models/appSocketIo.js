@@ -25,6 +25,7 @@ function configurationEvenements(socket) {
       {eventName: 'SenseursPassifs/setVpinSenseur', callback: (params, cb) => {setVpinSenseur(socket, params, cb)}},
       {eventName: 'SenseursPassifs/setActiviteLcd', callback: (params, cb) => {setActiviteLcd(socket, params, cb)}},
       {eventName: 'SenseursPassifs/setVpinLcd', callback: (params, cb) => {setVpinLcd(socket, params, cb)}},
+      {eventName: 'SenseursPassifs/setAffichageLcd', callback: (params, cb) => {setAffichageLcd(socket, params, cb)}},
     ]
   }
 
@@ -198,6 +199,19 @@ async function setVpinLcd(socket, params, cb) {
     cb({err: "Erreur : " + err})
   }
 }
+
+async function setAffichageLcd(socket, params, cb) {
+  try {
+    const {noeud_id, lcd_affichage} = params
+    debug("setAffichageLcd:\n%O", params)
+    const dao = socket.senseursPassifsDao
+    dao.setAffichageLcd(noeud_id, lcd_affichage)
+    cb(true)
+  } catch(err) {
+    cb({err: "Erreur : " + err})
+  }
+}
+
 
 async function setSecuriteSenseur(socket, params, cb) {
 
