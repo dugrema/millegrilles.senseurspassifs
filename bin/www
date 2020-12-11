@@ -7,7 +7,7 @@ const MemoryStore = require('memorystore')(session)
 const socketioSession = require('express-socket.io-session')
 
 const amqpdao = require('../models/amqpdao')
-const {initialiser: initialiserServer} = require('millegrilles.common/lib/server3')
+const {initialiser: initialiserServer} = require('@dugrema/millegrilles.common/lib/server3')
 const {initialiser: initialiserSenseursPassifs} = require('../routes/senseurspassifs')
 
 const secretCookiesPassword = 'moncookiesecret98321'
