@@ -1,5 +1,6 @@
 import React from 'react'
-import { Row, Col, Button, Form, Alert } from 'react-bootstrap';
+import { Row, Col, Button, Form, Alert } from 'react-bootstrap'
+import {proxy as comlinkProxy} from 'comlink'
 
 import { ConfigurationBlynk, ConfigurationLCD } from './NoeudConfigModules'
 import { Senseurs } from './NoeudConfigSenseurs'
@@ -25,14 +26,12 @@ export class Noeud extends React.Component {
     const wsa = this.props.rootProps.websocketApp
     const noeud_id = this.props.rootProps.paramsPage.noeud_id
     chargerSenseurs(wsa, params=>{this.setState(params)}, noeud_id)
-    wsa.subscribe(routingKeysNoeud, this.messageRecu, {exchange: '2.prive'})
-    wsa.subscribe(routingKeysNoeud, this.messageRecu, {exchange: '3.protege'})
+    wsa.subscribe(routingKeysNoeud, this.messageRecu, {exchange: ['2.prive', '3.protege']})
   }
 
   componentWillUnmount() {
     const wsa = this.props.rootProps.websocketApp
-    wsa.unsubscribe(routingKeysNoeud, this.messageRecu, {exchange: '2.prive'})
-    wsa.unsubscribe(routingKeysNoeud, this.messageRecu, {exchange: '3.protege'})
+    wsa.unsubscribe(routingKeysNoeud, this.messageRecu, {exchange: ['2.prive', '3.protege']})
   }
 
   setErreur = erreur => {
@@ -43,7 +42,7 @@ export class Noeud extends React.Component {
     this.setState({confirmation})
   }
 
-  messageRecu = message => {
+  messageRecu = comlinkProxy(message => {
     // console.debug("Message recu :\n%O", message)
     var splitKey = message.routingKey.split('.')
     const action = splitKey[splitKey.length-1]
@@ -56,7 +55,7 @@ export class Noeud extends React.Component {
         this.traiterLecture(message.message, message.exchange, this.state.senseurs, param=>{this.setState(param)})
       }
     }
-  }
+  })
 
   traiterLecture = (message, exchange) => {
     traiterLecture(message, exchange, this.state.senseurs, param=>{this.setState(param)})

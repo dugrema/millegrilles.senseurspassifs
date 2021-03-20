@@ -1,5 +1,6 @@
 import React from 'react'
-import { WebSocketSenseursPassifs } from './components/webSocketManager'
+import {proxy as comlinkProxy} from 'comlink'
+
 import { VerificationInfoServeur } from './Authentification'
 import { SectionContenu } from './SectionContenu'
 import { MenuItems } from './Menu'
@@ -42,21 +43,18 @@ export class ApplicationSenseursPassifs extends React.Component {
 
   componentDidMount() {
 
-    const wsa = new WebSocketSenseursPassifs(this.props.rootProps.connexionSocketIo)
-    this.props.rootProps.connexionSocketIo.emit('changerApplication', 'senseurspassifs', reponse=>{
-      if(reponse && reponse.err) {
-        console.error("Erreur enregistrements senseurspassifs socket.io :\n%O", reponse)
-        return
-      }
-      this.setState({websocketApp: wsa}, async _ =>{
-        await chargerNoeuds(wsa, etat=>{
-          this.setState(etat)
-        })
-        // Enregistrer ecoute evenements noeuds
-        wsa.subscribe(ROUTING_KEYS_NOEUDS, this.majNoeud, {exchange: '2.prive'})
-        wsa.subscribe(ROUTING_KEYS_NOEUDS, this.majNoeud, {exchange: '3.protege'})
+    const wsa = this.props.rootProps.connexionWorker
+    wsa.isFormatteurReady()
+      .then( async _ =>{
+        console.debug("Formatteur ready sur connexion, fetch fichiers")
+        this.setState({websocketApp: wsa})
+
+        wsa.subscribe(ROUTING_KEYS_NOEUDS, this.majNoeud, {DEBUG: true, exchange: ['2.prive', '3.protege']})
+
+        const noeuds = await wsa.getListeNoeuds()
+        console.debug("Liste noeuds : %O", noeuds)
+        this.setState({noeuds})
       })
-    })
 
     this.props.setSousMenuApplication(
       <MenuItems
@@ -69,14 +67,13 @@ export class ApplicationSenseursPassifs extends React.Component {
 
   componentWillUnmount() {
     const wsa = this.state.websocketApp
-    wsa.unsubscribe(ROUTING_KEYS_NOEUDS, this.majNoeud, {exchange: '2.prive'})
-    wsa.unsubscribe(ROUTING_KEYS_NOEUDS, this.majNoeud, {exchange: '3.protege'})
+    wsa.unsubscribe(ROUTING_KEYS_NOEUDS, this.majNoeud, {exchange: ['2.prive', '3.protege']})
   }
 
-  majNoeud = msg => {
+  majNoeud = comlinkProxy(msg => {
     // console.debug("MAJ noeud recue\n%O", msg)
     majNoeud(msg.message, msg.exchange, this.state.noeuds, state=>{this.setState(state)})
-  }
+  })
 
   setInfoServeur = (info) => {
     this.setState(info)
@@ -164,17 +161,6 @@ export class ApplicationSenseursPassifs extends React.Component {
     return page
   }
 
-}
-
-async function chargerNoeuds(wsa, setState) {
-  try {
-    // console.debug("Charger noeuds")
-    const noeuds = await wsa.getListeNoeuds()
-    // console.debug("Reponse noeuds:\n%O", noeuds)
-    setState({noeuds})
-  } catch (err) {
-    console.error("Erreur getListeNoeuds()\n%O", err)
-  }
 }
 
 function majNoeud(message, exchange, noeuds, setState) {

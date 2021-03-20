@@ -1,14 +1,15 @@
 import React from 'react'
 import { Container, Row, Col, Nav, Navbar } from 'react-bootstrap'
 import openSocket from 'socket.io-client'
+import {proxy as comlinkProxy} from 'comlink'
 
-// import { WebSocketManager } from 'millegrilles.common/lib/webSocketManager'
 import { Trans } from 'react-i18next';
 
-// import {ConnexionWebsocket} from '../containers/Authentification'
-import { ApplicationSenseursPassifs } from '../App'
+import {getCertificats, getClesPrivees} from './components/pkiHelper'
+import {splitPEMCerts} from '@dugrema/millegrilles.common/lib/forgecommon'
+import {setupWorkers, cleanupWorkers, preparerWorkersAvecCles} from './workers/workers.load'
 
-// import '../App.css'
+import { ApplicationSenseursPassifs } from './App'
 
 //import manifest from '../manifest.build.js'
 const manifest = {
@@ -16,7 +17,7 @@ const manifest = {
   version: "DUMMY",
 }
 
-export default class AppDev extends React.Component {
+export default class AppTopLevel extends React.Component {
 
   state = {
     //websocketApp: null,         // Connexion socket.io
@@ -24,6 +25,90 @@ export default class AppDev extends React.Component {
     sousMenuApplication: null,
     connexionSocketIo: null,
   }
+
+  componentDidMount() {
+    setupWorkers(this).then( async _ =>{
+      console.debug("Workers charges, info session : %O, proppys : %O", this.state, this.props)
+
+      this.setState({
+        signateurTransaction: {preparerTransaction: this.state.chiffrageWorker.formatterMessage}, // Legacy
+      })
+
+      await this.preparerWorkersAvecCles()
+      this.toggleProtege()  // Tenter upgrade protege automatiquement
+    })
+
+  }
+
+  componentWillUnmount() {
+    cleanupWorkers(this)
+  }
+
+  toggleProtege = async () => {
+    if( this.state.modeProtege ) {
+      // Desactiver mode protege
+      this.state.connexionWorker.downgradePrive()
+    } else {
+      // Activer mode protege, upgrade avec certificat (implicite)
+      console.debug("toggleProtege")
+      try {
+        const resultat = await this.state.connexionWorker.upgradeProteger()
+      } catch(err) {
+        console.error("BIARE! %O", err)
+      }
+    }
+  }
+
+  async preparerWorkersAvecCles() {
+    const {nomUsager, chiffrageWorker, connexionWorker} = this.state
+
+    // Initialiser certificat de MilleGrille et cles si presentes
+    const certInfo = await getCertificats(nomUsager)
+    if(certInfo && certInfo.fullchain) {
+      const fullchain = splitPEMCerts(certInfo.fullchain)
+      const clesPrivees = await getClesPrivees(nomUsager)
+
+      // Initialiser le CertificateStore
+      await chiffrageWorker.initialiserCertificateStore([...fullchain].pop(), {isPEM: true, DEBUG: false})
+      console.debug("Certificat : %O, Cles privees : %O", certInfo.fullchain, clesPrivees)
+
+      // Initialiser web worker
+      await chiffrageWorker.initialiserFormatteurMessage({
+        certificatPem: certInfo.fullchain,
+        clePriveeSign: clesPrivees.signer,
+        clePriveeDecrypt: clesPrivees.dechiffrer,
+        DEBUG: true
+      })
+
+      await connexionWorker.initialiserFormatteurMessage({
+        certificatPem: certInfo.fullchain,
+        clePriveeSign: clesPrivees.signer,
+        clePriveeDecrypt: clesPrivees.dechiffrer,
+        DEBUG: true
+      })
+    } else {
+      throw new Error("Pas de cert")
+    }
+  }
+
+  deconnexionSocketIo = comlinkProxy(event => {
+    console.debug("Socket.IO deconnecte : %O", event)
+    this.setState({modeProtege: false})
+  })
+
+  reconnectSocketIo = comlinkProxy(event => {
+    console.debug("Socket.IO reconnecte : %O", event)
+    if(!this.state.modeProtege) {
+      this.toggleProtege()
+    }
+  })
+
+  setEtatProtege = comlinkProxy(reponse => {
+    console.debug("Callback etat protege : %O", reponse)
+    const modeProtege = reponse.etat
+    console.debug("Toggle mode protege, nouvel etat : %O", reponse)
+    this.setState({modeProtege})
+  })
 
   setSousMenuApplication = sousMenuApplication => {
     console.debug("Set sous-menu application")
@@ -35,51 +120,18 @@ export default class AppDev extends React.Component {
   //   this.setState({websocketApp, modeProtege: false})
   // }
 
-  setConnexionSocketIo = connexionSocketIo => {
-    this.setState({connexionSocketIo})
-  }
-
-  toggleProtege = async event => {
-    const modeToggle = ! this.state.modeProtege
-    if(modeToggle) {
-      console.debug("Activer mode protege")
-      this.state.connexionSocketIo.emit('upgradeProtege', reponse=>{
-        if(reponse && reponse.err) {
-          console.error("Erreur activation mode protege")
-        }
-        this.setState({modeProtege: reponse})
-      })
-    } else {
-      this.desactiverProtege()
-    }
-
-  }
-
-  desactiverProtege = () => {
-    console.debug("Revenir a mode prive")
-    if(this.state.connexionSocketIo) {
-
-      this.state.connexionSocketIo.emit('downgradePrive', reponse=>{
-        if(reponse && reponse.err) {
-          console.error("Erreur downgrade vers mode prive")
-        }
-        this.setState({modeProtege: false})
-      })
-
-    } else {
-      this.setState({modeProtege: false})
-    }
-  }
-
+  // setConnexionSocketIo = connexionSocketIo => {
+  //   this.setState({connexionSocketIo})
+  // }
 
   render() {
 
     const rootProps = {...this.state, manifest, toggleProtege: this.toggleProtege}
 
     let page;
-    if(!this.state.connexionSocketIo) {
+    if(!this.state.nomUsager || !this.state.connexionWorker) {
       // Connecter avec Socket.IO
-      page = <ConnexionWebsocket setConnexionSocketIo={this.setConnexionSocketIo} desactiverProtege={this.desactiverProtege} />
+      page = <p>Chargement en cours</p>
     } else {
       // 3. Afficher application
       page = <ApplicationSenseursPassifs setSousMenuApplication={this.setSousMenuApplication} rootProps={{...this.state}} />

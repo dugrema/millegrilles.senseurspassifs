@@ -4,12 +4,12 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'font-awesome/css/font-awesome.min.css';
 import './index.css';
 import './App.css';
-import AppDev from './dev/AppDev';
+import App from './AppTopLevel';
 import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(
   <React.StrictMode>
-    <AppDev />
+    <App />
   </React.StrictMode>,
   document.getElementById('root')
 );
