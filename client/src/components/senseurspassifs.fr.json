@@ -1,0 +1,221 @@
+{
+  "translation": {
+    "global": {
+      "dateHeure": "{{date, YYYY-MM-DD HH:mm:ss}}",
+      "dateModifiee": "{{date, D MMM}}",
+      "dateAnneeModifiee": "{{date, D MMM YYYY}}",
+      "heureModifiee": "{{date, HH:mm}}",
+      "securite": {
+        "secure": "Sécure",
+        "protege": "Protégé",
+        "prive": "Privé",
+        "public": "Public"
+      },
+      "appliquer": "Appliquer",
+      "sauvegarder": "Sauvegarder",
+      "publier": "Publier",
+      "retour": "Retour",
+      "ajouter": "Ajouter",
+      "supprimer": "Supprimer",
+      "url": "URL",
+      "rafraichir": "Rafraichir",
+      "activer": "Activer",
+      "desactiver": "Desactiver"
+    },
+    "application": {
+      "coupdoeilAdvert": "Coup D'Oeil sur MilleGrilles",
+      "coupdoeilVersion": "Version {{version}}"
+    },
+    "formulaire": {
+      "prenom": "Prénom :",
+      "nomFamille": "Nom de famille :",
+      "courriel": "Adresse courriel :",
+      "twitter": "Compte Twitter :",
+      "facebook": "Compte Facebook :"
+    },
+    "principale": {
+      "accueil": {
+        "generalTitre": "Information générale",
+        "version": "Version de Coup d'Oeil :",
+        "idmg": "IDMG :",
+        "gestionTitre": "Fonctions de gestion de votre MilleGrille",
+        "lienUsager": "Information usager et MilleGrille",
+        "lienTokens": "Gérer les tokens de sécurité"
+      },
+      "information": {
+        "titre": "Information personnalisée",
+        "description_1": "Personnaliser l'information de la MilleGrille.",
+        "usagerTitre": "Information personnelle de l'usager",
+        "descriptionUsager": "Cette information est inclue dans les fiches d'informations partagées sur des sites webs et d'autres MilleGrilles. Tous les champs sont optionnels.",
+        "milleGrilleTitre": "Information sur la MilleGrille",
+        "descriptionMilleGrille_1": "Cette information est partagée dans les fiches d'informations et affichée sur des sites webs.",
+        "descriptionMilleGrille_2": "MilleGrilles supporte plusieurs langues à la fois. Si vous parlez plusieurs langues, choisissez votre langue de correspondance préférée dans Language principal et activez l'option multilingue pour ajouter des languages supplémentaires. Ceci va vous permettre de créer des documents dans plusieurs langues à la fois.",
+        "nomMilleGrille": "Nom de la MilleGrille",
+        "languagePrincipal": "Language principal",
+        "languesAdditionnelles": "Sélectionner les langues additionnelles à supporter."
+      }
+    },
+    "langues": {
+      "fr": "Français",
+      "en": "Anglais"
+    },
+    "parametres": {
+      "noeudsPublics": {
+        "titre": "Noeuds publics",
+        "description": "Cette section permet d'ajouter et de configurer les paramètres de noeuds publics pour la MilleGrille.",
+        "titreNoeud": "{{url}}",
+        "ajouterNoeudTitre": "Ajouter un nouveau noeud public",
+        "urlLibelle": "URL",
+        "ajouterNoeudBouton": "Ajouter",
+        "supprimerNoeudBouton": "Supprimer",
+        "sauvegarder": "Sauvegarder",
+        "renommer": "Renommer",
+        "urlTexte": "L'adresse URL doit être exacte - ceci devient la référence pour la configuration.",
+        "sousMenu": "Sous menu ",
+        "awsAccessKeyId": "Access Key ID",
+        "awsSecretAccessKey": "Secret Key",
+        "awsCredentialRegion": "Region Credentials",
+        "awsBucketName": "Nom Bucket",
+        "awsBucketRegion": "Région Bucket",
+        "awsBucketUrl": "URL accès bucket",
+        "awsBucketDir": "Sous-répertoire bucket",
+        "menu": "Menu de Vitrine",
+        "modeDeploiement": "Mode de déploiement",
+        "modeDeploiementExplication": "Sélectionner le mode de transfert des fichiers vers Vitrine."
+      },
+      "menuVitrine": {
+        "albums": "Albums",
+        "messages": "Messages",
+        "blogs": "Blog",
+        "podcasts": "Podcasts",
+        "fichiers": "Fichiers",
+        "senseursPassifs": "Senseurs Passifs",
+        "autres": "Autres",
+        "changerLangue": "English"
+      },
+      "erreurs": {
+        "titre": "Erreurs",
+        "date": "Date :",
+        "erreur": "Erreur :",
+        "routingKey": "Routing Key :",
+        "messageOriginal": "Message original",
+        "traceback": "StackTrace / TraceBack",
+        "supprimerTout": "Supprimer tout"
+      }
+    },
+    "plume": {
+      "pageTitre": {
+        "titre": "Plume",
+        "description": "Plume est un éditeur de documents.",
+        "liensAnnonces": "Annonces",
+        "liensDocuments": "Documents",
+        "liensVitrine": "Vitrine",
+        "liensBlogs": "Blogs"
+      },
+      "annonces": {
+        "titre": "Annonces",
+        "description": "Les annonces sont de courts messages publics affichés dans Vitrine.",
+        "nouvelleAnnonce": "Nouvelle annonce",
+        "descriptionNouvelleAnnonce": "Publier une annonce",
+        "recentes": "Annonces récentes",
+        "sujetNouvelleAnnonce": "Sujet (optionnel)",
+        "sujetNouvelleAnnonceInfo": "Disponible : {{restants}} sur {{max}}",
+        "texteNouvelleAnnonce": "Texte",
+        "texteNouvelleAnnonceInfo": "Disponible : {{restants}} sur {{max}}",
+        "nouvelleAnnonceBoutonPublier": "Publier"
+      },
+      "vitrine": {
+        "titre": "Vitrine",
+        "sectionAccueil": "Accueil",
+        "messageBienvenue": "Message de bienvenue du Jumbotron",
+        "ajouterColonne": "Ajouter une colonne",
+        "accueilImage": "Image",
+        "selectionnerImage": "Sélectionner une image (fuuid)",
+        "changerImage": "Changer",
+        "retirerImage": "Supprimer",
+        "accueilTitre": "Titre de la colonne",
+        "accueilTexte": "Texte de la colonne",
+        "accueilLiens": "Liens au bas de la colonne",
+        "ajouterLiens": "Ajouter lien"
+      },
+      "blogs": {
+        "titre": "Blogs",
+        "nouveauBlogpost": "Nouveau",
+        "chargerBlogposts": "Suivant"
+      }
+    },
+    "grosFichiers": {
+      "niveauSecurite": "Niveau de sécurité"
+    },
+    "pki": {
+      "afficher": {
+        "titre": "Référence des certificats d'autorité de la MilleGrille",
+        "description_1": "Le certificat racine représente l'identité de la MilleGrille."
+      }
+    },
+    "backup": {
+      "initiale": {
+        "titre": "Backup",
+        "lienBackupCles": "Backup des clés sécurité",
+        "lancerBackup": "Lancer le backup et restaurer le système",
+        "configurer": "Configurer le backup"
+      },
+      "cles": {
+        "titre": "Backup clés",
+        "instructions_1": "Faire une copie des clés privées de la MilleGrille.",
+        "instructions_2": "Ces clés sont requises pour permettre une restauration complète de la MilleGrille.",
+        "instructions_3": "Le mot de passe doit être rangé dans un endroit différent de celui des clés. Par exemple, le mot de passe peut être sauvegardé dans un gestionnaire de mots de passe (e.g. SplashID) ou imprimé et rangé dans votre porte-feuille.",
+        "avertissementTitre": "Avertissement",
+        "avertissement_1": "Si une clé et son mot de passe est volé, la MilleGrille doit être détruite aussi vite que possible.",
+        "avertissement_2": "Les clés ne doivent sous aucun prétexte être données à quelqu'un d'autre, surtout si ce n'est pas quelqu'un à qui vous seriez prêt à donner une copie des clés de votre voiture sport.",
+        "titreMotDePasse": "Mot de passe",
+        "motDePasse": "Mot de passe",
+        "boutonGenerer": "Générer",
+        "boutonRecupererCleRacine": "Charger clé racine",
+        "boutonGenererCleBackup": "Générer clé de backup"
+      },
+      "lancer": {
+        "titre": "Opérations de backup et restauration",
+        "instructions_1": "Lancer un backup avec les paramètres courants.",
+        "instructions_2": "Pour déclencher une opération, cliquer sur le bouton correspondant. Tous les domaines sont affectés en même temps.",
+        "boutonDeclencher": "Déclencher",
+        "boutonRestaurer": "Restaurer",
+        "boutonRegenerer": "Régénérer",
+        "instructions_reset": "Attention : la fonction de reset efface tous les backups existants et recommence à neuf.",
+        "titreRestaurerCles": "Restaurer accès aux documents protégés et sécures",
+        "instructionsRestaurerCles_1": "Restaurer l'accès au documents protégés et sécures en fournissant la clé de backup et son mot de passe.",
+        "instructionsRestaurerCles_2": "Il est possible d'uploader la clé de backup sous format de fichier .json provenant d'une copie de sûreté. Il est aussi possible d'entrer le mot de passe et coller la clé directement dans les espaces à cet effet.",
+        "champMotDePasse": "Mot de passe",
+        "boutonRestaurerCles": "Restaurer clés",
+        "actionsInterdites": "Actions interdites",
+        "boutonResetBackup": "Reset transactions"
+      }
+    },
+    "hebergement": {
+      "initiale": {
+        "titre": "Hébergement de MilleGrilles",
+        "millegrillesHebergees": "MilleGrilles hébergées"
+      },
+      "millegrillesHebergees": {
+        "titre": "MilleGrilles hébergées",
+        "idmg": "MilleGrille",
+        "etat": "État",
+        "actions": "Actions"
+      }
+    },
+    "menu": {
+      "Accueil": "Accueil",
+      "Noeuds": "Noeuds",
+      "Domaines": "Domaines",
+      "Favoris": "Favoris",
+      "AjouterNoeuds": "Ajouter",
+      "GererFavoris": "Gestion favoris",
+      "Principal": "Principal",
+      "Parametres": "Parametres",
+      "Backup": "Backup",
+      "Hebergement": "Hebergement",
+      "Pki": "Pki",
+      "changerLangue": "English"
+    }
+  }
+}
