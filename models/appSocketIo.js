@@ -8,7 +8,7 @@ const routingKeysPrive = [
   'appSocketio.nodejs',  // Juste pour trouver facilement sur exchange - debug
 ]
 
-function configurationEvenements(socket) {
+function configurerEvenements(socket) {
   const configurationEvenements = {
     listenersPrives: [
       {eventName: 'SenseursPassifs/getListeNoeuds', callback: cb => {getListeNoeuds(socket, cb)}},
@@ -304,5 +304,5 @@ function downgradePrive(socket, params) {
 // }
 
 module.exports = {
-  configurationEvenements
+  configurerEvenements
 }
