@@ -47,11 +47,11 @@ function setActiviteLcd(noeud_id, activite) {
 }
 
 function setVpinLcd(noeud_id, lcd_vpin_onoff, lcd_vpin_navigation) {
-  return emitBlocking(this.socket, 'SenseursPassifs/setVpinLcd', {noeud_id, lcd_vpin_onoff, lcd_vpin_navigation})
+  return connexionClient.emitBlocking('SenseursPassifs/setVpinLcd', {noeud_id, lcd_vpin_onoff, lcd_vpin_navigation})
 }
 
 function setAffichageLcd(noeud_id, lcd_affichage) {
-  return emitBlocking(this.socket, 'SenseursPassifs/setAffichageLcd', {noeud_id, lcd_affichage})
+  return connexionClient.emitBlocking('SenseursPassifs/setAffichageLcd', {noeud_id, lcd_affichage})
 }
 
 function setVpinSenseur(uuid_senseur, blynkVPins) {

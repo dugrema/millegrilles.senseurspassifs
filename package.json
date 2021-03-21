@@ -4,7 +4,8 @@
   "description": "MilleGrilles SenseursPassifs api",
   "main": "index.js",
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "server": "node ./bin/www"
   },
   "author": "Mathieu Dugre",
   "license": "ISC",
