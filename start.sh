@@ -25,6 +25,6 @@ export NODE_ENV=development
 # Parametre module logging debug
 export DEBUG=millegrilles:*
 export DEV=1
-export IDMG=JPtGcNcFSkfSdw49YsDpQHKxqTHMitpbPZW17a2JC54T
+# export IDMG=JPtGcNcFSkfSdw49YsDpQHKxqTHMitpbPZW17a2JC54T
 
 npm start

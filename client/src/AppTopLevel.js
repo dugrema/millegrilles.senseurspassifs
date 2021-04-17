@@ -61,34 +61,35 @@ export default class AppTopLevel extends React.Component {
 
   async preparerWorkersAvecCles() {
     const {nomUsager, chiffrageWorker, connexionWorker} = this.state
+    await preparerWorkersAvecCles(nomUsager, chiffrageWorker, connexionWorker)
 
-    // Initialiser certificat de MilleGrille et cles si presentes
-    const certInfo = await getCertificats(nomUsager)
-    if(certInfo && certInfo.fullchain) {
-      const fullchain = splitPEMCerts(certInfo.fullchain)
-      const clesPrivees = await getClesPrivees(nomUsager)
-
-      // Initialiser le CertificateStore
-      await chiffrageWorker.initialiserCertificateStore([...fullchain].pop(), {isPEM: true, DEBUG: false})
-      console.debug("Certificat : %O, Cles privees : %O", certInfo.fullchain, clesPrivees)
-
-      // Initialiser web worker
-      await chiffrageWorker.initialiserFormatteurMessage({
-        certificatPem: certInfo.fullchain,
-        clePriveeSign: clesPrivees.signer,
-        clePriveeDecrypt: clesPrivees.dechiffrer,
-        DEBUG: true
-      })
-
-      await connexionWorker.initialiserFormatteurMessage({
-        certificatPem: certInfo.fullchain,
-        clePriveeSign: clesPrivees.signer,
-        clePriveeDecrypt: clesPrivees.dechiffrer,
-        DEBUG: true
-      })
-    } else {
-      throw new Error("Pas de cert")
-    }
+    // // Initialiser certificat de MilleGrille et cles si presentes
+    // const certInfo = await getCertificats(nomUsager)
+    // if(certInfo && certInfo.fullchain) {
+    //   const fullchain = splitPEMCerts(certInfo.fullchain)
+    //   const clesPrivees = await getClesPrivees(nomUsager)
+    //
+    //   // Initialiser le CertificateStore
+    //   await chiffrageWorker.initialiserCertificateStore([...fullchain].pop(), {isPEM: true, DEBUG: false})
+    //   console.debug("Certificat : %O, Cles privees : %O", certInfo.fullchain, clesPrivees)
+    //
+    //   // Initialiser web worker
+    //   await chiffrageWorker.initialiserFormatteurMessage({
+    //     certificatPem: certInfo.fullchain,
+    //     clePriveeSign: clesPrivees.signer,
+    //     clePriveeDecrypt: clesPrivees.dechiffrer,
+    //     DEBUG: true
+    //   })
+    //
+    //   await connexionWorker.initialiserFormatteurMessage({
+    //     certificatPem: certInfo.fullchain,
+    //     clePriveeSign: clesPrivees.signer,
+    //     clePriveeDecrypt: clesPrivees.dechiffrer,
+    //     DEBUG: true
+    //   })
+    // } else {
+    //   throw new Error("Pas de cert")
+    // }
   }
 
   deconnexionSocketIo = comlinkProxy(event => {
