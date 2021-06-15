@@ -130,7 +130,7 @@ export default class AppTopLevel extends React.Component {
     const rootProps = {...this.state, manifest, toggleProtege: this.toggleProtege}
 
     let page;
-    if(!this.state.nomUsager || !this.state.connexionWorker) {
+    if(!this.state.modeProtege) {
       // Connecter avec Socket.IO
       page = <p>Chargement en cours</p>
     } else {

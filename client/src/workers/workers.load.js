@@ -1,9 +1,8 @@
 import {wrap as comlinkWrap, proxy as comlinkProxy, releaseProxy} from 'comlink'
 import {getCertificats, getClesPrivees} from '@dugrema/millegrilles.common/lib/browser/dbUsager'
-import {splitPEMCerts} from '@dugrema/millegrilles.common/lib/forgecommon'
 
 /* eslint-disable-next-line */
-import ChiffrageWorker from 'worker-loader!@dugrema/millegrilles.common/lib/browser/chiffrage.worker'
+import ChiffrageWorker from '@dugrema/millegrilles.common/lib/browser/chiffrage.worker'
 import ConnexionWorker from './connexion.worker'
 
 export async function setupWorkers(app) {
@@ -75,7 +74,7 @@ async function connecterReact(connexionWorker, app) {
   /* Helper pour connecter le worker avec socketIo.
      - connexionWorker : proxu de connexionWorker deja initialise
      - app : this d'une classe React */
-  const infoIdmg = await connexionWorker.connecter()
+  const infoIdmg = await connexionWorker.connecter({location: window.location.href})
   console.debug("Connexion socket.io completee, info idmg : %O", infoIdmg)
   app.setState({...infoIdmg})
 
@@ -88,7 +87,7 @@ export async function preparerWorkersAvecCles(nomUsager, chiffrageWorker, connex
   // Initialiser certificat de MilleGrille et cles si presentes
   const certInfo = await getCertificats(nomUsager)
   if(certInfo && certInfo.fullchain) {
-    const fullchain = splitPEMCerts(certInfo.fullchain)
+    const fullchain = certInfo.fullchain
     const clesPrivees = await getClesPrivees(nomUsager)
 
     // Initialiser le CertificateStore

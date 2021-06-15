@@ -1,118 +1,4 @@
 #!/usr/bin/env node
-
-// const debug = require('debug')('millegrilles:coupdoeil:www')
-// const express = require('express')
-// const session = require('express-session')
-// const MemoryStore = require('memorystore')(session)
-// const socketioSession = require('express-socket.io-session')
-//
-// const amqpdao = require('../models/amqpdao')
-// const {initialiser: initialiserServer} = require('@dugrema/millegrilles.common/lib/server3')
-// const {initialiser: initialiserSenseursPassifs} = require('../routes/senseurspassifs')
-//
-// const secretCookiesPassword = 'moncookiesecret98321'
-// const hostname = process.env.HOST
-//
-// const sessionMiddleware = session({
-//   secret: secretCookiesPassword,
-//   cookie: { path: '/', domain: hostname, sameSite: 'strict', secure: true, maxAge: 3600000 },
-//   store: new MemoryStore({
-//     checkPeriod: 3600000 // prune expired entries every 1h
-//   }),
-//   proxy: true,
-//   resave: false,
-// })
-// const socketioSessionMiddleware = socketioSession(sessionMiddleware, {autoSave: true})
-//
-// async function init() {
-//
-//   // Connexion AMQ
-//   const {amqpdao: instAmqpdao} = await amqpdao.init()
-//   const idmg = instAmqpdao.pki.idmg
-//
-//   function stubDev(req, res, next) {
-//     req.mq = instAmqpdao
-//     req.idmg = idmg
-//     req.session.estProprietaire = true
-//     req.session.idmgCompte = idmg
-//
-//     next()
-//   }
-//
-//   debug("Initialisation serveur IDMG : %s", idmg)
-//
-//   // Creer une collection avec la connexion a MQ (format qui supporte hebergement)
-//   const rabbitMQParIdmg = {
-//     [idmg]: instAmqpdao
-//   }
-//   const mqList = [instAmqpdao]
-//
-//   const fctRabbitMQParIdmg = (idmg) => {
-//     return rabbitMQParIdmg[idmg]
-//   }
-//
-//   // Initalier les apps individuelles, mapper dans dict (cle est path relatif)
-//   const senseurspassifs = await initialiserSenseursPassifs(fctRabbitMQParIdmg, {idmg})
-//   const devRoute = devRouteStub(instAmqpdao, {idmg})
-//
-//   const mappingApps = [
-//     {path: 'devRoute', ...devRoute},
-//     {path: 'senseurspassifs', ...senseurspassifs},
-//   ]
-//
-//   const root = express()
-//   root.use(sessionMiddleware)
-//   root.use(stubDev)
-//
-//   const serverInstance = initialiserServer(
-//     root, mappingApps,
-//     {
-//       pathSocketio: 'senseurspassifs',
-//       sessionMiddleware: socketioSessionMiddleware,
-//       fctRabbitMQParIdmg,
-//       mqList
-//     },
-//   )
-//
-// }
-//
-// function devRouteStub(instAmqpdao, opts) {
-//   const routeTest = express()
-//   // Aucune fonctionnalite n'est disponible via REST, tout est sur socket.io
-//   routeTest.get('/index.html', (req, res)=>{res.end("Allo")})
-//   routeTest.use(function(req, res, next) {res.sendStatus(404)});
-//
-//   // Ajouter parametres de hook commun pour Socket.IO (dev)
-//   const socketio = {
-//     callbackPreSetup: socketio=>preconfigSocketioCallback(socketio, instAmqpdao),
-//   }
-//
-//   return {route: routeTest, socketio}
-// }
-//
-// function preconfigSocketioCallback(socketIo, instAmqpdao) {
-//   debug("Callback, preconfig socket.io avec middleware")
-//   socketIo.use((socket, next)=>{
-//     debug("Ajout dev params dans req sur socket.io")
-//
-//     socket.handshake.session.idmgCompte = instAmqpdao.pki.idmg
-//
-//     socket.estProprietaire = true
-//
-//     socket.on('upgradeProtege', socket.upgradeProtege)
-//     socket.on('downgradePrive', socket.downgradePrive)
-//     socket.on('changerApplication', socket.changerApplication)
-//     socket.on('subscribe', socket.subscribe)
-//     socket.on('unsubscribe', socket.unsubscribe)
-//
-//     next()
-//   })
-//
-// }
-//
-// init()
-
-
 const debug = require('debug')('millegrilles:senseurspassifs:www')
 const express = require('express')
 
@@ -120,6 +6,7 @@ const socketApp = require('../models/appSocketIo')
 const amqpdao = require('../models/amqpdao')
 // const {initialiser: initialiserServer} = require('@dugrema/millegrilles.common/lib/server3')
 const server4 = require('@dugrema/millegrilles.common/lib/server4')
+const { extraireExtensionsMillegrille } = require('@dugrema/millegrilles.common/lib/forgecommon')
 const {initialiser: initialiserSenseursPassifs} = require('../routes/senseurspassifs')
 const { SenseursPassifsDao } = require('../models/senseursPassifsDao')
 
@@ -128,7 +15,7 @@ async function init() {
   // Initialiser server et routes
   const app = express()
   const {server, socketIo, amqpdao: amqpdaoInst} = await server4(
-    app, socketApp.configurerEvenements, {pathApp: '/senseurspassifs'})
+    app, socketApp.configurerEvenements, {pathApp: '/senseurspassifs', verifierAutorisation})
 
   const senseursPassifsDao = new SenseursPassifsDao(amqpdaoInst)
   socketIo.use((socket, next)=>{
@@ -149,6 +36,29 @@ async function init() {
   routeSenseursPassifs.use(initialiserSenseursPassifs(amqpdaoInst))
   routeSenseursPassifs.use(express.static('static/'))
 
+}
+
+function verifierAutorisation(socket, securite, certificatForge) {
+  debug("Verifier autorisation cert %O", certificatForge)
+  if(securite === '3.protege') {
+    const extensions = extraireExtensionsMillegrille(certificatForge)
+    debug("www.verifierAutorisation extensions %O", extensions)
+
+    // Deleguation globale donne tous les acces
+    if(['proprietaire', 'delegue'].includes(extensions.delegationGlobale)) {
+      debug("Usager proprietaire, acces 3.protege OK")
+      return true
+    }
+
+    // Delegation au domaine coupdoeil
+    if(extensions.delegationsDomaines.includes('coupdoeil')) {
+      debug("Usager delegue domaine coupdoeil, acces 3.protege OK")
+      return true
+    }
+
+    debug("Usager acces 3.protege refuse")
+  }
+  return false
 }
 
 init()

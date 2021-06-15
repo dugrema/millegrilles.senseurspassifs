@@ -11,10 +11,10 @@ const routingKeysPrive = [
 function configurerEvenements(socket) {
   const configurationEvenements = {
     listenersPrives: [
-      {eventName: 'SenseursPassifs/getListeNoeuds', callback: cb => {getListeNoeuds(socket, cb)}},
-      {eventName: 'SenseursPassifs/getListeSenseursNoeud', callback: (noeud_id, cb) => {getListeSenseursNoeud(socket, noeud_id, cb)}},
     ],
     listenersProteges: [
+      {eventName: 'SenseursPassifs/getListeNoeuds', callback: cb => {getListeNoeuds(socket, cb)}},
+      {eventName: 'SenseursPassifs/getListeSenseursNoeud', callback: (noeud_id, cb) => {getListeSenseursNoeud(socket, noeud_id, cb)}},
       {eventName: 'SenseursPassifs/changerNomNoeud', callback: (params, cb) => {changerNomNoeud(socket, params, cb)}},
       {eventName: 'SenseursPassifs/changerSecuriteNoeud', callback: (params, cb) => {changerSecuriteNoeud(socket, params, cb)}},
       {eventName: 'SenseursPassifs/setActiviteBlynk', callback: (params, cb) => {setActiviteBlynk(socket, params, cb)}},
