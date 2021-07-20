@@ -62,34 +62,6 @@ export default class AppTopLevel extends React.Component {
   async preparerWorkersAvecCles() {
     const {nomUsager, chiffrageWorker, connexionWorker} = this.state
     await preparerWorkersAvecCles(nomUsager, chiffrageWorker, connexionWorker)
-
-    // // Initialiser certificat de MilleGrille et cles si presentes
-    // const certInfo = await getCertificats(nomUsager)
-    // if(certInfo && certInfo.fullchain) {
-    //   const fullchain = splitPEMCerts(certInfo.fullchain)
-    //   const clesPrivees = await getClesPrivees(nomUsager)
-    //
-    //   // Initialiser le CertificateStore
-    //   await chiffrageWorker.initialiserCertificateStore([...fullchain].pop(), {isPEM: true, DEBUG: false})
-    //   console.debug("Certificat : %O, Cles privees : %O", certInfo.fullchain, clesPrivees)
-    //
-    //   // Initialiser web worker
-    //   await chiffrageWorker.initialiserFormatteurMessage({
-    //     certificatPem: certInfo.fullchain,
-    //     clePriveeSign: clesPrivees.signer,
-    //     clePriveeDecrypt: clesPrivees.dechiffrer,
-    //     DEBUG: true
-    //   })
-    //
-    //   await connexionWorker.initialiserFormatteurMessage({
-    //     certificatPem: certInfo.fullchain,
-    //     clePriveeSign: clesPrivees.signer,
-    //     clePriveeDecrypt: clesPrivees.dechiffrer,
-    //     DEBUG: true
-    //   })
-    // } else {
-    //   throw new Error("Pas de cert")
-    // }
   }
 
   deconnexionSocketIo = comlinkProxy(event => {
@@ -115,15 +87,6 @@ export default class AppTopLevel extends React.Component {
     console.debug("Set sous-menu application")
     this.setState({sousMenuApplication})
   }
-
-  // setWebsocketApp = websocketApp => {
-  //   // Set la connexion Socket.IO. Par defaut, le mode est prive (lecture seule)
-  //   this.setState({websocketApp, modeProtege: false})
-  // }
-
-  // setConnexionSocketIo = connexionSocketIo => {
-  //   this.setState({connexionSocketIo})
-  // }
 
   render() {
 
@@ -162,24 +125,6 @@ export class ConnexionWebsocket extends React.Component {
   async authentifier() {
     const connexionSocketIo = openSocketHelper()
     this.props.setConnexionSocketIo(connexionSocketIo)
-
-    // const config = {
-    //   path: '/coupdoeil/socket.io',
-    //   reconnection: true,
-    // }
-    // const websocketConnexion = new WebSocketManager(config)
-    // websocketConnexion.disconnectHandler = this.props.desactiverProtege
-    //
-    // try {
-    //   await websocketConnexion.connecter()
-    //   this.props.setWebsocketApp(websocketConnexion)
-    //   console.debug("Authentification completee")
-    // } catch(err) {
-    //   console.error("Erreur authentification")
-    //   console.error(err)
-    //   this.setState({erreur: true, erreurMessage: err.cause})
-    // }
-
   }
 
   render() {
@@ -279,27 +224,6 @@ function Menu(props) {
     </Navbar>
   )
 }
-
-// export function MenuItems(props) {
-//   return (
-//     <Nav className="mr-auto" activeKey={props.section} onSelect={props.changerPage}>
-//       <Nav.Item>
-//         <Nav.Link eventKey='Principale'>
-//           <Trans>menu.Principal</Trans>
-//         </Nav.Link>
-//       </Nav.Item>
-//       <Dropdown as={NavItem}>
-//         <Dropdown.Toggle as={NavLink}><Trans>menu.Parametres</Trans></Dropdown.Toggle>
-//         <Dropdown.Menu>
-//           <Dropdown.Item eventKey="Parametres"><Trans>menu.Parametres</Trans></Dropdown.Item>
-//           <Dropdown.Item eventKey="Backup"><Trans>menu.Backup</Trans></Dropdown.Item>
-//           <Dropdown.Item eventKey="Hebergement"><Trans>menu.Hebergement</Trans></Dropdown.Item>
-//           <Dropdown.Item eventKey="Pki"><Trans>menu.Pki</Trans></Dropdown.Item>
-//         </Dropdown.Menu>
-//       </Dropdown>
-//     </Nav>
-//   )
-// }
 
 function openSocketHelper() {
   let socket = openSocket('/', {

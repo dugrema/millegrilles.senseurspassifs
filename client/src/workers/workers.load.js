@@ -1,112 +1,72 @@
 import {wrap as comlinkWrap, proxy as comlinkProxy, releaseProxy} from 'comlink'
 import {getCertificats, getClesPrivees} from '@dugrema/millegrilles.common/lib/browser/dbUsager'
 
-/* eslint-disable-next-line */
 import ChiffrageWorker from '@dugrema/millegrilles.common/lib/browser/chiffrage.worker'
+import X509Worker from '@dugrema/millegrilles.common/lib/browser/x509.worker'
 import ConnexionWorker from './connexion.worker'
 
-export async function setupWorkers(app) {
-  /* Fonction pour componentDidMount : setupWorker(this) */
-
-  const [chiffrage, connexion] = await Promise.all([
-    initialiserWorkerChiffrage(app.callbackCleMillegrille),
-    initialiserConnexion(app)
+export async function setupWorkers() {
+  const [chiffrage, x509, connexion] = await Promise.all([
+    initialiserWorkerChiffrage(),
+    initialiserX509(),
+    initialiserConnexion(),
   ])
-  console.debug("Workers prets")
 
-  app.setState({
-    connexionWorker: connexion.proxy,
-    connexionInstance: connexion.workerInstance,
-    chiffrageWorker: chiffrage.proxy,
-    chiffrageInstance: chiffrage.workerInstance,
-  })
-
-  return {chiffrage, connexion}
-}
-
-export function cleanupWorkers(app) {
-  /* Fonction pour componentWillUnmount : cleanupWorkers(this) */
-
-  try {
-    if(app.state.chiffrageWorker) {
-      console.debug("Nettoyage worker chiffrage, release proxy")
-      app.state.chiffrageWorker[releaseProxy]()
-      app.state.chiffrageInstance.terminate()
-      app.setState({chiffrageWorker: null, chiffrageInstance: null})
-    }
-  } catch(err) {console.error("Erreur fermeture worker chiffrage")}
-
-  try {
-    if(app.state.connexionWorker) {
-      console.debug("Nettoyage worker, connexion release proxy")
-      app.state.connexionWorker[releaseProxy]()
-      app.state.connexionInstance.terminate()
-      app.setState({connexionWorker: null, connexionInstance: null})
-    }
-  } catch(err) {console.error("Erreur fermeture worker chiffrage")}
+  return {chiffrage, x509, connexion}
 }
 
 async function initialiserWorkerChiffrage(callbackCleMillegrille) {
   try {
     const workerInstance = new ChiffrageWorker()
-    const proxy = await comlinkWrap(workerInstance)
-
-    // const cbCleMillegrille = comlinkProxy(callbackCleMillegrille)
-    // chiffrageWorker.initialiserCallbackCleMillegrille(cbCleMillegrille)
-
-    return { workerInstance, proxy }
-
+    const chiffrageWorker = comlinkWrap(workerInstance)
+    return { workerInstance, chiffrageWorker }
   } catch(err) {
     console.error("Erreur initilisation worker chiffrate : %O", err)
   }
 }
 
+function initialiserX509() {
+  const workerInstance = new X509Worker()
+  const connexionWorker = comlinkWrap(workerInstance)
+
+  return { workerInstance, x509Worker: connexionWorker }
+}
+
 async function initialiserConnexion(app) {
   const workerInstance = new ConnexionWorker()
-  const proxy = await comlinkWrap(workerInstance)
-
-  await connecterReact(proxy, app)
-
-  return { workerInstance, proxy }
+  const connexionWorker = comlinkWrap(workerInstance)
+  return { workerInstance, connexionWorker }
 }
 
-async function connecterReact(connexionWorker, app) {
-  /* Helper pour connecter le worker avec socketIo.
-     - connexionWorker : proxu de connexionWorker deja initialise
-     - app : this d'une classe React */
-  const infoIdmg = await connexionWorker.connecter({location: window.location.href})
-  console.debug("Connexion socket.io completee, info idmg : %O", infoIdmg)
-  app.setState({...infoIdmg})
-
-  connexionWorker.socketOn('disconnect', app.deconnexionSocketIo)
-  connexionWorker.socketOn('modeProtege', app.setEtatProtege)
-  connexionWorker.socketOn('reconnect', app.reconnectSocketIo)
-}
-
-export async function preparerWorkersAvecCles(nomUsager, chiffrageWorker, connexionWorker) {
+export async function preparerWorkersAvecCles(nomUsager, chiffrageWorker, connexionWorker, x509Worker) {
   // Initialiser certificat de MilleGrille et cles si presentes
   const certInfo = await getCertificats(nomUsager)
   if(certInfo && certInfo.fullchain) {
     const fullchain = certInfo.fullchain
     const clesPrivees = await getClesPrivees(nomUsager)
 
+    const caPem = [...fullchain].pop()
+
     // Initialiser le CertificateStore
-    await chiffrageWorker.initialiserCertificateStore([...fullchain].pop(), {isPEM: true, DEBUG: false})
-    console.debug("Certificat : %O, Cles privees : %O", certInfo.fullchain, clesPrivees)
+    await chiffrageWorker.initialiserCertificateStore(caPem, {isPEM: true, DEBUG: false})
+    // console.debug("preparerWorkersAvecCles Certificat : %O, Cles privees : %O", certInfo.fullchain, clesPrivees)
+
+    // Initialiser verification x509
+    await x509Worker.init(caPem)
 
     // Initialiser web worker
     await chiffrageWorker.initialiserFormatteurMessage({
       certificatPem: certInfo.fullchain,
       clePriveeSign: clesPrivees.signer,
       clePriveeDecrypt: clesPrivees.dechiffrer,
-      DEBUG: true
+      DEBUG: false
     })
 
     await connexionWorker.initialiserFormatteurMessage({
       certificatPem: certInfo.fullchain,
       clePriveeSign: clesPrivees.signer,
       clePriveeDecrypt: clesPrivees.dechiffrer,
-      DEBUG: true
+      DEBUG: false
     })
   } else {
     throw new Error("Pas de cert")

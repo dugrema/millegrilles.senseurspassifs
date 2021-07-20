@@ -10,13 +10,13 @@ const domainesConnus = {
 
 export function SectionContenu(props) {
 
-  const Page = domainesConnus[props.rootProps.page]
+  const Page = domainesConnus[props.page]
 
   let contenu
   if(Page) {
-    contenu = <Page rootProps={props.rootProps} />
+    contenu = <Page {...props} />
   } else {
-    contenu = <p>Section non definie : "{props.rootProps.page}"</p>
+    contenu = <p>Section non definie : "{props.page}"</p>
   }
 
   return contenu

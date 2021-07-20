@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState, useEffect, useCallback} from 'react'
 import { Row, Col, Button, Form, Alert } from 'react-bootstrap'
 import {proxy as comlinkProxy} from 'comlink'
 
@@ -12,109 +12,123 @@ const routingKeysNoeud = [
   'evenement.SenseursPassifs.lecture'
 ]
 
-export class Noeud extends React.Component {
+export function Noeud(props) {
 
-  listeners = []
+  console.debug("Proppys %O", props)
 
-  state = {
-    senseurs: [],
-    erreur: '',
-    confirmation: '',
-  }
+  // listeners = []
 
-  componentDidMount() {
-    const wsa = this.props.rootProps.websocketApp
-    const noeud_id = this.props.rootProps.paramsPage.noeud_id
-    chargerSenseurs(wsa, params=>{this.setState(params)}, noeud_id)
-    wsa.subscribe(routingKeysNoeud, this.messageRecu, {exchange: ['2.prive', '3.protege']})
-  }
+  // state = {
+  //   senseurs: [],
+  //   erreur: '',
+  //   confirmation: '',
+  // }
 
-  componentWillUnmount() {
-    const wsa = this.props.rootProps.websocketApp
-    wsa.unsubscribe(routingKeysNoeud, this.messageRecu, {exchange: ['2.prive', '3.protege']})
-  }
+  const [senseurs, setSenseurs] = useState('')
+  const [erreur, setErreur] = useState('')
+  const [confirmation, setConfirmation] = useState('')
 
-  setErreur = erreur => {
-    this.setState({erreur})
-  }
+  // componentDidMount() {
+  //   const wsa = this.props.rootProps.websocketApp
+  //   const noeud_id = this.props.rootProps.paramsPage.noeud_id
+  //   chargerSenseurs(wsa, params=>{this.setState(params)}, noeud_id)
+  //   wsa.subscribe(routingKeysNoeud, this.messageRecu, {exchange: ['2.prive', '3.protege']})
+  // }
+  //
+  // componentWillUnmount() {
+  //   const wsa = this.props.rootProps.websocketApp
+  //   wsa.unsubscribe(routingKeysNoeud, this.messageRecu, {exchange: ['2.prive', '3.protege']})
+  // }
 
-  setConfirmation = confirmation => {
-    this.setState({confirmation})
-  }
+  const modeProtege = props.rootProps.modeProtege,
+        connexion = props.workers.connexion,
+        noeuds = props.noeuds,
+        noeud_id = props.paramsPage.noeud_id
 
-  messageRecu = comlinkProxy(message => {
+  useEffect(()=>{
+    if(modeProtege) {
+      connexion.getListeSenseursNoeud(noeud_id)
+    }
+  }, [modeProtege])
+
+  // const setErreur = erreur => {
+  //   this.setState({erreur})
+  // }
+
+  // const setConfirmation = confirmation => {
+  //   this.setState({confirmation})
+  // }
+
+  const messageRecu = useCallback(comlinkProxy(message => {
     // console.debug("Message recu :\n%O", message)
     var splitKey = message.routingKey.split('.')
     const action = splitKey[splitKey.length-1]
 
     if(action === 'lecture') {
-      const noeudId = this.props.rootProps.paramsPage.noeud_id
+      const noeudId = noeud_id
       const noeudIdRecu = message.message.noeud_id
       // console.debug("Lecture recue : %O", message.message)
       if(noeudId === noeudIdRecu) {
         this.traiterLecture(message.message, message.exchange, this.state.senseurs, param=>{this.setState(param)})
       }
     }
-  })
+  }), [])
 
-  traiterLecture = (message, exchange) => {
-    traiterLecture(message, exchange, this.state.senseurs, param=>{this.setState(param)})
-  }
+  const traiterLecture = useCallback((message, exchange) => {
+    traiterLecture(message, exchange, senseurs, param=>{this.setState(param)})
+  }, [])
 
-  changerSecurite = async event => {
+  const changerSecurite = useCallback(async event => {
     const {value} = event.currentTarget
-    const wsa = this.props.rootProps.websocketApp
-    const noeud_id = this.props.rootProps.paramsPage.noeud_id
+    // const wsa = props.rootProps.websocketApp
+    const noeud_id = props.rootProps.paramsPage.noeud_id
 
     this.setErreur()
 
     try {
-      const reponse = await wsa.changerSecuriteNoeud(noeud_id, value)
+      const reponse = await connexion.changerSecuriteNoeud(noeud_id, value)
       console.debug("Reponse commande changer securite\n%O", reponse)
-      this.props.rootProps.majNoeud(reponse)
+      props.rootProps.majNoeud(reponse)
     } catch(err) {
-      this.setErreur(''+err)
+      setErreur(''+err)
     }
-  }
+  }, [])
 
-  render() {
+  // const noeud_id = props.rootProps.paramsPage.noeud_id
 
-    const noeud_id = this.props.rootProps.paramsPage.noeud_id
+  const noeud = noeuds.filter(noeud=>{
+    return noeud.noeud_id === noeud_id
+  })[0] // Filtrer, garder premier element
 
-    const noeud = this.props.rootProps.noeuds.filter(noeud=>{
-      return noeud.noeud_id === noeud_id
-    })[0] // Filtrer, garder premier element
-
-    var erreur = '', confirmation = ''
-    if(this.state.erreur) {
-      erreur = (
-        <Alert variant="danger" dismissible onClose={_=>this.setErreur()}>
-          {this.state.erreur}
-        </Alert>
-      )
-    }
-    if(this.state.confirmation) {
-      confirmation = (
-        <Alert variant="success" dismissible onClose={_=>this.setConfirmation()}>
-          {this.state.confirmation}
-        </Alert>
-      )
-    }
-
-    return (
-      <div>
-        <h1>Noeud</h1>
+  // var erreur = '', confirmation = ''
+  if(erreur) {
+    erreur = (
+      <Alert variant="danger" dismissible onClose={_=>setErreur()}>
         {erreur}
-        {confirmation}
-        <AfficherInformationNoeud rootProps={this.props.rootProps}
-                                  noeud={noeud} senseurs={this.state.senseurs}
-                                  changerSecurite={this.changerSecurite}
-                                  setErreur={this.setErreur}
-                                  majNoeud={this.props.rootProps.majNoeud}
-                                  setConfirmation={this.setConfirmation} />
-      </div>
+      </Alert>
     )
   }
+  if(confirmation) {
+    confirmation = (
+      <Alert variant="success" dismissible onClose={_=>setConfirmation()}>
+        {confirmation}
+      </Alert>
+    )
+  }
+
+  return (
+    <div>
+      <h1>Noeud</h1>
+      {erreur}
+      {confirmation}
+      <AfficherInformationNoeud rootProps={props.rootProps}
+                                noeud={noeud} senseurs={senseurs}
+                                changerSecurite={changerSecurite}
+                                setErreur={setErreur}
+                                majNoeud={props.rootProps.majNoeud}
+                                setConfirmation={setConfirmation} />
+    </div>
+  )
 }
 
 class AfficherInformationNoeud extends React.Component {

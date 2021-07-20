@@ -1,10 +1,12 @@
-import React from 'react';
-import { Row, Col, Button } from 'react-bootstrap';
+import React, {useState, useCallback} from 'react'
+import { Row, Col, Button } from 'react-bootstrap'
 
-export class Accueil extends React.Component {
+export function Accueil(props) {
 
-  selectionnerNoeud = event => {
-    const changerPage = this.props.rootProps.changerPage
+  const changerPage = props.rootProps.changerPage
+
+  const selectionnerNoeud = useCallback(event => {
+    const changerPage = props.rootProps.changerPage
     const {value} = event.currentTarget
 
     // Simuler event
@@ -14,37 +16,31 @@ export class Accueil extends React.Component {
     }
     // console.debug("Afficher noeud :\n%O", pageInfo)
     changerPage({currentTarget: pageInfo})
-  }
+  }, [changerPage])
 
-  render() {
-
-    return (
-      <div>
-        <h1>Senseurs Passifs</h1>
-        <ListeNoeuds noeuds={this.props.rootProps.noeuds} selectionnerNoeud={this.selectionnerNoeud} />
-      </div>
-    )
-
-  }
+  return (
+    <div>
+      <h1>Senseurs Passifs</h1>
+      <ListeNoeuds noeuds={props.noeuds} selectionnerNoeud={selectionnerNoeud} />
+    </div>
+  )
 
 }
 
-class ListeNoeuds extends React.Component {
+function ListeNoeuds(props) {
 
-  render() {
+  if(!props.noeuds) return ''
 
-    const listeNoeuds = this.props.noeuds.map(noeud=>{
-      return <NoeudItem key={noeud.noeud_id} noeud={noeud} selectionnerNoeud={this.props.selectionnerNoeud} />
-    })
+  const listeNoeuds = props.noeuds.map(noeud=>{
+    return <NoeudItem key={noeud.noeud_id} noeud={noeud} selectionnerNoeud={props.selectionnerNoeud} />
+  })
 
-    return (
-      <div>
-        <h2>Noeuds</h2>
-        {listeNoeuds}
-      </div>
-    )
-  }
-
+  return (
+    <div>
+      <h2>Noeuds</h2>
+      {listeNoeuds}
+    </div>
+  )
 }
 
 function NoeudItem(props) {

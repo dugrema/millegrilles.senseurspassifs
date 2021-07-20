@@ -1,15 +1,15 @@
 // Gestion evenements socket.io pour /millegrilles
 const debug = require('debug')('millegrilles:senseurspassifs:appSocketIo');
 
-const routingKeysPrive = [
-  'transaction.SenseursPassifs.#.majNoeud',
-  'transaction.SenseursPassifs.#.majSenseur',
-  'evenement.SenseursPassifs.#.lecture',
-  'appSocketio.nodejs',  // Juste pour trouver facilement sur exchange - debug
+const ROUTING_KEYS_EVENEMENTS = [
+  'evenement.SenseursPassifs.lectureConfirmee',
 ]
 
 function configurerEvenements(socket) {
   const configurationEvenements = {
+    listenersPublics: [
+      {eventName: 'challenge', callback: (params, cb) => {challenge(socket, params, cb)}},
+    ],
     listenersPrives: [
     ],
     listenersProteges: [
@@ -26,10 +26,26 @@ function configurerEvenements(socket) {
       {eventName: 'SenseursPassifs/setActiviteLcd', callback: (params, cb) => {setActiviteLcd(socket, params, cb)}},
       {eventName: 'SenseursPassifs/setVpinLcd', callback: (params, cb) => {setVpinLcd(socket, params, cb)}},
       {eventName: 'SenseursPassifs/setAffichageLcd', callback: (params, cb) => {setAffichageLcd(socket, params, cb)}},
+
+      // Listeners
+      {eventName: 'SenseursPassifs/ecouterEvenements', callback: (params, cb) => {ecouterEvenements(socket, params, cb)}},
     ]
   }
 
   return configurationEvenements
+}
+
+async function challenge(socket, params, cb) {
+  // Repondre avec un message signe
+  // console.debug("!!! SOCKET ! : %O", socket)
+  const reponse = {
+    reponse: params.challenge,
+    message: 'Trust no one',
+    nomUsager: socket.nomUsager,
+    userId: socket.userId,
+  }
+  const reponseSignee = await socket.amqpdao.pki.formatterMessage(reponse, 'challenge', {ajouterCertificat: true})
+  cb(reponseSignee)
 }
 
 // Enregistre les evenements prive sur le socket
@@ -302,6 +318,15 @@ function downgradePrive(socket, params) {
 //   cb(listeMessages)
 //
 // }
+
+function ecouterEvenements(socket, params, cb) {
+  const opts = {
+    routingKeys: ROUTING_KEYS_EVENEMENTS,
+    exchange: ['3.protege'],
+  }
+  debug("Params : %O, cb: %O", params, cb)
+  socket.subscribe(opts, cb)
+}
 
 module.exports = {
   configurerEvenements
