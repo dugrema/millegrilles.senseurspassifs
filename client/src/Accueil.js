@@ -1,6 +1,8 @@
 import React, {useState, useCallback} from 'react'
 import { Row, Col, Button } from 'react-bootstrap'
 
+import Sommaire from './SommaireSenseurs'
+
 export function Accueil(props) {
 
   const changerPage = props.rootProps.changerPage
@@ -22,6 +24,11 @@ export function Accueil(props) {
     <div>
       <h1>Senseurs Passifs</h1>
       <ListeNoeuds noeuds={props.noeuds} selectionnerNoeud={selectionnerNoeud} />
+
+      <h2>Sommaire</h2>
+      <Sommaire noeuds={props.noeuds}
+                workers={props.workers}
+                rootProps={props.rootProps} />
     </div>
   )
 
