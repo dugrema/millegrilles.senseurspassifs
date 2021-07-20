@@ -35,26 +35,10 @@ export function Noeud(props) {
 
   const messageRecu = useCallback(comlinkProxy(message => {
     traiterLecture(noeud_id, message, _contexteCallback.senseurs, _contexteCallback.setSenseurs)
-    // console.debug("Message recu :\n%O", message)
-    // var action = message.routingKey.split('.').pop()
-
-    // if(action === 'lecture') {
-    //   const noeudId = noeud_id
-    //   const noeudIdRecu = message.message.noeud_id
-    //   // console.debug("Lecture recue : %O", message.message)
-    //   if(noeudId === noeudIdRecu) {
-    //     this.traiterLecture(message.message, message.exchange, this.state.senseurs, param=>{this.setState(param)})
-    //   }
-    // }
   }), [noeud_id])
-
-  // const traiterLectureHandler = useCallback((message, exchange) => {
-  //   traiterLecture(message, exchange, senseurs, param=>{this.setState(param)})
-  // }, [])
 
   const changerSecurite = useCallback(async event => {
     const {value} = event.currentTarget
-    // const wsa = props.rootProps.websocketApp
     const noeud_id = props.rootProps.paramsPage.noeud_id
 
     setErreur()
@@ -72,6 +56,7 @@ export function Noeud(props) {
       connexion.getListeSenseursNoeud(noeud_id)
         .then(senseurs=>{
           console.debug("Senseurs charges : %O", senseurs)
+          setSenseurs(senseurs)
         })
 
       connexion.ecouterEvenementsSenseurs(messageRecu)
@@ -79,7 +64,7 @@ export function Noeud(props) {
         connexion.retirerEvenementsSenseurs()
       }
     }
-  }, [modeProtege])
+  }, [modeProtege, setSenseurs])
 
   // const noeud_id = props.rootProps.paramsPage.noeud_id
 
@@ -204,18 +189,21 @@ function AfficherInformationNoeud(props) {
 
       <ConfigurationBlynk noeud={noeud}
                           rootProps={props.rootProps}
+                          workers={props.workers}
                           setErreur={props.setErreur}
                           setConfirmation={props.setConfirmation} />
 
       <ConfigurationLCD noeud={noeud}
                         blynkActif={blynkActif}
                         rootProps={props.rootProps}
+                        workers={props.workers}
                         setErreur={props.setErreur}
                         setConfirmation={props.setConfirmation} />
 
       <Senseurs senseurs={props.senseurs}
                 noeud={noeud}
                 rootProps={props.rootProps}
+                workers={props.workers}
                 setErreur={props.setErreur}
                 traiterLecture={props.traiterLecture}
                 setConfirmation={props.setConfirmation}

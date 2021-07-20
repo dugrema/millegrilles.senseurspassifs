@@ -12,6 +12,7 @@ export function Senseurs(props) {
                       noeud={props.noeud}
                       senseur={senseur}
                       rootProps={props.rootProps}
+                      workers={props.workers}
                       setErreur={props.setErreur}
                       setConfirmation={props.setConfirmation}
                       setModeEdition={props.setModeEdition}
@@ -54,7 +55,7 @@ class Senseur extends React.Component {
   }
 
   sauvegarderNom = async _ => {
-    const wsa = this.props.rootProps.websocketApp
+    const wsa = this.props.workers.connexion
 
     // Aucun nom
     if(!this.state.descriptif) {
@@ -74,7 +75,7 @@ class Senseur extends React.Component {
   }
 
   sauvegarderSenseur = async _ => {
-    const wsa = this.props.rootProps.websocketApp
+    const wsa = this.props.workers.connexion
 
     if(this.state.descriptif && this.state.descriptif !== this.props.senseur.descriptif) {
       // Sauvegarder le nom du senseur
