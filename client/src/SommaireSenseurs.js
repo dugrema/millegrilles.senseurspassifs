@@ -6,6 +6,13 @@ import {DateTimeAfficher} from './components/ReactFormatters'
 
 const _contexteCallback = {}
 
+const CONST_CHAMPS_SOMMAIRE = [
+  // {suffix: 'epoch', format: val=>{new Date(val*1000)}},
+  {suffix: 'temperature', formatter: val=><span>{Math.round(val, 1)}&deg;C</span>},
+  {suffix: 'humidite', formatter: val=><span>{Math.round(val, 1)}%</span>},
+  {suffix: 'pression', formatter: val=><span>{Math.round(val, 1)} kPa</span>},
+]
+
 export default function Sommaire(props) {
 
   const [senseurs, setSenseurs] = useState('')
@@ -15,7 +22,7 @@ export default function Sommaire(props) {
         noeuds = props.noeuds
 
   const messageRecu = useCallback(comlinkProxy(message => {
-    console.debug("Message : %O", message)
+    // console.debug("Message : %O", message)
     traiterLecture(message, _contexteCallback.senseurs, _contexteCallback.setSenseurs)
   }), [])
 
@@ -49,9 +56,17 @@ export default function Sommaire(props) {
 
   if(!props.noeuds) return ''
 
+  const noeudsTries = [...noeuds]
+  noeudsTries.sort((a,b)=>{
+    const nomA = a.descriptif || a.noeud_id,
+          nomB = b.descriptif || b.noeud_id
+
+    return nomA.localeCompare(nomB)
+  })
+
   return (
     <>
-      <ListeNoeuds noeuds={props.noeuds}
+      <ListeNoeuds noeuds={noeudsTries}
                    senseurs={senseurs} />
     </>
   )
@@ -68,7 +83,7 @@ function ListeNoeuds(props) {
           senseurs = listeSenseurs.filter(item=>item.noeud_id===noeud_id),
           nom = noeud.descriptif || noeud.noeud_id
 
-    console.debug("Senseurs : %O (Proppys %O)", senseurs, props)
+    // console.debug("Senseurs : %O (Proppys %O)", senseurs, props)
 
     return (
       <div key={noeud.noeud_id}>
@@ -91,14 +106,14 @@ function ListeSenseurs(props) {
 
   if(!senseurs) return ''
 
-  const champs = [
-    // {suffix: 'epoch', format: val=>{new Date(val*1000)}},
-    {suffix: 'temperature', formatter: val=><span>{Math.round(val, 1)}&deg;C</span>},
-    {suffix: 'humidite', formatter: val=><span>{Math.round(val, 1)}%</span>},
-    {suffix: 'pression', formatter: val=><span>{Math.round(val, 1)} kPa</span>},
-  ]
+  senseurs.sort((a,b)=>{
+    const nomA = a.descriptif || a.uuid_senseur,
+          nomB = b.descriptif || b.uuid_senseur
 
-  const cols = champs.map((champ, idx)=>{
+    return nomA.localeCompare(nomB)
+  })
+
+  const cols = CONST_CHAMPS_SOMMAIRE.map((champ, idx)=>{
     let valeur = ''
 
     senseurs.forEach(item=>{
