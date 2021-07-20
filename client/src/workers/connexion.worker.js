@@ -221,7 +221,7 @@ function setVpinSenseur(uuid_senseur, blynkVPins) {
 }
 
 function changerNomSenseur(uuid_senseur, nom) {
-  return connexionClient.emitBlocking('SenseursPassifs/ecouterEvenementsSenseurs', {uuid_senseur, nom})
+  return connexionClient.emitBlocking('SenseursPassifs/changerNomSenseur', {uuid_senseur, nom})
 }
 
 async function ecouterEvenementsSenseurs(cb) {
