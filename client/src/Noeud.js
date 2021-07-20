@@ -5,73 +5,60 @@ import {proxy as comlinkProxy} from 'comlink'
 import { ConfigurationBlynk, ConfigurationLCD } from './NoeudConfigModules'
 import { Senseurs } from './NoeudConfigSenseurs'
 
-const routingKeysNoeud = [
-  'transaction.SenseursPassifs.*.majSenseur',
-  'transaction.SenseursPassifs.majSenseur',
-  'evenement.SenseursPassifs.*.lecture',
-  'evenement.SenseursPassifs.lecture'
-]
+// const routingKeysNoeud = [
+//   'transaction.SenseursPassifs.*.majSenseur',
+//   'transaction.SenseursPassifs.majSenseur',
+//   'evenement.SenseursPassifs.*.lecture',
+//   'evenement.SenseursPassifs.lecture'
+// ]
+
+const _contexteCallback = {}
 
 export function Noeud(props) {
 
-  console.debug("Proppys %O", props)
-
-  // listeners = []
-
-  // state = {
-  //   senseurs: [],
-  //   erreur: '',
-  //   confirmation: '',
-  // }
+  // console.debug("Proppys %O", props)
 
   const [senseurs, setSenseurs] = useState('')
   const [erreur, setErreur] = useState('')
   const [confirmation, setConfirmation] = useState('')
-
-  // componentDidMount() {
-  //   const wsa = this.props.rootProps.websocketApp
-  //   const noeud_id = this.props.rootProps.paramsPage.noeud_id
-  //   chargerSenseurs(wsa, params=>{this.setState(params)}, noeud_id)
-  //   wsa.subscribe(routingKeysNoeud, this.messageRecu, {exchange: ['2.prive', '3.protege']})
-  // }
-  //
-  // componentWillUnmount() {
-  //   const wsa = this.props.rootProps.websocketApp
-  //   wsa.unsubscribe(routingKeysNoeud, this.messageRecu, {exchange: ['2.prive', '3.protege']})
-  // }
 
   const modeProtege = props.rootProps.modeProtege,
         connexion = props.workers.connexion,
         noeuds = props.noeuds,
         noeud_id = props.paramsPage.noeud_id
 
+  // Entretien contexte pour callback comlink proxys
+  useEffect(()=>{
+    _contexteCallback.senseurs = senseurs
+    _contexteCallback.setSenseurs = setSenseurs
+  }, [senseurs, setSenseurs])
+
   useEffect(()=>{
     if(modeProtege) {
       connexion.getListeSenseursNoeud(noeud_id)
+        .then(senseurs=>{
+          console.debug("Senseurs charges : %O", senseurs)
+        })
+
+      connexion.ecouterEvenementsSenseurs(messageRecu)
+      return ()=>{
+        connexion.retirerEvenementsSenseurs()
+      }
     }
   }, [modeProtege])
 
-  // const setErreur = erreur => {
-  //   this.setState({erreur})
-  // }
-
-  // const setConfirmation = confirmation => {
-  //   this.setState({confirmation})
-  // }
-
   const messageRecu = useCallback(comlinkProxy(message => {
-    // console.debug("Message recu :\n%O", message)
-    var splitKey = message.routingKey.split('.')
-    const action = splitKey[splitKey.length-1]
+    console.debug("Message recu :\n%O", message)
+    var action = message.routingKey.split('.').pop()
 
-    if(action === 'lecture') {
-      const noeudId = noeud_id
-      const noeudIdRecu = message.message.noeud_id
-      // console.debug("Lecture recue : %O", message.message)
-      if(noeudId === noeudIdRecu) {
-        this.traiterLecture(message.message, message.exchange, this.state.senseurs, param=>{this.setState(param)})
-      }
-    }
+    // if(action === 'lecture') {
+    //   const noeudId = noeud_id
+    //   const noeudIdRecu = message.message.noeud_id
+    //   // console.debug("Lecture recue : %O", message.message)
+    //   if(noeudId === noeudIdRecu) {
+    //     this.traiterLecture(message.message, message.exchange, this.state.senseurs, param=>{this.setState(param)})
+    //   }
+    // }
   }), [])
 
   const traiterLecture = useCallback((message, exchange) => {

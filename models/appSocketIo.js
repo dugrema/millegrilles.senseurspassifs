@@ -28,7 +28,8 @@ function configurerEvenements(socket) {
       {eventName: 'SenseursPassifs/setAffichageLcd', callback: (params, cb) => {setAffichageLcd(socket, params, cb)}},
 
       // Listeners
-      {eventName: 'SenseursPassifs/ecouterEvenements', callback: (params, cb) => {ecouterEvenements(socket, params, cb)}},
+      {eventName: 'SenseursPassifs/ecouterEvenementsSenseurs', callback: (params, cb) => {ecouterEvenementsSenseurs(socket, params, cb)}},
+      {eventName: 'SenseursPassifs/retirerEvenementsSenseurs', callback: (params, cb) => {retirerEvenementsSenseurs(socket, params, cb)}},
     ]
   }
 
@@ -319,7 +320,7 @@ function downgradePrive(socket, params) {
 //
 // }
 
-function ecouterEvenements(socket, params, cb) {
+function ecouterEvenementsSenseurs(socket, params, cb) {
   const opts = {
     routingKeys: ROUTING_KEYS_EVENEMENTS,
     exchange: ['3.protege'],
