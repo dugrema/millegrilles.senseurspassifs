@@ -17,6 +17,7 @@ export WEB_CERT=$MG_MQ_CERTFILE
 export WEB_KEY=$MG_MQ_KEYFILE
 export MG_MQ_URL=amqps://$HOST:5673
 export PORT=3013
+export MG_REDIS_HOST=$HOST
 
 export SERVER_TYPE=spdy
 
