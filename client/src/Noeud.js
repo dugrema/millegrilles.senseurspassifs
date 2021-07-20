@@ -18,7 +18,7 @@ export function Noeud(props) {
 
   // console.debug("Proppys %O", props)
 
-  const [senseurs, setSenseurs] = useState('')
+  const [senseurs, setSenseurs] = useState([])
   const [erreur, setErreur] = useState('')
   const [confirmation, setConfirmation] = useState('')
 
@@ -33,23 +33,10 @@ export function Noeud(props) {
     _contexteCallback.setSenseurs = setSenseurs
   }, [senseurs, setSenseurs])
 
-  useEffect(()=>{
-    if(modeProtege) {
-      connexion.getListeSenseursNoeud(noeud_id)
-        .then(senseurs=>{
-          console.debug("Senseurs charges : %O", senseurs)
-        })
-
-      connexion.ecouterEvenementsSenseurs(messageRecu)
-      return ()=>{
-        connexion.retirerEvenementsSenseurs()
-      }
-    }
-  }, [modeProtege])
-
   const messageRecu = useCallback(comlinkProxy(message => {
-    console.debug("Message recu :\n%O", message)
-    var action = message.routingKey.split('.').pop()
+    traiterLecture(noeud_id, message, _contexteCallback.senseurs, _contexteCallback.setSenseurs)
+    // console.debug("Message recu :\n%O", message)
+    // var action = message.routingKey.split('.').pop()
 
     // if(action === 'lecture') {
     //   const noeudId = noeud_id
@@ -59,11 +46,11 @@ export function Noeud(props) {
     //     this.traiterLecture(message.message, message.exchange, this.state.senseurs, param=>{this.setState(param)})
     //   }
     // }
-  }), [])
+  }), [noeud_id])
 
-  const traiterLecture = useCallback((message, exchange) => {
-    traiterLecture(message, exchange, senseurs, param=>{this.setState(param)})
-  }, [])
+  // const traiterLectureHandler = useCallback((message, exchange) => {
+  //   traiterLecture(message, exchange, senseurs, param=>{this.setState(param)})
+  // }, [])
 
   const changerSecurite = useCallback(async event => {
     const {value} = event.currentTarget
@@ -80,6 +67,20 @@ export function Noeud(props) {
       setErreur(''+err)
     }
   }, [])
+
+  useEffect(()=>{
+    if(modeProtege) {
+      connexion.getListeSenseursNoeud(noeud_id)
+        .then(senseurs=>{
+          console.debug("Senseurs charges : %O", senseurs)
+        })
+
+      connexion.ecouterEvenementsSenseurs(messageRecu)
+      return ()=>{
+        connexion.retirerEvenementsSenseurs()
+      }
+    }
+  }, [modeProtege])
 
   // const noeud_id = props.rootProps.paramsPage.noeud_id
 
@@ -109,6 +110,7 @@ export function Noeud(props) {
       {erreur}
       {confirmation}
       <AfficherInformationNoeud rootProps={props.rootProps}
+                                workers={props.workers}
                                 noeud={noeud} senseurs={senseurs}
                                 changerSecurite={changerSecurite}
                                 setErreur={setErreur}
@@ -118,119 +120,126 @@ export function Noeud(props) {
   )
 }
 
-class AfficherInformationNoeud extends React.Component {
+function AfficherInformationNoeud(props) {
 
-  state = {
-    descriptif: '',
-    senseursModeEdition: {},  // Senseurs en mode d'edition. cle : uuid, valeur : true
-  }
+  // state = {
+  //   descriptif: '',
+  //   senseursModeEdition: {},  // Senseurs en mode d'edition. cle : uuid, valeur : true
+  // }
 
-  changerChamp = event => {
-    const {name, value} = event.currentTarget
-    this.setState({[name]: value})
-  }
+  const [descriptif, setDescriptif] = useState('')
+  const [senseursModeEdition, setSenseursModeEdition] = useState('')
 
-  changerNomNoeud = async _ => {
+  const connexion = props.workers.connexion
+
+  const majNoeud = props.majNoeud,
+        setConfirmation = props.setConfirmation,
+        setErreur = props.setErreur,
+        noeud = props.noeud,
+        blynkActif = noeud.blynk_actif || false
+
+  // changerChamp = event => {
+  //   const {name, value} = event.currentTarget
+  //   this.setState({[name]: value})
+  // }
+
+  const changerNomNoeud = useCallback(async _ => {
     console.debug("Changer nom noeud : %s", this.state.descriptif)
 
-    if(!this.state.descriptif) {
-      this.props.setErreur("Veuillez ajouter/modifier le nom du noeud")
+    if(!descriptif) {
+      props.setErreur("Veuillez ajouter/modifier le nom du noeud")
       return
     }
 
-    const wsa = this.props.rootProps.websocketApp
-    const noeud_id = this.props.rootProps.paramsPage.noeud_id
+    const noeud_id = noeud.noeud_id
 
     try {
-      wsa.changerNomNoeud(noeud_id, this.state.descriptif)
-      this.props.majNoeud({noeud_id, descriptif: this.state.descriptif})
-      this.props.setConfirmation("Nom du noeud change.")
+      connexion.changerNomNoeud(noeud_id, descriptif)
+      majNoeud({noeud_id, descriptif})
+      setConfirmation("Nom du noeud change.")
     } catch (err) {
-      this.props.setErreur(''+err)
+      props.setErreur(''+err)
     }
-  }
+  }, [connexion, descriptif, noeud, majNoeud, setConfirmation, setErreur])
 
-  setModeEdition = (uuidSenseur, estEdition) => {
-    const senseursModeEdition = {...this.state.senseursModeEdition}
+  const setModeEdition = useCallback((uuidSenseur, estEdition) => {
+
+    const senseursModeEditionMaj = {...senseursModeEdition}
+
     if(estEdition) {
-      senseursModeEdition[uuidSenseur] = true
+      senseursModeEditionMaj[uuidSenseur] = true
     } else {
-      delete senseursModeEdition[uuidSenseur]
+      delete senseursModeEditionMaj[uuidSenseur]
     }
-    this.setState({senseursModeEdition})
-  }
 
-  render() {
-    const noeud = this.props.noeud
+    setSenseursModeEdition(senseursModeEditionMaj)
+  }, [setSenseursModeEdition])
 
-    const blynkActif = noeud.blynk_actif || false
+  return (
+    <div className="config-page">
+      <Row>
+        <Col md={2} className="label">Nom</Col>
+        <Col md={7}>
+          <Form.Group controlId="nomNoeud">
+            <Form.Control type="text"
+                          name="descriptif"
+                          onChange={setDescriptif}
+                          value={descriptif || noeud.descriptif || ''}
+                          placeholder="Mettre un nom pour le noeud ..."
+                          disabled={!props.rootProps.modeProtege} />
+          </Form.Group>
+        </Col>
+        <Col md={3}>
+          <Button onClick={changerNomNoeud}
+                  variant="secondary"
+                  disabled={!props.rootProps.modeProtege}>Changer nom</Button>
+        </Col>
+      </Row>
+      <Row>
+        <Col md={2} className="label">Noeud Id</Col>
+        <Col>{noeud.noeud_id}</Col>
+      </Row>
+      <Row>
+        <Col md={2} className="label">Securite</Col>
+        <Col md={2}>{noeud.securite}</Col>
+        <Col md={8}>
+          <Button variant="success"
+                  disabled={noeud.securite==='3.protege' || !props.rootProps.modeProtege}
+                  onClick={props.changerSecurite}
+                  value="3.protege">Protege</Button>
+          <Button variant="dark"
+                  disabled={noeud.securite==='2.prive' || !props.rootProps.modeProtege}
+                  onClick={props.changerSecurite}
+                  value="2.prive">Prive</Button>
+          <Button variant="danger"
+                  disabled={noeud.securite==='1.public' || !props.rootProps.modeProtege}
+                  onClick={props.changerSecurite}
+                  value="1.public">Public</Button>
+        </Col>
+      </Row>
 
-    return (
-      <div className="config-page">
-        <Row>
-          <Col md={2} className="label">Nom</Col>
-          <Col md={7}>
-            <Form.Group controlId="nomNoeud">
-              <Form.Control type="text"
-                            name="descriptif"
-                            onChange={this.changerChamp}
-                            value={this.state.descriptif || noeud.descriptif || ''}
-                            placeholder="Mettre un nom pour le noeud ..."
-                            disabled={!this.props.rootProps.modeProtege} />
-            </Form.Group>
-          </Col>
-          <Col md={3}>
-            <Button onClick={this.changerNomNoeud}
-                    variant="secondary"
-                    disabled={!this.props.rootProps.modeProtege}>Changer nom</Button>
-          </Col>
-        </Row>
-        <Row>
-          <Col md={2} className="label">Noeud Id</Col>
-          <Col>{noeud.noeud_id}</Col>
-        </Row>
-        <Row>
-          <Col md={2} className="label">Securite</Col>
-          <Col md={2}>{noeud.securite}</Col>
-          <Col md={8}>
-            <Button variant="success"
-                    disabled={noeud.securite==='3.protege' || !this.props.rootProps.modeProtege}
-                    onClick={this.props.changerSecurite}
-                    value="3.protege">Protege</Button>
-            <Button variant="dark"
-                    disabled={noeud.securite==='2.prive' || !this.props.rootProps.modeProtege}
-                    onClick={this.props.changerSecurite}
-                    value="2.prive">Prive</Button>
-            <Button variant="danger"
-                    disabled={noeud.securite==='1.public' || !this.props.rootProps.modeProtege}
-                    onClick={this.props.changerSecurite}
-                    value="1.public">Public</Button>
-          </Col>
-        </Row>
+      <ConfigurationBlynk noeud={noeud}
+                          rootProps={props.rootProps}
+                          setErreur={props.setErreur}
+                          setConfirmation={props.setConfirmation} />
 
-        <ConfigurationBlynk noeud={noeud}
-                            rootProps={this.props.rootProps}
-                            setErreur={this.props.setErreur}
-                            setConfirmation={this.props.setConfirmation} />
+      <ConfigurationLCD noeud={noeud}
+                        blynkActif={blynkActif}
+                        rootProps={props.rootProps}
+                        setErreur={props.setErreur}
+                        setConfirmation={props.setConfirmation} />
 
-        <ConfigurationLCD noeud={noeud}
-                          blynkActif={blynkActif}
-                          rootProps={this.props.rootProps}
-                          setErreur={this.props.setErreur}
-                          setConfirmation={this.props.setConfirmation} />
-
-        <Senseurs senseurs={this.props.senseurs}
-                  noeud={noeud}
-                  rootProps={this.props.rootProps}
-                  setErreur={this.props.setErreur}
-                  traiterLecture={this.props.traiterLecture}
-                  setConfirmation={this.props.setConfirmation}
-                  setModeEdition={this.setModeEdition}
-                  senseursModeEdition={this.state.senseursModeEdition}
-                  blynkActif={blynkActif} />
-      </div>
-    )
-  }
+      <Senseurs senseurs={props.senseurs}
+                noeud={noeud}
+                rootProps={props.rootProps}
+                setErreur={props.setErreur}
+                traiterLecture={props.traiterLecture}
+                setConfirmation={props.setConfirmation}
+                setModeEdition={setModeEdition}
+                senseursModeEdition={senseursModeEdition}
+                blynkActif={blynkActif} />
+    </div>
+  )
 }
 
 async function chargerSenseurs(wsa, setState, noeud_id) {
@@ -239,10 +248,15 @@ async function chargerSenseurs(wsa, setState, noeud_id) {
   setState({senseurs})
 }
 
-function traiterLecture(message, exchange, senseurs, setState) {
-  const uuid_senseur = message.uuid_senseur
+function traiterLecture(noeud_id, evenement, senseurs, setSenseurs) {
+  const message = evenement.message,
+        uuid_senseur = message.uuid_senseur
 
-  // console.debug("Lecture recue :\n%O", message)
+  console.debug("Lecture recue :\n%O\nSenseurs: %O", message, senseurs)
+
+  // Verifier que le messages est pour le noeud_id courant
+  const noeudIdRecu = message.noeud_id
+  if(noeud_id !== noeudIdRecu) return  // Rien a faire
 
   var trouve = false
   const copieSenseurs = senseurs.map(senseurExistant=>{
@@ -276,12 +290,12 @@ function traiterLecture(message, exchange, senseurs, setState) {
 
   if(!trouve) {
     // Ajouter le senseur a la liste
-    if(!message.securite) message.securite = exchange
+    // if(!message.securite) message.securite = exchange
     message.nouveau = true
     copieSenseurs.push(message)
   }
 
   // console.debug("Nouvelle liste senseurs :\n%O", copieSenseurs)
 
-  setState({senseurs: copieSenseurs})
+  setSenseurs(copieSenseurs)
 }
