@@ -329,6 +329,13 @@ function ecouterEvenementsSenseurs(socket, params, cb) {
   socket.subscribe(opts, cb)
 }
 
+function retirerEvenementsSenseurs(socket, params, cb) {
+  const routingKeys = ROUTING_KEYS_EVENEMENTS.map(item=>'3.protege.'+item)
+  socket.unsubscribe({routingKeys})
+  debug("retirerEvenementsSenseurs")
+  if(cb) cb(true)
+}
+
 module.exports = {
   configurerEvenements
 }
