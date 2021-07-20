@@ -7,6 +7,10 @@ import { getRandomValues } from '@dugrema/millegrilles.common/lib/chiffrage'
 
 const URL_SOCKET = '/senseurspassifs'
 
+const ROUTING_KEYS_NOEUDS = [
+  'evenement.SenseursPassifs.majNoeudConfirmee'
+]
+
 const ROUTING_KEYS_EVENEMENTS = [
   'evenement.SenseursPassifs.lectureConfirmee',
 ]
@@ -237,6 +241,23 @@ async function retirerEvenementsSenseurs() {
   // console.debug("Retrait ecoute evenement enregistrerCallbackTranscodageProgres %s", fuuid)
 }
 
+async function ecouterEvenementsNoeuds(cb) {
+  console.debug('ecouterEvenementsNoeuds enregistrer cb %O', cb)
+  ROUTING_KEYS_NOEUDS.forEach(item=>{connexionClient.socketOn(item, cb)})
+  const resultat = await connexionClient.emitBlocking('SenseursPassifs/ecouterEvenementsNoeuds', {}, {noformat: true})
+  if(!resultat) {
+    throw new Error("Erreur ecouterEvenementsNoeuds")
+  }
+}
+
+async function retirerEvenementsNoeuds() {
+  ROUTING_KEYS_NOEUDS.forEach(item=>{connexionClient.socketOff(item)})
+  const resultat = await connexionClient.emitBlocking('SenseursPassifs/retirerEvenementsNoeuds', {}, {noformat: true})
+  if(!resultat) {
+    throw new Error("Erreur retirerEvenementsNoeuds")
+  }
+  // console.debug("Retrait ecoute evenement enregistrerCallbackTranscodageProgres %s", fuuid)
+}
 
 comlinkExpose({
   ...connexionClient,
@@ -248,4 +269,5 @@ comlinkExpose({
   setAffichageLcd, setVpinSenseur, changerNomSenseur,
 
   ecouterEvenementsSenseurs, retirerEvenementsSenseurs,
+  ecouterEvenementsNoeuds, retirerEvenementsNoeuds,
 })

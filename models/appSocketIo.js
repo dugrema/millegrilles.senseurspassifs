@@ -1,7 +1,11 @@
 // Gestion evenements socket.io pour /millegrilles
 const debug = require('debug')('millegrilles:senseurspassifs:appSocketIo');
 
-const ROUTING_KEYS_EVENEMENTS = [
+const ROUTING_KEYS_NOEUDS = [
+  'evenement.SenseursPassifs.majNoeudConfirmee'
+]
+
+const ROUTING_KEYS_SENSEURS = [
   'evenement.SenseursPassifs.lectureConfirmee',
 ]
 
@@ -30,6 +34,9 @@ function configurerEvenements(socket) {
       // Listeners
       {eventName: 'SenseursPassifs/ecouterEvenementsSenseurs', callback: (params, cb) => {ecouterEvenementsSenseurs(socket, params, cb)}},
       {eventName: 'SenseursPassifs/retirerEvenementsSenseurs', callback: (params, cb) => {retirerEvenementsSenseurs(socket, params, cb)}},
+      {eventName: 'SenseursPassifs/ecouterEvenementsNoeuds', callback: (params, cb) => {ecouterEvenementsNoeuds(socket, params, cb)}},
+      {eventName: 'SenseursPassifs/retirerEvenementsNoeuds', callback: (params, cb) => {retirerEvenementsNoeuds(socket, params, cb)}},
+
     ]
   }
 
@@ -322,7 +329,7 @@ function downgradePrive(socket, params) {
 
 function ecouterEvenementsSenseurs(socket, params, cb) {
   const opts = {
-    routingKeys: ROUTING_KEYS_EVENEMENTS,
+    routingKeys: ROUTING_KEYS_SENSEURS,
     exchange: ['3.protege'],
   }
   debug("Params : %O, cb: %O", params, cb)
@@ -330,7 +337,23 @@ function ecouterEvenementsSenseurs(socket, params, cb) {
 }
 
 function retirerEvenementsSenseurs(socket, params, cb) {
-  const routingKeys = ROUTING_KEYS_EVENEMENTS.map(item=>'3.protege.'+item)
+  const routingKeys = ROUTING_KEYS_SENSEURS.map(item=>'3.protege.'+item)
+  socket.unsubscribe({routingKeys})
+  debug("retirerEvenementsSenseurs")
+  if(cb) cb(true)
+}
+
+function ecouterEvenementsNoeuds(socket, params, cb) {
+  const opts = {
+    routingKeys: ROUTING_KEYS_NOEUDS,
+    exchange: ['3.protege'],
+  }
+  debug("Params : %O, cb: %O", params, cb)
+  socket.subscribe(opts, cb)
+}
+
+function retirerEvenementsNoeuds(socket, params, cb) {
+  const routingKeys = ROUTING_KEYS_NOEUDS.map(item=>'3.protege.'+item)
   socket.unsubscribe({routingKeys})
   debug("retirerEvenementsSenseurs")
   if(cb) cb(true)

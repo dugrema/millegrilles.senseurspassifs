@@ -57,12 +57,11 @@ export function Noeud(props) {
     // const wsa = props.rootProps.websocketApp
     const noeud_id = props.rootProps.paramsPage.noeud_id
 
-    this.setErreur()
+    setErreur()
 
     try {
       const reponse = await connexion.changerSecuriteNoeud(noeud_id, value)
       console.debug("Reponse commande changer securite\n%O", reponse)
-      props.rootProps.majNoeud(reponse)
     } catch(err) {
       setErreur(''+err)
     }
@@ -88,33 +87,20 @@ export function Noeud(props) {
     return noeud.noeud_id === noeud_id
   })[0] // Filtrer, garder premier element
 
-  // var erreur = '', confirmation = ''
-  if(erreur) {
-    erreur = (
-      <Alert variant="danger" dismissible onClose={_=>setErreur()}>
-        {erreur}
-      </Alert>
-    )
-  }
-  if(confirmation) {
-    confirmation = (
-      <Alert variant="success" dismissible onClose={_=>setConfirmation()}>
-        {confirmation}
-      </Alert>
-    )
-  }
-
   return (
     <div>
       <h1>Noeud</h1>
-      {erreur}
-      {confirmation}
+      <Alert variant="danger" show={erreur?true:false} dismissible onClose={_=>setErreur()}>
+        {erreur}
+      </Alert>
+      <Alert variant="success" show={confirmation?true:false} dismissible onClose={_=>setConfirmation()}>
+        {confirmation}
+      </Alert>
       <AfficherInformationNoeud rootProps={props.rootProps}
                                 workers={props.workers}
                                 noeud={noeud} senseurs={senseurs}
                                 changerSecurite={changerSecurite}
                                 setErreur={setErreur}
-                                majNoeud={props.rootProps.majNoeud}
                                 setConfirmation={setConfirmation} />
     </div>
   )
@@ -132,8 +118,7 @@ function AfficherInformationNoeud(props) {
 
   const connexion = props.workers.connexion
 
-  const majNoeud = props.majNoeud,
-        setConfirmation = props.setConfirmation,
+  const setConfirmation = props.setConfirmation,
         setErreur = props.setErreur,
         noeud = props.noeud,
         blynkActif = noeud.blynk_actif || false
@@ -144,7 +129,7 @@ function AfficherInformationNoeud(props) {
   // }
 
   const changerNomNoeud = useCallback(async _ => {
-    console.debug("Changer nom noeud : %s", this.state.descriptif)
+    console.debug("Changer nom noeud : %s", descriptif)
 
     if(!descriptif) {
       props.setErreur("Veuillez ajouter/modifier le nom du noeud")
@@ -154,13 +139,12 @@ function AfficherInformationNoeud(props) {
     const noeud_id = noeud.noeud_id
 
     try {
-      connexion.changerNomNoeud(noeud_id, descriptif)
-      majNoeud({noeud_id, descriptif})
-      setConfirmation("Nom du noeud change.")
+      const reponse = await connexion.changerNomNoeud(noeud_id, descriptif)
+      console.debug("Reponse changer nom noeud : %O", reponse)
     } catch (err) {
       props.setErreur(''+err)
     }
-  }, [connexion, descriptif, noeud, majNoeud, setConfirmation, setErreur])
+  }, [connexion, descriptif, noeud, setConfirmation, setErreur])
 
   const setModeEdition = useCallback((uuidSenseur, estEdition) => {
 
@@ -183,7 +167,7 @@ function AfficherInformationNoeud(props) {
           <Form.Group controlId="nomNoeud">
             <Form.Control type="text"
                           name="descriptif"
-                          onChange={setDescriptif}
+                          onChange={event=>{setDescriptif(event.currentTarget.value)}}
                           value={descriptif || noeud.descriptif || ''}
                           placeholder="Mettre un nom pour le noeud ..."
                           disabled={!props.rootProps.modeProtege} />
@@ -252,7 +236,7 @@ function traiterLecture(noeud_id, evenement, senseurs, setSenseurs) {
   const message = evenement.message,
         uuid_senseur = message.uuid_senseur
 
-  console.debug("Lecture recue :\n%O\nSenseurs: %O", message, senseurs)
+  // console.debug("Lecture recue :\n%O\nSenseurs: %O", message, senseurs)
 
   // Verifier que le messages est pour le noeud_id courant
   const noeudIdRecu = message.noeud_id

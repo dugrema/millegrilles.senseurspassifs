@@ -3,7 +3,7 @@ import { Container, Row, Col, Nav, Navbar } from 'react-bootstrap'
 import {proxy as comlinkProxy} from 'comlink'
 import { Trans } from 'react-i18next'
 
-import { VerificationInfoServeur } from './Authentification'
+// import { VerificationInfoServeur } from './Authentification'
 import { SectionContenu } from './SectionContenu'
 
 import {setupWorkers, preparerWorkersAvecCles} from './workers/workers.load'
@@ -49,6 +49,7 @@ export default function App(props) {
     _=>{
       _setEtatConnexion = comlinkProxy(setEtatConnexion)
       preparerWorkers(setWorkers, _setEtatConnexion, setNomUsager)
+        .catch(err=>{console.error("Erreur preparation workers : %O", err)})
     },
     [setWorkers, setEtatConnexion, setNomUsager]
   )
@@ -153,6 +154,11 @@ function ApplicationSenseursPassifs(props) {
   const connexion = props.workers.connexion,
         modeProtege = props.rootProps.modeProtege
 
+  const traiterMessageNoeudsHandler = useCallback(comlinkProxy(msg => {
+    console.debug("Message noeuds recu : %O", msg)
+    majNoeud(msg, _contexte.noeuds, _contexte.setNoeuds)
+  }), [])
+
   // Entretien du contexte global pour les callbacks comlink proxy
   useEffect(()=>{
     _contexte.noeuds = noeuds
@@ -167,8 +173,17 @@ function ApplicationSenseursPassifs(props) {
           setNoeuds(noeuds)
         })
         .catch(err=>{console.error("Erreur reception noeuds : %O", err)})
+
+      if(traiterMessageNoeudsHandler) {
+        connexion.ecouterEvenementsNoeuds(traiterMessageNoeudsHandler)
+          .catch(err=>{console.error("Erreur ecouterEvenementsNoeuds: %O", err)})
+
+        return ()=>{
+          connexion.retirerEvenementsNoeuds()
+        }
+      }
     }
-  }, [connexion, modeProtege])
+  }, [connexion, modeProtege, traiterMessageNoeudsHandler])
 
   // componentDidMount() {
   //
@@ -199,10 +214,10 @@ function ApplicationSenseursPassifs(props) {
   //   wsa.unsubscribe(ROUTING_KEYS_NOEUDS, this.majNoeud, {exchange: ['2.prive', '3.protege']})
   // }
 
-  const majNoeud = useCallback(comlinkProxy(msg => {
-    console.debug("MAJ noeud recue\n%O", msg)
-    majNoeud(msg, _contexte.noeuds, _contexte.setNoeuds)
-  }), [_contexte])
+  // const majNoeud = useCallback(comlinkProxy(msg => {
+  //   console.debug("MAJ noeud recue\n%O", msg)
+  //   majNoeud(msg, _contexte.noeuds, _contexte.setNoeuds)
+  // }), [_contexte])
 
   // toggleProtege = async event => {
   //   const modeToggle = ! this.state.modeProtege
