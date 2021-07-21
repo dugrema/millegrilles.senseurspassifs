@@ -169,10 +169,10 @@ async function setActiviteBlynk(socket, params, cb) {
     const {noeud_id, activite} = params
     debug("setActiviteBlynk:\n%O", params)
     const dao = socket.senseursPassifsDao
-    dao.setActiviteBlynk(noeud_id, activite)
-    cb(true)
+    await dao.setActiviteBlynk(noeud_id, activite)
+    if(cb) cb(true)
   } catch(err) {
-    cb({err: "Erreur : " + err})
+    if(cb) cb({err: "Erreur : " + err})
   }
 }
 
@@ -181,10 +181,10 @@ async function setAuthTokenBlynk(socket, params, cb) {
     const {noeud_id, authToken} = params
     debug("setServerBlynk:\n%O", params)
     const dao = socket.senseursPassifsDao
-    dao.setAuthTokenBlynk(noeud_id, authToken)
-    cb(true)
+    await dao.setAuthTokenBlynk(noeud_id, authToken)
+    if(cb) cb(true)
   } catch(err) {
-    cb({err: "Erreur : " + err})
+    if(cb) cb({err: "Erreur : " + err})
   }
 }
 
@@ -193,10 +193,10 @@ async function setServerBlynk(socket, params, cb) {
     const {noeud_id, host, port} = params
     debug("setServerBlynk:\n%O", params)
     const dao = socket.senseursPassifsDao
-    dao.setServerBlynk(noeud_id, host, port)
-    cb(true)
+    await dao.setServerBlynk(noeud_id, host, port)
+    if(cb) cb(true)
   } catch(err) {
-    cb({err: "Erreur : " + err})
+    if(cb) cb({err: "Erreur : " + err})
   }
 }
 
@@ -205,10 +205,10 @@ async function setActiviteLcd(socket, params, cb) {
     const {noeud_id, activite} = params
     debug("setActiviteLcd:\n%O", params)
     const dao = socket.senseursPassifsDao
-    dao.setActiviteLcd(noeud_id, activite)
-    cb(true)
+    await dao.setActiviteLcd(noeud_id, activite)
+    if(cb) cb(true)
   } catch(err) {
-    cb({err: "Erreur : " + err})
+    if(cb) cb({err: "Erreur : " + err})
   }
 }
 
@@ -217,10 +217,10 @@ async function setVpinLcd(socket, params, cb) {
     const {noeud_id, lcd_vpin_onoff, lcd_vpin_navigation} = params
     debug("setVpinLcd:\n%O", params)
     const dao = socket.senseursPassifsDao
-    dao.setVpinLcd(noeud_id, lcd_vpin_onoff, lcd_vpin_navigation)
-    cb(true)
+    await dao.setVpinLcd(noeud_id, lcd_vpin_onoff, lcd_vpin_navigation)
+    if(cb) cb(true)
   } catch(err) {
-    cb({err: "Erreur : " + err})
+    if(cb) cb({err: "Erreur : " + err})
   }
 }
 
@@ -229,10 +229,10 @@ async function setAffichageLcd(socket, params, cb) {
     const {noeud_id, lcd_affichage} = params
     debug("setAffichageLcd:\n%O", params)
     const dao = socket.senseursPassifsDao
-    dao.setAffichageLcd(noeud_id, lcd_affichage)
-    cb(true)
+    await dao.setAffichageLcd(noeud_id, lcd_affichage)
+    if(cb) cb(true)
   } catch(err) {
-    cb({err: "Erreur : " + err})
+    if(cb) cb({err: "Erreur : " + err})
   }
 }
 
