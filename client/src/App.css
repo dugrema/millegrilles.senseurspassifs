@@ -220,3 +220,13 @@ i.protege {
   padding-top: 0.5em;
   padding-bottom: 1em;
 }
+
+.senseur-nom {
+  font-weight: bold;
+}
+.senseur-date {
+  text-align: right;
+}
+.senseur-valeur {
+  text-align: right;
+}

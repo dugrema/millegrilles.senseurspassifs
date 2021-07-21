@@ -8,9 +8,9 @@ const _contexteCallback = {}
 
 const CONST_CHAMPS_SOMMAIRE = [
   // {suffix: 'epoch', format: val=>{new Date(val*1000)}},
-  {suffix: 'temperature', formatter: val=><span>{Math.round(val, 1)}&deg;C</span>},
-  {suffix: 'humidite', formatter: val=><span>{Math.round(val, 1)}%</span>},
-  {suffix: 'pression', formatter: val=><span>{Math.round(val, 1)} kPa</span>},
+  {suffix: 'temperature', formatter: val=><span>{val.toFixed(1)}&deg;C</span>},
+  {suffix: 'humidite', formatter: val=><span>{val.toFixed(1)}%</span>},
+  {suffix: 'pression', formatter: val=><span>{val.toFixed(1)} kPa</span>},
 ]
 
 export default function Sommaire(props) {
@@ -113,29 +113,32 @@ function ListeSenseurs(props) {
     return nomA.localeCompare(nomB)
   })
 
-  const cols = CONST_CHAMPS_SOMMAIRE.map((champ, idx)=>{
-    let valeur = ''
+  return senseurs.map(item=>{
+    const nom = item.descriptif || item.uuid_senseur,
+          dateLecture = item['_mg-derniere-modification']
 
-    senseurs.forEach(item=>{
+    const cols = CONST_CHAMPS_SOMMAIRE.map((champ, idx)=>{
+      let valeur = ''
+
       for(let nomApp in item.senseurs) {
         if(nomApp.endsWith(champ.suffix)) {
           const valeurs = item.senseurs[nomApp]
           valeur = valeurs.valeur
-          if(champ.formatter) valeur = champ.formatter(valeur)
+          try {
+            if(champ.formatter) valeur = champ.formatter(valeur)
+          } catch(err) {
+            console.warn("Traitement formattage nomApp %s %O", nomApp, err)
+          }
         }
       }
+
+      return <Col xs={4} sm={3} md={1} key={idx} className="senseur-valeur">{valeur}</Col>
     })
 
-    return <Col xs={12} sm={3} md={1} key={idx}>{valeur}</Col>
-  })
-
-  return senseurs.map(item=>{
-    const nom = item.descriptif || item.uuid_senseur,
-          dateLecture = item['_mg-derniere-modification']
     return (
       <Row key={item.uuid_senseur}>
-        <Col md={2}>{nom}</Col>
-        <Col md={2}><DateTimeAfficher date={dateLecture} /></Col>
+        <Col xs={6} sm={3} className="senseur-nom">{nom}</Col>
+        <Col xs={6} sm={3} className="senseur-date"><DateTimeAfficher date={dateLecture} /></Col>
         {cols}
       </Row>
     )
