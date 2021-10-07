@@ -15,7 +15,7 @@ const CONST_CHAMPS_SOMMAIRE = [
 
 export default function Sommaire(props) {
 
-  console.debug("Sommaire proppys : %O", props)
+  // console.debug("Sommaire proppys : %O", props)
 
   const [senseurs, setSenseurs] = useState('')
 

@@ -7,7 +7,7 @@ export function Senseurs(props) {
 
   var senseurs = null
   if(props.listeSenseurs) {
-    console.debug("Senseurs : %O", props.listeSenseurs)
+    // console.debug("Senseurs : %O", props.listeSenseurs)
     senseurs = props.listeSenseurs.map(senseur=>{
       return <Senseur key={senseur.uuid_senseur}
                       noeud={props.noeud}

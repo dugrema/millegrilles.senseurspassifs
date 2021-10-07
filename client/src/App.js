@@ -171,7 +171,8 @@ function ApplicationSenseursPassifs(props) {
                                  workers={props.workers}
                                  page={rootProps.page}
                                  paramsPage={rootProps.paramsPage}
-                                 listeNoeuds={listeNoeuds} />
+                                 listeNoeuds={listeNoeuds}
+                                 majNoeud={traiterMessageNoeudsHandler} />
   }
 
   return pageRender
@@ -179,6 +180,7 @@ function ApplicationSenseursPassifs(props) {
 }
 
 function majNoeud(evenement, listeNoeuds, setNoeuds) {
+  console.debug("majNoeud message recu : %O", evenement)
   const {message, exchange} = evenement
 
   const noeud_id = message.noeud_id
@@ -196,11 +198,12 @@ function majNoeud(evenement, listeNoeuds, setNoeuds) {
   })
 
   if(!trouve) {
+    console.debug("majNoeud Nouveau noeud ajoute : %O", message)
     if(!message.securite) message.securite = exchange
     noeudsMaj.push(message)
   }
 
-  setNoeuds(noeudsMaj)
+  setNoeuds({...listeNoeuds, noeuds: noeudsMaj})
 }
 
 export function Layout(props) {

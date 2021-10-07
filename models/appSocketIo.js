@@ -19,17 +19,8 @@ function configurerEvenements(socket) {
     listenersProteges: [
       {eventName: 'SenseursPassifs/getListeNoeuds', callback: (requete, cb) => {getListeNoeuds(socket, requete, cb)}},
       {eventName: 'SenseursPassifs/getListeSenseursNoeud', callback: (requete, cb) => {getListeSenseursNoeud(socket, requete, cb)}},
-      {eventName: 'SenseursPassifs/changerNomNoeud', callback: (params, cb) => {changerNomNoeud(socket, params, cb)}},
-      {eventName: 'SenseursPassifs/changerSecuriteNoeud', callback: (params, cb) => {changerSecuriteNoeud(socket, params, cb)}},
-      // {eventName: 'SenseursPassifs/setActiviteBlynk', callback: (params, cb) => {setActiviteBlynk(socket, params, cb)}},
-      // {eventName: 'SenseursPassifs/setAuthTokenBlynk', callback: (params, cb) => {setAuthTokenBlynk(socket, params, cb)}},
-      // {eventName: 'SenseursPassifs/setServerBlynk', callback: (params, cb) => {setServerBlynk(socket, params, cb)}},
-      {eventName: 'SenseursPassifs/setSecuriteSenseur', callback: (params, cb) => {setSecuriteSenseur(socket, params, cb)}},
-      {eventName: 'SenseursPassifs/changerNomSenseur', callback: (params, cb) => {changerNomSenseur(socket, params, cb)}},
-      {eventName: 'SenseursPassifs/setVpinSenseur', callback: (params, cb) => {setVpinSenseur(socket, params, cb)}},
-      {eventName: 'SenseursPassifs/setActiviteLcd', callback: (params, cb) => {setActiviteLcd(socket, params, cb)}},
-      {eventName: 'SenseursPassifs/setVpinLcd', callback: (params, cb) => {setVpinLcd(socket, params, cb)}},
-      {eventName: 'SenseursPassifs/setAffichageLcd', callback: (params, cb) => {setAffichageLcd(socket, params, cb)}},
+      {eventName: 'SenseursPassifs/majNoeud', callback: (params, cb) => {majNoeud(socket, params, cb)}},
+      {eventName: 'SenseursPassifs/majSenseur', callback: (params, cb) => {majSenseur(socket, params, cb)}},
 
       // Listeners
       {eventName: 'SenseursPassifs/ecouterEvenementsSenseurs', callback: (params, cb) => {ecouterEvenementsSenseurs(socket, params, cb)}},
@@ -115,31 +106,42 @@ async function getListeSenseursNoeud(socket, requete, cb) {
   }
 }
 
-async function changerNomNoeud(socket, params, cb) {
-  const {noeud_id, nom} = params
-  debug("changerNomNoeud:\n%O", params)
+async function majNoeud(socket, params, cb) {
+  debug("majNoeud:\n%O", params)
   const dao = socket.senseursPassifsDao
   try {
-    await dao.changerNomNoeud(noeud_id, nom)
-    cb(true)
+    let reponse = await dao.majNoeud(params)
+    cb(reponse)
   } catch(err) {
-    debug("Erreur changerNomNoeud\n%O", err)
+    debug("Erreur majNoeud\n%O", err)
     cb({err: 'Erreur: ' + err})
   }
 }
 
-async function changerSecuriteNoeud(socket, params, cb) {
-  const {noeud_id, securite} = params
-  debug("changerSecuriteNoeud:\n%O", params)
+async function majSenseur(socket, params, cb) {
+  debug("majSenseur:\n%O", params)
   const dao = socket.senseursPassifsDao
   try {
-    const noeuds = await dao.changerSecuriteNoeud(noeud_id, securite)
-    cb(noeuds)
+    await dao.majNoeud(params)
+    cb(true)
   } catch(err) {
-    debug("Erreur changerSecuriteNoeud\n%O", err)
+    debug("Erreur majSenseur\n%O", err)
     cb({err: 'Erreur: ' + err})
   }
 }
+
+// async function changerSecuriteNoeud(socket, params, cb) {
+//   const {noeud_id, securite} = params
+//   debug("changerSecuriteNoeud:\n%O", params)
+//   const dao = socket.senseursPassifsDao
+//   try {
+//     const noeuds = await dao.changerSecuriteNoeud(noeud_id, securite)
+//     cb(noeuds)
+//   } catch(err) {
+//     debug("Erreur changerSecuriteNoeud\n%O", err)
+//     cb({err: 'Erreur: ' + err})
+//   }
+// }
 
 // async function setActiviteBlynk(socket, params, cb) {
 //   try {
@@ -177,72 +179,72 @@ async function changerSecuriteNoeud(socket, params, cb) {
 //   }
 // }
 
-async function setActiviteLcd(socket, params, cb) {
-  try {
-    const {noeud_id, activite} = params
-    debug("setActiviteLcd:\n%O", params)
-    const dao = socket.senseursPassifsDao
-    await dao.setActiviteLcd(noeud_id, activite)
-    if(cb) cb(true)
-  } catch(err) {
-    if(cb) cb({err: "Erreur : " + err})
-  }
-}
-
-async function setVpinLcd(socket, params, cb) {
-  try {
-    const {noeud_id, lcd_vpin_onoff, lcd_vpin_navigation} = params
-    debug("setVpinLcd:\n%O", params)
-    const dao = socket.senseursPassifsDao
-    await dao.setVpinLcd(noeud_id, lcd_vpin_onoff, lcd_vpin_navigation)
-    if(cb) cb(true)
-  } catch(err) {
-    if(cb) cb({err: "Erreur : " + err})
-  }
-}
-
-async function setAffichageLcd(socket, params, cb) {
-  try {
-    const {noeud_id, lcd_affichage} = params
-    debug("setAffichageLcd:\n%O", params)
-    const dao = socket.senseursPassifsDao
-    await dao.setAffichageLcd(noeud_id, lcd_affichage)
-    if(cb) cb(true)
-  } catch(err) {
-    if(cb) cb({err: "Erreur : " + err})
-  }
-}
-
-
-async function setSecuriteSenseur(socket, params, cb) {
-
-}
-
-async function changerNomSenseur(socket, params, cb) {
-  const {uuid_senseur, nom} = params
-  debug("changerNomSenseur:\n%O", params)
-  const dao = socket.senseursPassifsDao
-  try {
-    await dao.changerNomSenseur(uuid_senseur, nom)
-    cb(true)
-  } catch(err) {
-    debug("Erreur changerNomSenseur\n%O", err)
-    cb({err: 'Erreur: ' + err})
-  }
-}
-
-async function setVpinSenseur(socket, params, cb) {
-  try {
-    const {uuid_senseur, blynkVPins} = params
-    debug("setVpinSenseur:\n%O", params)
-    const dao = socket.senseursPassifsDao
-    await dao.setVpinSenseur(uuid_senseur, blynkVPins)
-    cb(true)
-  } catch(err) {
-    console.error("Erreur set vpin: %O", err)
-    cb({err: "Erreur : " + err.message?err.message:err})
-  }
-}
+// async function setActiviteLcd(socket, params, cb) {
+//   try {
+//     const {noeud_id, activite} = params
+//     debug("setActiviteLcd:\n%O", params)
+//     const dao = socket.senseursPassifsDao
+//     await dao.setActiviteLcd(noeud_id, activite)
+//     if(cb) cb(true)
+//   } catch(err) {
+//     if(cb) cb({err: "Erreur : " + err})
+//   }
+// }
+//
+// async function setVpinLcd(socket, params, cb) {
+//   try {
+//     const {noeud_id, lcd_vpin_onoff, lcd_vpin_navigation} = params
+//     debug("setVpinLcd:\n%O", params)
+//     const dao = socket.senseursPassifsDao
+//     await dao.setVpinLcd(noeud_id, lcd_vpin_onoff, lcd_vpin_navigation)
+//     if(cb) cb(true)
+//   } catch(err) {
+//     if(cb) cb({err: "Erreur : " + err})
+//   }
+// }
+//
+// async function setAffichageLcd(socket, params, cb) {
+//   try {
+//     const {noeud_id, lcd_affichage} = params
+//     debug("setAffichageLcd:\n%O", params)
+//     const dao = socket.senseursPassifsDao
+//     await dao.setAffichageLcd(noeud_id, lcd_affichage)
+//     if(cb) cb(true)
+//   } catch(err) {
+//     if(cb) cb({err: "Erreur : " + err})
+//   }
+// }
+//
+//
+// async function setSecuriteSenseur(socket, params, cb) {
+//
+// }
+//
+// async function changerNomSenseur(socket, params, cb) {
+//   const {uuid_senseur, nom} = params
+//   debug("changerNomSenseur:\n%O", params)
+//   const dao = socket.senseursPassifsDao
+//   try {
+//     await dao.changerNomSenseur(uuid_senseur, nom)
+//     cb(true)
+//   } catch(err) {
+//     debug("Erreur changerNomSenseur\n%O", err)
+//     cb({err: 'Erreur: ' + err})
+//   }
+// }
+//
+// async function setVpinSenseur(socket, params, cb) {
+//   try {
+//     const {uuid_senseur, blynkVPins} = params
+//     debug("setVpinSenseur:\n%O", params)
+//     const dao = socket.senseursPassifsDao
+//     await dao.setVpinSenseur(uuid_senseur, blynkVPins)
+//     cb(true)
+//   } catch(err) {
+//     console.error("Erreur set vpin: %O", err)
+//     cb({err: "Erreur : " + err.message?err.message:err})
+//   }
+// }
 
 
 // function recevoirNouveauMessageAMQ(socket, routingKey, message) {

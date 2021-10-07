@@ -68,8 +68,6 @@ export function Noeud(props) {
     }
   }, [modeProtege, setListeSenseurs, noeud])
 
-  // const noeud_id = props.rootProps.paramsPage.noeud_id
-
   return (
     <div>
       <h1>Noeud</h1>
@@ -83,6 +81,7 @@ export function Noeud(props) {
                                 workers={props.workers}
                                 noeud={noeud}
                                 listeSenseurs={listeSenseurs}
+                                majNoeud={props.majNoeud}
                                 changerSecurite={changerSecurite}
                                 setErreur={setErreur}
                                 setConfirmation={setConfirmation} />
@@ -103,18 +102,20 @@ function AfficherInformationNoeud(props) {
         blynkActif = noeud.blynk_actif || false
 
   const changerNomNoeud = useCallback(async _ => {
-    console.debug("Changer nom noeud : %s", descriptif)
+    // console.debug("Changer nom noeud : %s", descriptif)
 
     if(!descriptif) {
       props.setErreur("Veuillez ajouter/modifier le nom du noeud")
       return
     }
 
-    const noeud_id = noeud.noeud_id
+    const noeud_id = noeud.noeud_id,
+          partition = noeud.partition
 
     try {
-      const reponse = await connexion.changerNomNoeud(noeud_id, descriptif)
+      const reponse = await connexion.majNoeud(partition, {noeud_id, descriptif})
       console.debug("Reponse changer nom noeud : %O", reponse)
+      await props.majNoeud({message: reponse})
     } catch (err) {
       props.setErreur(''+err)
     }
@@ -176,14 +177,7 @@ function AfficherInformationNoeud(props) {
         </Col>
       </Row>
 
-      <ConfigurationBlynk noeud={noeud}
-                          rootProps={props.rootProps}
-                          workers={props.workers}
-                          setErreur={props.setErreur}
-                          setConfirmation={props.setConfirmation} />
-
       <ConfigurationLCD noeud={noeud}
-                        blynkActif={blynkActif}
                         rootProps={props.rootProps}
                         workers={props.workers}
                         setErreur={props.setErreur}
@@ -197,8 +191,7 @@ function AfficherInformationNoeud(props) {
                 traiterLecture={props.traiterLecture}
                 setConfirmation={props.setConfirmation}
                 setModeEdition={setModeEdition}
-                senseursModeEdition={senseursModeEdition}
-                blynkActif={blynkActif} />
+                senseursModeEdition={senseursModeEdition} />
     </div>
   )
 }

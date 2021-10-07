@@ -15,16 +15,10 @@ const ROUTING_KEYS_EVENEMENTS = [
   'evenement.SenseursPassifs.lectureConfirmee',
 ]
 
-var // _callbackSiteMaj,
-    // _callbackSectionMaj,
-    _callbackSetEtatConnexion,
+var _callbackSetEtatConnexion,
     _callbackPreparerCles,
-    // _resolverWorker,
     _x509Worker,
-    // _verifierSignature,   // web worker resolver (utilise pour valider signature messages)
-    // _siteConfig,
     _urlCourant = '',
-    // _urlBase = '',
     _connecte = false,
     _protege = false
 
@@ -32,28 +26,11 @@ function setCallbacks(setEtatConnexion, x509Worker, callbackPreparerCles) {
   _callbackSetEtatConnexion = setEtatConnexion
   _x509Worker = x509Worker
   _callbackPreparerCles = callbackPreparerCles
-  // console.debug("setCallbacks connexionWorker : %O, %O", setEtatConnexion, x509Worker, callbackPreparerCles)
 }
 
 function estActif() {
   return _urlCourant && _connecte && _protege
 }
-
-
-// function connecter(opts) {
-//   opts = opts || {}
-//   var url = opts.url
-//   if(!url) {
-//     // Utiliser le serveur local mais remplacer le pathname par URL_SOCKET
-//     const urlLocal = new URL(opts.location)
-//     urlLocal.pathname = URL_SOCKET
-//     urlLocal.hash = ''
-//     urlLocal.search = ''
-//     url = urlLocal.href
-//   }
-//   console.debug("Connecter socket.io sur url %s", url)
-//   return connexionClient.connecter(url, opts)
-// }
 
 async function connecter(opts) {
   opts = opts || {}
@@ -67,18 +44,14 @@ async function connecter(opts) {
       urlApp.pathname = URL_SOCKET
     }
   }
-  // console.debug("url choisi : %O", urlApp)
 
   if(urlApp === _urlCourant) return
-  // _urlCourant = null  // Reset url courant
 
   const urlSocketio = new URL(urlApp.href)
   urlSocketio.pathname = path.join(urlSocketio.pathname, 'socket.io')
 
   console.debug("Socket.IO connecter avec url %s", urlSocketio.href)
-  // return connexionClient.connecter(url, opts)
 
-  // const urlInfo = new URL(url)
   const hostname = 'https://' + urlSocketio.host
   const pathSocketio = urlSocketio.pathname
 
@@ -188,11 +161,12 @@ function getListeSenseursNoeud(partition, noeud_id) {
   )
 }
 
-function majNoeud(partition, params, nom) {
+function majNoeud(partition, params) {
+  console.debug("majNoeud, partition: %s, params: %O", partition, params)
   return connexionClient.emitBlocking(
     'SenseursPassifs/majNoeud',
     {partition, ...params},
-    {domaine: 'SenseursPassifs', action: 'majNoeud', attacherCertificat: true}
+    {domaine: 'SenseursPassifs', action: 'majNoeud', partition, attacherCertificat: true}
   )
 }
 
@@ -203,22 +177,6 @@ function majSenseur(partition, params, nom) {
     {domaine: 'SenseursPassifs', action: 'majSenseur', attacherCertificat: true}
   )
 }
-
-// function setActiviteLcd(noeud_id, activite) {
-//   return connexionClient.emitBlocking('SenseursPassifs/setActiviteLcd', {noeud_id, activite})
-// }
-//
-// function setVpinLcd(noeud_id, lcd_vpin_onoff, lcd_vpin_navigation) {
-//   return connexionClient.emitBlocking('SenseursPassifs/setVpinLcd', {noeud_id, lcd_vpin_onoff, lcd_vpin_navigation})
-// }
-//
-// function setAffichageLcd(noeud_id, lcd_affichage) {
-//   return connexionClient.emitBlocking('SenseursPassifs/setAffichageLcd', {noeud_id, lcd_affichage})
-// }
-
-// function changerNomSenseur(uuid_senseur, nom) {
-//   return connexionClient.emitBlocking('SenseursPassifs/changerNomSenseur', {uuid_senseur, nom})
-// }
 
 async function ecouterEvenementsSenseurs(cb) {
   ROUTING_KEYS_EVENEMENTS.forEach(item=>{connexionClient.socketOn(item, cb)})
@@ -234,7 +192,6 @@ async function retirerEvenementsSenseurs() {
   if(!resultat) {
     throw new Error("Erreur retirerEvenementsSenseurs")
   }
-  // console.debug("Retrait ecoute evenement enregistrerCallbackTranscodageProgres %s", fuuid)
 }
 
 async function ecouterEvenementsNoeuds(cb) {
@@ -252,7 +209,6 @@ async function retirerEvenementsNoeuds() {
   if(!resultat) {
     throw new Error("Erreur retirerEvenementsNoeuds")
   }
-  // console.debug("Retrait ecoute evenement enregistrerCallbackTranscodageProgres %s", fuuid)
 }
 
 comlinkExpose({
@@ -261,10 +217,6 @@ comlinkExpose({
   setCallbacks, estActif,
 
   getListeNoeuds, getListeSenseursNoeud, majNoeud, majSenseur,
-
-  // changerNomNoeud, changerSecuriteNoeud,
-  // setActiviteBlynk, setServerBlynk, setAuthTokenBlynk, setActiviteLcd, setVpinLcd,
-  // setAffichageLcd, setVpinSenseur, changerNomSenseur,
 
   ecouterEvenementsSenseurs, retirerEvenementsSenseurs,
   ecouterEvenementsNoeuds, retirerEvenementsNoeuds,
