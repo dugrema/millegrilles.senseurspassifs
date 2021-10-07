@@ -21,9 +21,9 @@ function configurerEvenements(socket) {
       {eventName: 'SenseursPassifs/getListeSenseursNoeud', callback: (noeud_id, cb) => {getListeSenseursNoeud(socket, noeud_id, cb)}},
       {eventName: 'SenseursPassifs/changerNomNoeud', callback: (params, cb) => {changerNomNoeud(socket, params, cb)}},
       {eventName: 'SenseursPassifs/changerSecuriteNoeud', callback: (params, cb) => {changerSecuriteNoeud(socket, params, cb)}},
-      {eventName: 'SenseursPassifs/setActiviteBlynk', callback: (params, cb) => {setActiviteBlynk(socket, params, cb)}},
-      {eventName: 'SenseursPassifs/setAuthTokenBlynk', callback: (params, cb) => {setAuthTokenBlynk(socket, params, cb)}},
-      {eventName: 'SenseursPassifs/setServerBlynk', callback: (params, cb) => {setServerBlynk(socket, params, cb)}},
+      // {eventName: 'SenseursPassifs/setActiviteBlynk', callback: (params, cb) => {setActiviteBlynk(socket, params, cb)}},
+      // {eventName: 'SenseursPassifs/setAuthTokenBlynk', callback: (params, cb) => {setAuthTokenBlynk(socket, params, cb)}},
+      // {eventName: 'SenseursPassifs/setServerBlynk', callback: (params, cb) => {setServerBlynk(socket, params, cb)}},
       {eventName: 'SenseursPassifs/setSecuriteSenseur', callback: (params, cb) => {setSecuriteSenseur(socket, params, cb)}},
       {eventName: 'SenseursPassifs/changerNomSenseur', callback: (params, cb) => {changerNomSenseur(socket, params, cb)}},
       {eventName: 'SenseursPassifs/setVpinSenseur', callback: (params, cb) => {setVpinSenseur(socket, params, cb)}},
@@ -164,41 +164,41 @@ async function changerSecuriteNoeud(socket, params, cb) {
   }
 }
 
-async function setActiviteBlynk(socket, params, cb) {
-  try {
-    const {noeud_id, activite} = params
-    debug("setActiviteBlynk:\n%O", params)
-    const dao = socket.senseursPassifsDao
-    await dao.setActiviteBlynk(noeud_id, activite)
-    if(cb) cb(true)
-  } catch(err) {
-    if(cb) cb({err: "Erreur : " + err})
-  }
-}
-
-async function setAuthTokenBlynk(socket, params, cb) {
-  try {
-    const {noeud_id, authToken} = params
-    debug("setServerBlynk:\n%O", params)
-    const dao = socket.senseursPassifsDao
-    await dao.setAuthTokenBlynk(noeud_id, authToken)
-    if(cb) cb(true)
-  } catch(err) {
-    if(cb) cb({err: "Erreur : " + err})
-  }
-}
-
-async function setServerBlynk(socket, params, cb) {
-  try {
-    const {noeud_id, host, port} = params
-    debug("setServerBlynk:\n%O", params)
-    const dao = socket.senseursPassifsDao
-    await dao.setServerBlynk(noeud_id, host, port)
-    if(cb) cb(true)
-  } catch(err) {
-    if(cb) cb({err: "Erreur : " + err})
-  }
-}
+// async function setActiviteBlynk(socket, params, cb) {
+//   try {
+//     const {noeud_id, activite} = params
+//     debug("setActiviteBlynk:\n%O", params)
+//     const dao = socket.senseursPassifsDao
+//     await dao.setActiviteBlynk(noeud_id, activite)
+//     if(cb) cb(true)
+//   } catch(err) {
+//     if(cb) cb({err: "Erreur : " + err})
+//   }
+// }
+//
+// async function setAuthTokenBlynk(socket, params, cb) {
+//   try {
+//     const {noeud_id, authToken} = params
+//     debug("setServerBlynk:\n%O", params)
+//     const dao = socket.senseursPassifsDao
+//     await dao.setAuthTokenBlynk(noeud_id, authToken)
+//     if(cb) cb(true)
+//   } catch(err) {
+//     if(cb) cb({err: "Erreur : " + err})
+//   }
+// }
+//
+// async function setServerBlynk(socket, params, cb) {
+//   try {
+//     const {noeud_id, host, port} = params
+//     debug("setServerBlynk:\n%O", params)
+//     const dao = socket.senseursPassifsDao
+//     await dao.setServerBlynk(noeud_id, host, port)
+//     if(cb) cb(true)
+//   } catch(err) {
+//     if(cb) cb({err: "Erreur : " + err})
+//   }
+// }
 
 async function setActiviteLcd(socket, params, cb) {
   try {

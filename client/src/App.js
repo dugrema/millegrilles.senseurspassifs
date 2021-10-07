@@ -3,23 +3,15 @@ import { Container, Row, Col, Nav, Navbar } from 'react-bootstrap'
 import {proxy as comlinkProxy} from 'comlink'
 import { Trans } from 'react-i18next'
 
-// import { VerificationInfoServeur } from './Authentification'
 import { SectionContenu } from './SectionContenu'
 
 import {setupWorkers, preparerWorkersAvecCles} from './workers/workers.load'
 
-// import './App.css'
-
-// import manifest from '../../../manifest.build.js'
 var manifestImport = {
   date: "DUMMY-Date",
   version: "DUMMY-Version",
 }
-// try {
-//   manifestImport = require('../../../manifest.build.js')
-// } catch(err) {
-//   // Ok
-// }
+
 const manifest = manifestImport
 
 let _etatConnexion,
@@ -27,11 +19,6 @@ let _etatConnexion,
     _workers
 
 const _contexte = {}  // Contexte global pour comlink proxy callbacks
-
-// const ROUTING_KEYS_NOEUDS = [
-//   'transaction.SenseursPassifs.*.majNoeud',
-//   'transaction.SenseursPassifs.majNoeud',
-// ]
 
 export default function App(props) {
   const [modeProtege, setModeProtege] = useState(false)
@@ -41,7 +28,6 @@ export default function App(props) {
   const [paramsPage, setParamsPage] = useState('')
 
   const setEtatConnexion = useCallback(etat => {
-    // console.debug("Callback setEtatConnexion (etat protege) : %s", etat)
     setModeProtege(etat)
   }, [setModeProtege])
 
@@ -122,9 +108,6 @@ async function preparerWorkers(setWorkers, setEtatConnexion, setNomUsager) {
     const infoIdmg = await connexionWorker.connecter(opts)
     console.debug("Connexion socket.io completee, info idmg : %O", infoIdmg)
 
-    // if(infoIdmg.idmg) setIdmg(infoIdmg.idmg)  // Note : il serait preferable de calculer le idmg avec x509Worker
-    // if(infoIdmg.nomUsager) setNomUsager(infoIdmg.nomUsager)
-
     // Indique a l'application que les workers sont prets
     setWorkers({
       connexion: connexionWorker,
@@ -135,19 +118,6 @@ async function preparerWorkers(setWorkers, setEtatConnexion, setNomUsager) {
 }
 
 function ApplicationSenseursPassifs(props) {
-
-  // state = {
-  //   serveurInfo: null,          // Provient de /coupdoeil/info.json
-  //   idmg: null,                 // IDMG actif
-  //   hebergement: false,
-  //
-  //   websocketApp: '',
-  //
-  //   noeuds: [],
-  //   paramsPage: {},
-  //
-  //   page: 'Accueil',
-  // }
 
   const [noeuds, setNoeuds] = useState('')
 
@@ -184,71 +154,6 @@ function ApplicationSenseursPassifs(props) {
       }
     }
   }, [connexion, modeProtege, traiterMessageNoeudsHandler])
-
-  // componentDidMount() {
-  //
-  //   const wsa = this.props.rootProps.connexionWorker
-  //   wsa.isFormatteurReady()
-  //     .then( async _ =>{
-  //       console.debug("Formatteur ready sur connexion, fetch fichiers")
-  //       this.setState({websocketApp: wsa})
-  //
-  //       // wsa.subscribe(ROUTING_KEYS_NOEUDS, this.majNoeud, {DEBUG: true, exchange: ['2.prive', '3.protege']})
-  //
-  //       const noeuds = await wsa.getListeNoeuds()
-  //       console.debug("Liste noeuds : %O", noeuds)
-  //       this.setState({noeuds})
-  //     })
-  //
-  //   this.props.setSousMenuApplication(
-  //     <MenuItems
-  //       changerPage={this.changerPage}
-  //       websocketApp={wsa}
-  //       />
-  //   )
-  //
-  // }
-
-  // componentWillUnmount() {
-  //   const wsa = this.state.websocketApp
-  //   wsa.unsubscribe(ROUTING_KEYS_NOEUDS, this.majNoeud, {exchange: ['2.prive', '3.protege']})
-  // }
-
-  // const majNoeud = useCallback(comlinkProxy(msg => {
-  //   console.debug("MAJ noeud recue\n%O", msg)
-  //   majNoeud(msg, _contexte.noeuds, _contexte.setNoeuds)
-  // }), [_contexte])
-
-  // toggleProtege = async event => {
-  //   const modeToggle = ! this.state.modeProtege
-  //   if(modeToggle) {
-  //     // console.debug("Activer mode protege")
-  //
-  //     if(this.state.websocketApp) {
-  //       try {
-  //         await this.state.websocketApp.demandeActiverModeProtege()
-  //         this.setState({modeProtege: true})
-  //       } catch(err) {
-  //         console.error("Erreur activation mode protege")
-  //         console.error(err)
-  //       }
-  //     } else {
-  //       console.error("Connexion Socket.IO absente")
-  //     }
-  //
-  //   } else {
-  //     this.desactiverProtege()
-  //   }
-  //
-  // }
-
-  // desactiverProtege = () => {
-  //   // console.debug("Revenir a mode prive")
-  //   if(this.state.websocketApp) {
-  //     // this.state.websocketApp.desactiverModeProtege()
-  //   }
-  //   this.setState({modeProtege: false})
-  // }
 
   const rootProps = {
     ...props.rootProps,
@@ -331,10 +236,6 @@ function Footer(props) {
 
   const idmg = props.rootProps.idmg
   var qrCode = 'QR'
-
-  // <span title={props.rootProps.manifest.date}>
-  //   <Trans values={{version: props.rootProps.manifest.version}}>application.coupdoeilVersion</Trans>
-  // </span>
 
   return (
     <Container fluid className="footer bg-info">

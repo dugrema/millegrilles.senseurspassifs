@@ -5,13 +5,6 @@ import {proxy as comlinkProxy} from 'comlink'
 import { ConfigurationBlynk, ConfigurationLCD } from './NoeudConfigModules'
 import { Senseurs } from './NoeudConfigSenseurs'
 
-// const routingKeysNoeud = [
-//   'transaction.SenseursPassifs.*.majSenseur',
-//   'transaction.SenseursPassifs.majSenseur',
-//   'evenement.SenseursPassifs.*.lecture',
-//   'evenement.SenseursPassifs.lecture'
-// ]
-
 const _contexteCallback = {}
 
 export function Noeud(props) {
@@ -93,11 +86,6 @@ export function Noeud(props) {
 
 function AfficherInformationNoeud(props) {
 
-  // state = {
-  //   descriptif: '',
-  //   senseursModeEdition: {},  // Senseurs en mode d'edition. cle : uuid, valeur : true
-  // }
-
   const [descriptif, setDescriptif] = useState('')
   const [senseursModeEdition, setSenseursModeEdition] = useState('')
 
@@ -107,11 +95,6 @@ function AfficherInformationNoeud(props) {
         setErreur = props.setErreur,
         noeud = props.noeud,
         blynkActif = noeud.blynk_actif || false
-
-  // changerChamp = event => {
-  //   const {name, value} = event.currentTarget
-  //   this.setState({[name]: value})
-  // }
 
   const changerNomNoeud = useCallback(async _ => {
     console.debug("Changer nom noeud : %s", descriptif)
