@@ -172,10 +172,6 @@ async function onConnect() {
   return resultatProtege
 }
 
-// function requeteSites(params) {
-//   return connexionClient.emitBlocking('publication/requeteSites', params)
-// }
-
 function getListeNoeuds() {
   return connexionClient.emitBlocking(
     'SenseursPassifs/getListeNoeuds',
@@ -192,45 +188,37 @@ function getListeSenseursNoeud(partition, noeud_id) {
   )
 }
 
-function changerNomNoeud(noeud_id, nom) {
-  return connexionClient.emitBlocking('SenseursPassifs/changerNomNoeud', {noeud_id, nom})
+function majNoeud(partition, params, nom) {
+  return connexionClient.emitBlocking(
+    'SenseursPassifs/majNoeud',
+    {partition, ...params},
+    {domaine: 'SenseursPassifs', action: 'majNoeud', attacherCertificat: true}
+  )
 }
 
-function changerSecuriteNoeud(noeud_id, securite) {
-  return connexionClient.emitBlocking('SenseursPassifs/changerSecuriteNoeud', {noeud_id, securite})
+function majSenseur(partition, params, nom) {
+  return connexionClient.emitBlocking(
+    'SenseursPassifs/majSenseur',
+    {partition, ...params},
+    {domaine: 'SenseursPassifs', action: 'majSenseur', attacherCertificat: true}
+  )
 }
 
-function setActiviteBlynk(noeud_id, activite) {
-  return connexionClient.emitBlocking('SenseursPassifs/setActiviteBlynk', {noeud_id, activite})
-}
+// function setActiviteLcd(noeud_id, activite) {
+//   return connexionClient.emitBlocking('SenseursPassifs/setActiviteLcd', {noeud_id, activite})
+// }
+//
+// function setVpinLcd(noeud_id, lcd_vpin_onoff, lcd_vpin_navigation) {
+//   return connexionClient.emitBlocking('SenseursPassifs/setVpinLcd', {noeud_id, lcd_vpin_onoff, lcd_vpin_navigation})
+// }
+//
+// function setAffichageLcd(noeud_id, lcd_affichage) {
+//   return connexionClient.emitBlocking('SenseursPassifs/setAffichageLcd', {noeud_id, lcd_affichage})
+// }
 
-function setServerBlynk(noeud_id, host, port) {
-  return connexionClient.emitBlocking('SenseursPassifs/setServerBlynk', {noeud_id, host, port})
-}
-
-function setAuthTokenBlynk(noeud_id, authToken) {
-  return connexionClient.emitBlocking('SenseursPassifs/setAuthTokenBlynk', {noeud_id, authToken})
-}
-
-function setActiviteLcd(noeud_id, activite) {
-  return connexionClient.emitBlocking('SenseursPassifs/setActiviteLcd', {noeud_id, activite})
-}
-
-function setVpinLcd(noeud_id, lcd_vpin_onoff, lcd_vpin_navigation) {
-  return connexionClient.emitBlocking('SenseursPassifs/setVpinLcd', {noeud_id, lcd_vpin_onoff, lcd_vpin_navigation})
-}
-
-function setAffichageLcd(noeud_id, lcd_affichage) {
-  return connexionClient.emitBlocking('SenseursPassifs/setAffichageLcd', {noeud_id, lcd_affichage})
-}
-
-function setVpinSenseur(uuid_senseur, blynkVPins) {
-  return connexionClient.emitBlocking('SenseursPassifs/setVpinSenseur', {uuid_senseur, blynkVPins})
-}
-
-function changerNomSenseur(uuid_senseur, nom) {
-  return connexionClient.emitBlocking('SenseursPassifs/changerNomSenseur', {uuid_senseur, nom})
-}
+// function changerNomSenseur(uuid_senseur, nom) {
+//   return connexionClient.emitBlocking('SenseursPassifs/changerNomSenseur', {uuid_senseur, nom})
+// }
 
 async function ecouterEvenementsSenseurs(cb) {
   ROUTING_KEYS_EVENEMENTS.forEach(item=>{connexionClient.socketOn(item, cb)})
@@ -272,9 +260,11 @@ comlinkExpose({
   connecter,  // Override de connexionClient.connecter
   setCallbacks, estActif,
 
-  getListeNoeuds, getListeSenseursNoeud, changerNomNoeud, changerSecuriteNoeud,
-  setActiviteBlynk, setServerBlynk, setAuthTokenBlynk, setActiviteLcd, setVpinLcd,
-  setAffichageLcd, setVpinSenseur, changerNomSenseur,
+  getListeNoeuds, getListeSenseursNoeud, majNoeud, majSenseur,
+
+  // changerNomNoeud, changerSecuriteNoeud,
+  // setActiviteBlynk, setServerBlynk, setAuthTokenBlynk, setActiviteLcd, setVpinLcd,
+  // setAffichageLcd, setVpinSenseur, changerNomSenseur,
 
   ecouterEvenementsSenseurs, retirerEvenementsSenseurs,
   ecouterEvenementsNoeuds, retirerEvenementsNoeuds,

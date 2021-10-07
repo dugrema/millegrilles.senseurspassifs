@@ -118,7 +118,7 @@ function ListeSenseurs(props) {
 
   return senseurs.map(item=>{
     const nom = item.descriptif || item.uuid_senseur,
-          dateLecture = item['_mg-derniere-modification']
+          dateLecture = item.derniere_lecture
 
     const cols = CONST_CHAMPS_SOMMAIRE.map((champ, idx)=>{
       let valeur = ''
@@ -153,7 +153,7 @@ function traiterLecture(evenement, senseurs, setSenseurs) {
   const message = evenement.message,
         uuid_senseur = message.uuid_senseur
 
-  // console.debug("Lecture recue :\n%O\nSenseurs: %O", message, senseurs)
+  console.debug("Lecture recue :\n%O\nSenseurs: %O", message, senseurs)
 
   if(!senseurs) return
 
@@ -178,7 +178,8 @@ function traiterLecture(evenement, senseurs, setSenseurs) {
         copieSenseur.senseurs[nomApp] = copieApp
       }
 
-      copieSenseur['_mg-derniere-modification'] = message['en-tete'].estampille
+      // copieSenseur['_mg-derniere-modification'] = message['en-tete'].estampille
+      copieSenseur.derniere_lecture = message.derniere_lecture
 
       // console.debug("Copie du senseur maj :\n%O", copieSenseur)
 
