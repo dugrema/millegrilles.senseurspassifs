@@ -177,7 +177,11 @@ async function onConnect() {
 // }
 
 function getListeNoeuds() {
-  return connexionClient.emitBlocking('SenseursPassifs/getListeNoeuds', null, {domaine: 'SenseursPassifs', attacherCertificat: true})
+  return connexionClient.emitBlocking(
+    'SenseursPassifs/getListeNoeuds',
+    {},
+    {domaine: 'SenseursPassifs', action: 'listeNoeuds', attacherCertificat: true}
+  )
 }
 
 function getListeSenseursNoeud(partition, noeud_id) {

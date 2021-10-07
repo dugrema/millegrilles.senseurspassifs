@@ -19,14 +19,21 @@ class SenseursPassifsDao {
     this.amqDao.routingKeyManager.removeRoutingKeysForSocket(socket, routingKeys, exchange, channel, reply_q)
   }
 
-  getListeNoeuds = async _ => {
+  getListeNoeuds = async requete => {
     const domaine = 'SenseursPassifs',
           action = 'listeNoeuds'
     debug("getListeNoeuds, rk : %s.%s", domaine, action)
 
-    const listeSenseurs = await this.amqDao.transmettreRequete(
-      domaine, {}, {action: 'listeNoeuds', decoder: true}
-    )
+    // const listeSenseurs = await this.amqDao.transmettreRequete(
+    //   domaine, {}, {action: 'listeNoeuds', decoder: true}
+    // )
+    //
+    debug("getListeNoeuds, routing : %s.%s, %O", domaine, action, requete)
+    if(requete['en-tete'].domaine === domaine && requete['en-tete'].action === action) {
+      return await this.amqDao.transmettreRequete(domaine, requete, {action, noformat: true, decoder: true})
+    } else {
+      return {ok: false}
+    }
 
     return listeSenseurs
   }

@@ -6,8 +6,9 @@ import { DateTimeAfficher } from './components/ReactFormatters'
 export function Senseurs(props) {
 
   var senseurs = null
-  if(props.senseurs) {
-    senseurs = props.senseurs.map(senseur=>{
+  if(props.listeSenseurs) {
+    console.debug("Senseurs : %O", props.listeSenseurs)
+    senseurs = props.listeSenseurs.map(senseur=>{
       return <Senseur key={senseur.uuid_senseur}
                       noeud={props.noeud}
                       senseur={senseur}
@@ -16,8 +17,7 @@ export function Senseurs(props) {
                       setErreur={props.setErreur}
                       setConfirmation={props.setConfirmation}
                       setModeEdition={props.setModeEdition}
-                      senseursModeEdition={props.senseursModeEdition}
-                      blynkActif={props.blynkActif} />
+                      senseursModeEdition={props.senseursModeEdition} />
     })
   }
 

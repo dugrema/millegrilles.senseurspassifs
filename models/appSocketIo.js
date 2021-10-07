@@ -17,8 +17,8 @@ function configurerEvenements(socket) {
     listenersPrives: [
     ],
     listenersProteges: [
-      {eventName: 'SenseursPassifs/getListeNoeuds', callback: cb => {getListeNoeuds(socket, cb)}},
-      {eventName: 'SenseursPassifs/getListeSenseursNoeud', callback: (noeud_id, cb) => {getListeSenseursNoeud(socket, noeud_id, cb)}},
+      {eventName: 'SenseursPassifs/getListeNoeuds', callback: (requete, cb) => {getListeNoeuds(socket, requete, cb)}},
+      {eventName: 'SenseursPassifs/getListeSenseursNoeud', callback: (requete, cb) => {getListeSenseursNoeud(socket, requete, cb)}},
       {eventName: 'SenseursPassifs/changerNomNoeud', callback: (params, cb) => {changerNomNoeud(socket, params, cb)}},
       {eventName: 'SenseursPassifs/changerSecuriteNoeud', callback: (params, cb) => {changerSecuriteNoeud(socket, params, cb)}},
       // {eventName: 'SenseursPassifs/setActiviteBlynk', callback: (params, cb) => {setActiviteBlynk(socket, params, cb)}},
@@ -92,10 +92,10 @@ function subscribe(socket, params) {
 //   const dao = socket.senseursPassifsDao.unsubscribe(socket, routingKeys, exchange)
 // }
 
-async function getListeNoeuds(socket, cb) {
+async function getListeNoeuds(socket, requete, cb) {
   const dao = socket.senseursPassifsDao
   try {
-    const noeuds = await dao.getListeNoeuds()
+    const noeuds = await dao.getListeNoeuds(requete)
     cb(noeuds)
   } catch(err) {
     debug("Erreur getListeNoeuds\n%O", err)

@@ -36,8 +36,6 @@ export function Accueil(props) {
 
 function ListeNoeuds(props) {
 
-  console.debug("PROPPYS : %O", props)
-
   if(!props.listeNoeuds) return ''
 
   const listeNoeuds = props.listeNoeuds.noeuds.map(noeud=>{

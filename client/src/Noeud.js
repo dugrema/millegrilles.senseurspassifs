@@ -11,7 +11,7 @@ export function Noeud(props) {
 
   // console.debug("Proppys %O", props)
 
-  const [senseurs, setSenseurs] = useState([])
+  const [listeSenseurs, setListeSenseurs] = useState([])
   const [erreur, setErreur] = useState('')
   const [confirmation, setConfirmation] = useState('')
   const [noeud, setNoeud] = useState('')
@@ -29,12 +29,12 @@ export function Noeud(props) {
 
   // Entretien contexte pour callback comlink proxys
   useEffect(()=>{
-    _contexteCallback.senseurs = senseurs
-    _contexteCallback.setSenseurs = setSenseurs
-  }, [senseurs, setSenseurs])
+    _contexteCallback.listeSenseurs = listeSenseurs
+    _contexteCallback.setListeSenseurs = setListeSenseurs
+  }, [listeSenseurs, setListeSenseurs])
 
   const messageRecu = useCallback(comlinkProxy(message => {
-    traiterLecture(noeud_id, message, _contexteCallback.senseurs, _contexteCallback.setSenseurs)
+    traiterLecture(noeud_id, message, _contexteCallback.listeSenseurs, _contexteCallback.setListeSenseurs)
   }), [noeud_id])
 
   const changerSecurite = useCallback(async event => {
@@ -56,9 +56,9 @@ export function Noeud(props) {
       console.debug("Charger liste senseurs pour : %O", noeud)
       let partition = noeud.partition
       connexion.getListeSenseursNoeud(partition, noeud_id)
-        .then(senseurs=>{
-          console.debug("Senseurs charges : %O", senseurs)
-          setSenseurs(senseurs)
+        .then(listeSenseurs=>{
+          console.debug("Senseurs charges : %O", listeSenseurs)
+          setListeSenseurs(listeSenseurs.senseurs)
         })
 
       connexion.ecouterEvenementsSenseurs(messageRecu)
@@ -66,7 +66,7 @@ export function Noeud(props) {
         connexion.retirerEvenementsSenseurs()
       }
     }
-  }, [modeProtege, setSenseurs, noeud])
+  }, [modeProtege, setListeSenseurs, noeud])
 
   // const noeud_id = props.rootProps.paramsPage.noeud_id
 
@@ -81,7 +81,8 @@ export function Noeud(props) {
       </Alert>
       <AfficherInformationNoeud rootProps={props.rootProps}
                                 workers={props.workers}
-                                noeud={noeud} senseurs={senseurs}
+                                noeud={noeud}
+                                listeSenseurs={listeSenseurs}
                                 changerSecurite={changerSecurite}
                                 setErreur={setErreur}
                                 setConfirmation={setConfirmation} />
@@ -188,7 +189,7 @@ function AfficherInformationNoeud(props) {
                         setErreur={props.setErreur}
                         setConfirmation={props.setConfirmation} />
 
-      <Senseurs senseurs={props.senseurs}
+      <Senseurs listeSenseurs={props.listeSenseurs}
                 noeud={noeud}
                 rootProps={props.rootProps}
                 workers={props.workers}
@@ -204,8 +205,8 @@ function AfficherInformationNoeud(props) {
 
 async function chargerSenseurs(wsa, setState, noeud_id) {
   const senseurs = await wsa.getListeSenseursNoeud(noeud_id)
-  // console.debug("Senseurs:\n%O", senseurs)
-  setState({senseurs})
+  console.debug("Senseurs:\n%O", senseurs)
+  setState({senseurs: senseurs.senseurs})
 }
 
 function traiterLecture(noeud_id, evenement, senseurs, setSenseurs) {
