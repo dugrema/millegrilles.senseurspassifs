@@ -198,12 +198,8 @@ export class ConfigurationBlynk extends React.Component {
 export class ConfigurationLCD extends React.Component {
 
   state = {
-    actif: this.props.noeud.lcd_actif || false,
-
-    vpinOnOff: this.props.noeud.lcd_vpin_onoff || '',
-    vpinNavigation: this.props.noeud.lcd_vpin_navigation || '',
-
-    lignesAffichage: this.props.noeud.lcd_affichage || [],
+    actif: '',
+    lignesAffichage: '',
     changementLignesAffichage: false,
   }
 
@@ -218,9 +214,10 @@ export class ConfigurationLCD extends React.Component {
   }
 
   changerAffichage = event => {
+    let lignesAffichage = this.state.lignesAffichage || this.props.noeud.lcd_affichage || []
     const {name, value, dataset} = event.currentTarget
     const numeroLigne = Number(dataset.ligne)
-    const nouvellesLignesAffichage = this.state.lignesAffichage.map((item, idx)=>{
+    const nouvellesLignesAffichage = lignesAffichage.map((item, idx)=>{
       if(idx === numeroLigne) {
         return {...item, [name]: value}
       } else {
@@ -231,19 +228,21 @@ export class ConfigurationLCD extends React.Component {
   }
 
   ajouterLigneAffichage = _ => {
-    // console.debug("Ajouter ligne affichage")
+    let lignesAffichage = this.state.lignesAffichage || this.props.noeud.lcd_affichage || []
+    lignesAffichage = [
+      ...lignesAffichage,
+      {uuid: '', appareil: '', affichage: ''}
+    ]
     this.setState({
-      lignesAffichage: [
-        ...this.state.lignesAffichage,
-        {uuid: '', appareil: '', affichage: ''}
-      ],
+      lignesAffichage,
       changementLignesAffichage: true,
     })
   }
 
   supprimerLigneAffichage = event => {
+    let lignesAffichage = this.state.lignesAffichage || this.props.noeud.lcd_affichage || []
     const numeroLigne = Number(event.currentTarget.value)
-    const nouvellesLignesAffichage = this.state.lignesAffichage.filter((_, idx)=>{
+    const nouvellesLignesAffichage = lignesAffichage.filter((_, idx)=>{
       if(idx === numeroLigne) return false
       return true
     })
@@ -252,37 +251,25 @@ export class ConfigurationLCD extends React.Component {
 
   sauvegarder = async _ => {
     const wsa = this.props.workers.connexion
-    const noeud_id = this.props.noeud.noeud_id
+    const noeud_id = this.props.noeud.noeud_id, partition = this.props.noeud.partition
 
     var confirmations = ''
-    const actif = this.state.actif,
+    const actif = this.state.actif === true,
           vpinOnOff = this.state.vpinOnOff,
           vpinNavigation = this.state.vpinNavigation,
           lignesAffichage = this.state.lignesAffichage
+
+    const transaction = {noeud_id}
 
     // Sauvegarder activite LCD si changee
     try {
       const actifCourant = this.props.noeud.lcd_actif
       if(actifCourant !== actif) {
         console.debug("Sauvegarder info lcd : actif=%s", actif)
-        await wsa.setActiviteLcd(noeud_id, actif)
+        //await wsa.setActiviteLcd(noeud_id, actif)
+        transaction.lcd_actif = actif
         // this.props.rootProps.majNoeud({noeud_id, lcd_actif: actif})
         confirmations += "Configuration activite LCD modifiee. "
-      }
-    } catch(err) {
-      this.props.setErreur(''+err)
-    }
-
-    // Sauvegarder VPINs de controle du LCD
-    try {
-      const vpinOnOffCourant = this.props.noeud.lcd_vpin_onoff,
-            vpinNavigationCourant = this.props.noeud.lcd_vpin_navigation
-
-      if(vpinOnOff !== vpinOnOffCourant || vpinNavigation !== vpinNavigationCourant) {
-        console.debug("Sauvegarder VPIN Blynk pour LCD : vpinOnOff=%s, vpinNavigation=%s", vpinOnOff, vpinNavigation)
-        await wsa.setVpinLcd(noeud_id, vpinOnOff, vpinNavigation)
-        // this.props.rootProps.majNoeud({noeud_id, lcd_vpin_onoff: vpinOnOff, lcd_vpin_navigation: vpinNavigation})
-        confirmations += "Configuration VPIN Blynk pour LCD modifiee. "
       }
     } catch(err) {
       this.props.setErreur(''+err)
@@ -292,7 +279,8 @@ export class ConfigurationLCD extends React.Component {
     try {
       if(this.state.changementLignesAffichage) {
         console.debug("Sauvegarder configuration affichage LCD : %O", lignesAffichage)
-        await wsa.setAffichageLcd(noeud_id, lignesAffichage)
+        // await wsa.setAffichageLcd(noeud_id, lignesAffichage)
+        transaction.lcd_affichage = lignesAffichage
         // this.props.rootProps.majNoeud({noeud_id, lcd_affichage: lignesAffichage})
         confirmations += "Configuration affichage LCD modifiee. "
       }
@@ -300,43 +288,18 @@ export class ConfigurationLCD extends React.Component {
       this.props.setErreur(''+err)
     }
 
+    let reponse = await wsa.majNoeud(partition, transaction)
+    await this.props.majNoeud({message: reponse})
+
     if(confirmations) {
       this.props.setConfirmation(confirmations)
+      this.setState({lcd_affichage: '', changementLignesAffichage: false, lignesAffichage: ''})
     }
   }
 
   render() {
 
-    var rowBlynk = ''
-    if(this.props.blynkActif) {
-      rowBlynk = (
-        <>
-          <h3>Controles Blynk du LCD</h3>
-
-          <Row>
-
-            <Form.Label column md={2}>ON/OFF</Form.Label>
-            <Col md={2}>
-              <Form.Group controlId={"vpinOnOff"}>
-                <Form.Control type="text" name="vpinOnOff" onChange={this.changerChamp}
-                              value={this.state.vpinOnOff} placeholder="VPIN"
-                              disabled={!this.props.rootProps.modeProtege} />
-              </Form.Group>
-            </Col>
-
-            <Form.Label column md={2}>Navigation</Form.Label>
-            <Col md={2}>
-              <Form.Group controlId={"vpinNavigation"}>
-                <Form.Control type="text" name="vpinNavigation" onChange={this.changerChamp}
-                              value={this.state.vpinNavigation} placeholder="VPIN"
-                              disabled={!this.props.rootProps.modeProtege} />
-              </Form.Group>
-            </Col>
-
-          </Row>
-        </>
-      )
-    }
+    // console.debug("Noeud Config LCD proppys: %O, state %O", this.props, this.state)
 
     return (
       <div className="config-lcd">
@@ -350,15 +313,13 @@ export class ConfigurationLCD extends React.Component {
             <Form.Check type="switch"
                         id="lcd-on"
                         name="actif"
-                        checked={this.state.actif}
+                        checked={(this.state.actif === '' && this.props.noeud.lcd_actif) || this.state.actif}
                         onChange={this.changerCheckbox}
                         disabled={!this.props.rootProps.modeProtege} />
           </Col>
         </Row>
 
-        {rowBlynk}
-
-        <AffichageLcd lignesAffichage={this.state.lignesAffichage}
+        <AffichageLcd lignesAffichage={this.state.lignesAffichage || this.props.noeud.lcd_affichage || []}
                       changerAffichage={this.changerAffichage}
                       ajouterLigneAffichage={this.ajouterLigneAffichage}
                       supprimerLigneAffichage={this.supprimerLigneAffichage}

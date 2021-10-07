@@ -187,7 +187,8 @@ function AfficherInformationNoeud(props) {
                         rootProps={props.rootProps}
                         workers={props.workers}
                         setErreur={props.setErreur}
-                        setConfirmation={props.setConfirmation} />
+                        setConfirmation={props.setConfirmation}
+                        majNoeud={props.majNoeud} />
 
       <Senseurs listeSenseurs={props.listeSenseurs}
                 noeud={noeud}
@@ -197,7 +198,8 @@ function AfficherInformationNoeud(props) {
                 traiterLecture={props.traiterLecture}
                 setConfirmation={props.setConfirmation}
                 setModeEdition={setModeEdition}
-                senseursModeEdition={senseursModeEdition} />
+                senseursModeEdition={senseursModeEdition}
+                majNoeud={props.majNoeud} />
     </div>
   )
 }
