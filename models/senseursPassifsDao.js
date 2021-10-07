@@ -50,15 +50,27 @@ class SenseursPassifsDao {
     }
   }
 
-  majNoeud = async params => {
+  majNoeud = params => {
     const domaine = 'SenseursPassifs',
           action = 'majNoeud',
           partition = params.partition
     debug("majNoeud, routing : %s.%s.%s, %O", domaine, partition, action, params)
     let entete = params['en-tete']
     if(entete.domaine === domaine && entete.action === action) {
-      const listeSenseurs = await this.amqDao.transmettreEnveloppeTransaction(params, domaine)
-      return listeSenseurs
+      return this.amqDao.transmettreEnveloppeTransaction(params, domaine)
+    } else {
+      return {ok: false}
+    }
+  }
+
+  majSenseur = params => {
+    const domaine = 'SenseursPassifs',
+          action = 'majSenseur',
+          partition = params.partition
+    debug("majSenseur, routing : %s.%s.%s, %O", domaine, partition, action, params)
+    let entete = params['en-tete']
+    if(entete.domaine === domaine && entete.action === action) {
+      return this.amqDao.transmettreEnveloppeTransaction(params, domaine)
     } else {
       return {ok: false}
     }

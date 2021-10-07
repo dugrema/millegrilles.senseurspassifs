@@ -43,57 +43,50 @@ class Senseur extends React.Component {
     this.setState({[name]: value})
   }
 
-  changerVPin = event => {
-    const {name, value} = event.currentTarget
-    const copieVPins = Object.assign({}, this.state.blynkVPins)
-    if(value) {
-      copieVPins[name] = parseInt(value)
-    } else {
-      copieVPins[name] = ''
-    }
-    this.setState({blynkVPins: copieVPins})
-  }
-
-  sauvegarderNom = async _ => {
-    const wsa = this.props.workers.connexion
-
-    // Aucun nom
-    if(!this.state.descriptif) {
-      this.props.setErreur("Veuillez ajouter/modifier le nom")
-      return
-    }
-
-    const descriptif = this.state.descriptif,
-          uuid_senseur = this.props.senseur.uuid_senseur
-
-    try {
-      await wsa.changerNomSenseur(uuid_senseur, descriptif)
-      this.props.setConfirmation('Senseurs mis a jour')
-    } catch(err) {
-      this.props.setErreur(''+err)
-    }
-  }
+  // sauvegarderNom = async _ => {
+  //   const wsa = this.props.workers.connexion
+  //
+  //   // Aucun nom
+  //   if(!this.state.descriptif) {
+  //     this.props.setErreur("Veuillez ajouter/modifier le nom")
+  //     return
+  //   }
+  //
+  //   const descriptif = this.state.descriptif,
+  //         uuid_senseur = this.props.senseur.uuid_senseur
+  //
+  //   try {
+  //     let reponse = await wsa.majSenseur(this.state.noeud.partition, {uuid_senseur, descriptif})
+  //     console.debug("Reponse majSenseur : %O", reponse)
+  //     this.props.setConfirmation('Senseur mis a jour')
+  //   } catch(err) {
+  //     this.props.setErreur(''+err)
+  //   }
+  // }
 
   sauvegarderSenseur = async _ => {
+    console.debug("sauvegarderSenseur proppys : %O", this.props)
     const wsa = this.props.workers.connexion
 
+    const uuid_senseur = this.props.senseur.uuid_senseur,
+          partition = this.props.noeud.partition,
+          noeud_id = this.props.noeud.noeud_id
+    const transaction = {uuid_senseur, noeud_id}
+
+    let changement = false
+
     if(this.state.descriptif && this.state.descriptif !== this.props.senseur.descriptif) {
-      // Sauvegarder le nom du senseur
-      this.sauvegarderNom()
+      // Sauvegarder le nom du senseu
+      transaction.descriptif = this.state.descriptif
+      changement = true
     }
 
-    const blynkVPins = this.state.blynkVPins,
-          uuid_senseur = this.props.senseur.uuid_senseur
-
-    if(Object.keys(blynkVPins).length > 0) {
-      try {
-        await wsa.setVpinSenseur(uuid_senseur, blynkVPins)
-        this.props.setConfirmation('Senseurs mis a jour')
-      } catch(err) {
-        this.props.setErreur(''+err)
-      }
+    if(changement) {
+      let reponse = await wsa.majSenseur(partition, transaction)
+      console.debug("Reponse majSenseur : %O", reponse)
     }
 
+    // this.setState({descriptif: ''})
     this.props.setModeEdition(this.props.senseur.uuid_senseur, false)
   }
 
@@ -118,13 +111,11 @@ class Senseur extends React.Component {
       apps = Object.keys(senseur.senseurs).map(nomApp=>{
         const app = senseur.senseurs[nomApp]
         return <AfficherAppareil key={senseur.uuid_senseur + '/' + nomApp}
-                                 blynkVPins={this.state.blynkVPins}
                                  senseurs={this.props.senseur.senseurs}
                                  app={app} nomApp={nomApp}
                                  noeud={this.props.noeud}
                                  changerVPin={this.changerVPin}
                                  timestampExpire={timestampExpire}
-                                 blynkActif={this.props.blynkActif}
                                  modeEdition={modeEdition} />
       })
     }
@@ -211,44 +202,9 @@ function AfficherAppareil(props) {
   // Prendre la vpin modifiee au besoin
   var vpin = ''
   // Verifier override vpin
-  if(Object.keys(props.blynkVPins).includes(props.nomApp)) vpin = props.blynkVPins[props.nomApp]
-  else vpin = props.app.blynk_vpin || ''
-
   var statusToken = ''
   if(props.app.nouveau) {
     statusToken = <i className="fa fa-flag"/>
-  }
-
-  var infoBlynk = ''
-  if( props.blynkActif ) {
-    if(props.modeEdition) {
-      const inputBlynk = (
-        <Form.Group controlId={"blynkVPin" + props.nomApp} >
-          <Form.Control type="text"
-                        name={props.nomApp}
-                        onChange={props.changerVPin}
-                        value={vpin}
-                        placeholder="VPIN" />
-        </Form.Group>
-      )
-      infoBlynk = (
-        <Row className="card-senseur-blynkinfo">
-          <Form.Label key="label" column lg={4}>
-            Blynk VPin
-          </Form.Label>
-          <Col key="input" lg={4}>
-            {inputBlynk}
-          </Col>
-        </Row>
-      )
-    } else if(vpin) {
-      infoBlynk = (
-        <Row className="card-senseur-blynkinfo">
-          <Col><span>Blynk VPin : {vpin}</span></Col>
-        </Row>
-      )
-    }
-
   }
 
   var format = ''
@@ -268,9 +224,6 @@ function AfficherAppareil(props) {
           {props.app.valeur}{format}
         </Col>
       </Row>
-
-      {infoBlynk}
-
     </Container>
   )
 }

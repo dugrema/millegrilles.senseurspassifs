@@ -199,7 +199,7 @@ function AfficherInformationNoeud(props) {
                 setConfirmation={props.setConfirmation}
                 setModeEdition={setModeEdition}
                 senseursModeEdition={senseursModeEdition}
-                majNoeud={props.majNoeud} />
+                majSenseur={props.majSenseur} />
     </div>
   )
 }

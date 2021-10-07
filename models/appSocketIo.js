@@ -122,8 +122,7 @@ async function majSenseur(socket, params, cb) {
   debug("majSenseur:\n%O", params)
   const dao = socket.senseursPassifsDao
   try {
-    await dao.majNoeud(params)
-    cb(true)
+    cb(await dao.majSenseur(params))
   } catch(err) {
     debug("Erreur majSenseur\n%O", err)
     cb({err: 'Erreur: ' + err})

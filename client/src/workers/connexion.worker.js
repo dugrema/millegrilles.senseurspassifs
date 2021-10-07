@@ -170,11 +170,12 @@ function majNoeud(partition, params) {
   )
 }
 
-function majSenseur(partition, params, nom) {
+function majSenseur(partition, params) {
+  console.debug("majSenseur, partition: %s, params: %O", partition, params)
   return connexionClient.emitBlocking(
     'SenseursPassifs/majSenseur',
     {partition, ...params},
-    {domaine: 'SenseursPassifs', action: 'majSenseur', attacherCertificat: true}
+    {domaine: 'SenseursPassifs', action: 'majSenseur', partition, attacherCertificat: true}
   )
 }
 
