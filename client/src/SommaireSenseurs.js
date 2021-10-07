@@ -15,11 +15,14 @@ const CONST_CHAMPS_SOMMAIRE = [
 
 export default function Sommaire(props) {
 
+  console.debug("Sommaire proppys : %O", props)
+
   const [senseurs, setSenseurs] = useState('')
 
   const connexion = props.workers.connexion,
         modeProtege = props.rootProps.modeProtege,
-        noeuds = props.noeuds
+        noeuds = props.listeNoeuds.noeuds,
+        partition = props.listeNoeuds.partition
 
   const messageRecu = useCallback(comlinkProxy(message => {
     // console.debug("Message : %O", message)
@@ -34,13 +37,13 @@ export default function Sommaire(props) {
 
   useEffect(()=>{
     if(!senseurs && connexion && modeProtege && noeuds) {
-      Promise.all(noeuds.map(item=>connexion.getListeSenseursNoeud(item.noeud_id)))
+      Promise.all(noeuds.map(item=>connexion.getListeSenseursNoeud(partition, item.noeud_id)))
         .then(resultat=>{
           console.debug("Senseurs charges : %O", resultat)
           // setSenseurs(senseurs)
           let senseurs = []
           resultat.forEach(res=>{
-            senseurs = [...senseurs, ...res]
+            senseurs = [...senseurs, ...res.senseurs]
           })
           setSenseurs(senseurs)
         })
@@ -54,9 +57,9 @@ export default function Sommaire(props) {
     }
   }, [connexion, modeProtege, noeuds, senseurs, messageRecu])
 
-  if(!props.noeuds) return ''
+  if(!props.listeNoeuds) return ''
 
-  const noeudsTries = [...noeuds]
+  const noeudsTries = [...props.listeNoeuds.noeuds]
   noeudsTries.sort((a,b)=>{
     const nomA = a.descriptif || a.noeud_id,
           nomB = b.descriptif || b.noeud_id

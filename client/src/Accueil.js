@@ -26,7 +26,7 @@ export function Accueil(props) {
       <ListeNoeuds listeNoeuds={props.listeNoeuds} selectionnerNoeud={selectionnerNoeud} />
 
       <h2>Sommaire</h2>
-      <Sommaire noeuds={props.noeuds}
+      <Sommaire listeNoeuds={props.listeNoeuds}
                 workers={props.workers}
                 rootProps={props.rootProps} />
     </div>
@@ -39,7 +39,7 @@ function ListeNoeuds(props) {
   if(!props.listeNoeuds) return ''
 
   const listeNoeuds = props.listeNoeuds.noeuds.map(noeud=>{
-    return <NoeudItem key={noeud.noeud_id} noeud={noeud} selectionnerNoeud={props.selectionnerNoeud} />
+    return <NoeudItem key={noeud.noeud_id} noeud={noeud} partition={noeud.partition} selectionnerNoeud={props.selectionnerNoeud} />
   })
 
   return (
