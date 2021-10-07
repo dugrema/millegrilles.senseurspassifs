@@ -25,23 +25,22 @@ class SenseursPassifsDao {
     debug("getListeNoeuds, rk : %s.%s", domaine, action)
 
     const listeSenseurs = await this.amqDao.transmettreRequete(
-      domaineAction, {}, {action: 'listeNoeuds', decoder: true}
+      domaine, {}, {action: 'listeNoeuds', decoder: true}
     )
 
     return listeSenseurs
   }
 
-  getListeSenseursNoeud = async (partition, noeud_id) => {
+  getListeSenseursNoeud = async requete => {
     const domaine = 'SenseursPassifs',
-          action = 'listeSenseursPourNoeud'
-    const params = { noeud_id }
-    debug("getListeSenseursNoeud, routing : %s.%s.%s, %O", domaine, partition, action, params)
-
-    const listeSenseurs = await this.amqDao.transmettreRequete(
-      domaine, params, {action, partition, decoder: true}
-    )
-
-    return listeSenseurs
+          action = 'listeSenseursPourNoeud',
+          partition = requete.partition
+    debug("getListeSenseursNoeud, routing : %s.%s.%s, %O", domaine, partition, action, requete)
+    if(requete['en-tete'].domaine === domaine && requete['en-tete'].action === action) {
+      return await this.amqDao.transmettreRequete(domaine, requete, {action, partition, noformat: true, decoder: true})
+    } else {
+      return {ok: false}
+    }
   }
 
   changerNomNoeud = async (partition, noeud_id, nomNoeud) => {
@@ -140,7 +139,7 @@ class SenseursPassifsDao {
     debug("changerNomNoeud, routing : %s.%s.%s, %O", domaine, partition, action, params)
 
     const listeSenseurs = await this.amqDao.transmettreTransactionFormattee(
-      params, domaineAction, {action, partition}
+      params, domaine, {action, partition}
     )
   }
 
@@ -162,7 +161,7 @@ class SenseursPassifsDao {
     debug("setVpinSenseur, routing : %s.%s.%s, %O", domaine, partition, action, params)
 
     await this.amqDao.transmettreTransactionFormattee(
-      params, domaineAction, {action, partition}
+      params, domaine, {action, partition}
     )
   }
 

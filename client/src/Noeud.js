@@ -14,11 +14,18 @@ export function Noeud(props) {
   const [senseurs, setSenseurs] = useState([])
   const [erreur, setErreur] = useState('')
   const [confirmation, setConfirmation] = useState('')
+  const [noeud, setNoeud] = useState('')
 
   const modeProtege = props.rootProps.modeProtege,
         connexion = props.workers.connexion,
-        noeuds = props.noeuds,
+        listeNoeuds = props.listeNoeuds,
         noeud_id = props.paramsPage.noeud_id
+
+  // Conserver noeud
+  const instNoeud = listeNoeuds.noeuds.filter(noeud=>{
+    return noeud.noeud_id === noeud_id
+  })[0] // Filtrer, garder premier element
+  useEffect(()=>{ setNoeud(instNoeud) }, [instNoeud])
 
   // Entretien contexte pour callback comlink proxys
   useEffect(()=>{
@@ -45,8 +52,10 @@ export function Noeud(props) {
   }, [])
 
   useEffect(()=>{
-    if(modeProtege) {
-      connexion.getListeSenseursNoeud(noeud_id)
+    if(modeProtege && noeud && noeud.partition) {
+      console.debug("Charger liste senseurs pour : %O", noeud)
+      let partition = noeud.partition
+      connexion.getListeSenseursNoeud(partition, noeud_id)
         .then(senseurs=>{
           console.debug("Senseurs charges : %O", senseurs)
           setSenseurs(senseurs)
@@ -57,13 +66,9 @@ export function Noeud(props) {
         connexion.retirerEvenementsSenseurs()
       }
     }
-  }, [modeProtege, setSenseurs])
+  }, [modeProtege, setSenseurs, noeud])
 
   // const noeud_id = props.rootProps.paramsPage.noeud_id
-
-  const noeud = noeuds.filter(noeud=>{
-    return noeud.noeud_id === noeud_id
-  })[0] // Filtrer, garder premier element
 
   return (
     <div>

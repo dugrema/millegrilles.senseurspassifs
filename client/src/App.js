@@ -119,28 +119,30 @@ async function preparerWorkers(setWorkers, setEtatConnexion, setNomUsager) {
 
 function ApplicationSenseursPassifs(props) {
 
-  const [noeuds, setNoeuds] = useState('')
+  const [listeNoeuds, setListeNoeuds] = useState('')
 
   const connexion = props.workers.connexion,
         modeProtege = props.rootProps.modeProtege
 
   const traiterMessageNoeudsHandler = useCallback(comlinkProxy(msg => {
     console.debug("Message noeuds recu : %O", msg)
-    majNoeud(msg, _contexte.noeuds, _contexte.setNoeuds)
+    majNoeud(msg, _contexte.listeNoeuds, _contexte.setListeNoeuds)
   }), [])
 
   // Entretien du contexte global pour les callbacks comlink proxy
   useEffect(()=>{
-    _contexte.noeuds = noeuds
-    _contexte.setNoeuds = setNoeuds
-  }, [noeuds, setNoeuds])
+    _contexte.listeNoeuds = listeNoeuds
+    _contexte.setListeNoeuds = setListeNoeuds
+  }, [listeNoeuds, setListeNoeuds])
 
   useEffect(()=>{
     if(connexion && modeProtege) {
       connexion.getListeNoeuds()
-        .then(noeuds=>{
-          console.debug("Noeuds recus : %O", noeuds)
-          setNoeuds(noeuds)
+        .then(listeNoeuds=>{
+          console.debug("Noeuds recus : %O", listeNoeuds)
+          // Injecter partition dans les noeuds
+          listeNoeuds.noeuds.forEach(n => {n.partition = listeNoeuds.partition})
+          setListeNoeuds(listeNoeuds)
         })
         .catch(err=>{console.error("Erreur reception noeuds : %O", err)})
 
@@ -169,24 +171,25 @@ function ApplicationSenseursPassifs(props) {
                                  workers={props.workers}
                                  page={rootProps.page}
                                  paramsPage={rootProps.paramsPage}
-                                 noeuds={noeuds} />
+                                 listeNoeuds={listeNoeuds} />
   }
 
   return pageRender
 
 }
 
-function majNoeud(evenement, noeuds, setNoeuds) {
+function majNoeud(evenement, listeNoeuds, setNoeuds) {
   const {message, exchange} = evenement
 
   const noeud_id = message.noeud_id
 
   var trouve = false
-  const noeudsMaj = noeuds.map(noeud=>{
+  const noeudsMaj = listeNoeuds.noeuds.map(noeud=>{
     if(noeud.noeud_id === noeud_id) {
       trouve = true
       var copieNoeud = Object.assign({}, noeud)
       copieNoeud = Object.assign(copieNoeud, message)
+      copieNoeud.partition = listeNoeuds.partition  // Copier partition du noeud
       return copieNoeud
     }
     return noeud

@@ -56,29 +56,6 @@ async function challenge(socket, params, cb) {
   cb(reponseSignee)
 }
 
-// Enregistre les evenements prive sur le socket
-// async function enregistrerPrive(socket, amqpdao) {
-//   debug("Enregistrer evenements prives sur socket %s", socket.id)
-//   socket.on('disconnect', ()=>{
-//     deconnexion(socket)
-//   })
-//
-//   // Operation niveau prive
-//   socket.on('getListeNoeuds', cb => {getListeNoeuds(socket, cb)})
-//   socket.on('getListeSenseursNoeud', (noeud_id, cb) => {getListeSenseursNoeud(socket, noeud_id, cb)})
-//   socket.on('changerNomNoeud', (params, cb) => {changerNomNoeud(socket, params, cb)})
-//   socket.on('changerSecuriteNoeud', (params, cb) => {changerSecuriteNoeud(socket, params, cb)})
-//   socket.on('setAuthTokenBlynk', (params, cb) => {setAuthTokenBlynk(socket, params, cb)})
-//   socket.on('setServerBlynk', (params, cb) => {setServerBlynk(socket, params, cb)})
-//   socket.on('setSecuriteSenseur', (params, cb) => {setSecuriteSenseur(socket, params, cb)})
-//   socket.on('changerNomSenseur', (params, cb) => {changerNomSenseur(socket, params, cb)})
-//   socket.on('setVpinSenseur', (params, cb) => {setVpinSenseur(socket, params, cb)})
-//
-//   socket.on('subscribe', params=>{subscribe(socket, params)})
-//   socket.on('unsubscribe', params=>{unsubscribe(socket, params)})
-//
-// }
-
 // Enregistre les evenements proteges sur le socket du proprietaire
 function enregistrerEvenementsProteges(socket, opts) {
   debug("Enregistrer evenements proteges")
@@ -126,11 +103,11 @@ async function getListeNoeuds(socket, cb) {
   }
 }
 
-async function getListeSenseursNoeud(socket, noeud_id, cb) {
-  debug("getListeSenseursNoeud:\n%s", noeud_id)
-  const dao = socket.senseursPassifsDao
+async function getListeSenseursNoeud(socket, requete, cb) {
   try {
-    const noeuds = await dao.getListeSenseursNoeud(noeud_id)
+    debug("getListeSenseursNoeud:\n%O", requete)
+    const dao = socket.senseursPassifsDao
+    const noeuds = await dao.getListeSenseursNoeud(requete)
     cb(noeuds)
   } catch(err) {
     debug("Erreur getListeSenseursNoeuds\n%O", err)

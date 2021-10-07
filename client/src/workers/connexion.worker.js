@@ -177,11 +177,15 @@ async function onConnect() {
 // }
 
 function getListeNoeuds() {
-  return connexionClient.emitBlocking('SenseursPassifs/getListeNoeuds')
+  return connexionClient.emitBlocking('SenseursPassifs/getListeNoeuds', null, {domaine: 'SenseursPassifs', attacherCertificat: true})
 }
 
-function getListeSenseursNoeud(noeud_id) {
-  return connexionClient.emitBlocking('SenseursPassifs/getListeSenseursNoeud', noeud_id)
+function getListeSenseursNoeud(partition, noeud_id) {
+  return connexionClient.emitBlocking(
+    'SenseursPassifs/getListeSenseursNoeud',
+    {partition, noeud_id},
+    {domaine: 'SenseursPassifs', action: 'listeSenseursPourNoeud', attacherCertificat: true}
+  )
 }
 
 function changerNomNoeud(noeud_id, nom) {

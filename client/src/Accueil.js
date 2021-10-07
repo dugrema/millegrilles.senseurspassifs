@@ -23,7 +23,7 @@ export function Accueil(props) {
   return (
     <div>
       <h1>Senseurs Passifs</h1>
-      <ListeNoeuds noeuds={props.noeuds} selectionnerNoeud={selectionnerNoeud} />
+      <ListeNoeuds listeNoeuds={props.listeNoeuds} selectionnerNoeud={selectionnerNoeud} />
 
       <h2>Sommaire</h2>
       <Sommaire noeuds={props.noeuds}
@@ -36,9 +36,11 @@ export function Accueil(props) {
 
 function ListeNoeuds(props) {
 
-  if(!props.noeuds) return ''
+  console.debug("PROPPYS : %O", props)
 
-  const listeNoeuds = props.noeuds.map(noeud=>{
+  if(!props.listeNoeuds) return ''
+
+  const listeNoeuds = props.listeNoeuds.noeuds.map(noeud=>{
     return <NoeudItem key={noeud.noeud_id} noeud={noeud} selectionnerNoeud={props.selectionnerNoeud} />
   })
 
