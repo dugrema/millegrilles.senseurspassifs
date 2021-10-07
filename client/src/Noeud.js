@@ -102,15 +102,8 @@ function AfficherInformationNoeud(props) {
         blynkActif = noeud.blynk_actif || false
 
   const changerNomNoeud = useCallback(async _ => {
-    // console.debug("Changer nom noeud : %s", descriptif)
-
-    if(!descriptif) {
-      props.setErreur("Veuillez ajouter/modifier le nom du noeud")
-      return
-    }
-
-    const noeud_id = noeud.noeud_id,
-          partition = noeud.partition
+    if(!descriptif) { props.setErreur("Veuillez ajouter/modifier le nom du noeud"); return }
+    const noeud_id = noeud.noeud_id, partition = noeud.partition
 
     try {
       const reponse = await connexion.majNoeud(partition, {noeud_id, descriptif})
@@ -120,6 +113,19 @@ function AfficherInformationNoeud(props) {
       props.setErreur(''+err)
     }
   }, [connexion, descriptif, noeud, setConfirmation, setErreur])
+
+  const changerSecurite = useCallback(async event => {
+    const securite = event.currentTarget.value
+    const noeud_id = noeud.noeud_id, partition = noeud.partition
+
+    try {
+      const reponse = await connexion.majNoeud(partition, {noeud_id, securite})
+      console.debug("Reponse changer nom noeud : %O", reponse)
+      await props.majNoeud({message: reponse})
+    } catch (err) {
+      props.setErreur(''+err)
+    }
+  }, [connexion, noeud, setConfirmation, setErreur])
 
   const setModeEdition = useCallback((uuidSenseur, estEdition) => {
 
@@ -164,15 +170,15 @@ function AfficherInformationNoeud(props) {
         <Col md={8}>
           <Button variant="success"
                   disabled={noeud.securite==='3.protege' || !props.rootProps.modeProtege}
-                  onClick={props.changerSecurite}
+                  onClick={changerSecurite}
                   value="3.protege">Protege</Button>
           <Button variant="dark"
                   disabled={noeud.securite==='2.prive' || !props.rootProps.modeProtege}
-                  onClick={props.changerSecurite}
+                  onClick={changerSecurite}
                   value="2.prive">Prive</Button>
           <Button variant="danger"
                   disabled={noeud.securite==='1.public' || !props.rootProps.modeProtege}
-                  onClick={props.changerSecurite}
+                  onClick={changerSecurite}
                   value="1.public">Public</Button>
         </Col>
       </Row>
