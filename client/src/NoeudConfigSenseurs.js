@@ -1,5 +1,5 @@
 import React from 'react'
-import { Container, Row, Col, Button, Form, Card, CardColumns } from 'react-bootstrap';
+import { Container, Row, Col, Button, Form, Card, CardGroup } from 'react-bootstrap';
 
 import { DateTimeAfficher } from './components/ReactFormatters'
 
@@ -24,9 +24,9 @@ export function Senseurs(props) {
   return (
     <div>
       <h2>Senseurs</h2>
-      <CardColumns>
+      <CardGroup>
         {senseurs}
-      </CardColumns>
+      </CardGroup>
     </div>
   )
 }
