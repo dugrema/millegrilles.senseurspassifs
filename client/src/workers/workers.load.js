@@ -1,5 +1,5 @@
 import {wrap as comlinkWrap, proxy as comlinkProxy, releaseProxy} from 'comlink'
-import {getCertificats, getClesPrivees} from '@dugrema/millegrilles.common/lib/browser/dbUsager'
+import {getUsager, getClesPrivees} from '@dugrema/millegrilles.common/lib/browser/dbUsager'
 
 import ChiffrageWorker from '@dugrema/millegrilles.common/lib/browser/chiffrage.worker'
 import X509Worker from '@dugrema/millegrilles.common/lib/browser/x509.worker'
@@ -40,10 +40,10 @@ async function initialiserConnexion(app) {
 
 export async function preparerWorkersAvecCles(nomUsager, chiffrageWorker, connexionWorker, x509Worker) {
   // Initialiser certificat de MilleGrille et cles si presentes
-  const certInfo = await getCertificats(nomUsager)
-  if(certInfo && certInfo.fullchain) {
-    const fullchain = certInfo.fullchain
-    const clesPrivees = await getClesPrivees(nomUsager)
+  const usager = await getUsager(nomUsager)
+  console.debug("Usager charge : %O", usager)
+  if(usager && usager.certificat) {
+    const fullchain = usager.certificat
 
     const caPem = [...fullchain].pop()
 
@@ -56,16 +56,16 @@ export async function preparerWorkersAvecCles(nomUsager, chiffrageWorker, connex
 
     // Initialiser web worker
     await chiffrageWorker.initialiserFormatteurMessage({
-      certificatPem: certInfo.fullchain,
-      clePriveeSign: clesPrivees.signer,
-      clePriveeDecrypt: clesPrivees.dechiffrer,
+      certificatPem: usager.certificat.join(''),
+      clePriveeSign: usager.signer,
+      clePriveeDecrypt: usager.dechiffrer,
       DEBUG: false
     })
 
     await connexionWorker.initialiserFormatteurMessage({
-      certificatPem: certInfo.fullchain,
-      clePriveeSign: clesPrivees.signer,
-      clePriveeDecrypt: clesPrivees.dechiffrer,
+      certificatPem: usager.certificat.join(''),
+      clePriveeSign: usager.signer,
+      clePriveeDecrypt: usager.dechiffrer,
       DEBUG: false
     })
   } else {
