@@ -1,11 +1,9 @@
 import React, {useState, useEffect, useCallback} from 'react'
 import { Container, Row, Col, Nav, Navbar } from 'react-bootstrap'
-import {proxy as comlinkProxy} from 'comlink'
+import { proxy } from 'comlink'
 import { Trans } from 'react-i18next'
 
 import { SectionContenu } from './SectionContenu'
-
-import {setupWorkers, preparerWorkersAvecCles} from './workers/workers.load'
 
 var manifestImport = {
   date: "DUMMY-Date",
@@ -14,31 +12,33 @@ var manifestImport = {
 
 const manifest = manifestImport
 
-let _etatConnexion,
-    _setEtatConnexion,
-    _workers
+// let _etatConnexion,
+//     _setEtatConnexion,
+//     _workers
 
 const _contexte = {}  // Contexte global pour comlink proxy callbacks
 
 export default function App(props) {
-  const [modeProtege, setModeProtege] = useState(false)
   const [workers, setWorkers] = useState('')
-  const [nomUsager, setNomUsager] = useState('')
+  const [usager, setUsager] = useState('')
   const [page, setPage] = useState('Accueil')
   const [paramsPage, setParamsPage] = useState('')
+  const [etatConnexion, setEtatConnexion] = useState('')
+  const [idmg, setIdmg] = useState('')
 
-  const setEtatConnexion = useCallback(etat => {
-    setModeProtege(etat)
-  }, [setModeProtege])
+  // const setEtatConnexion = useCallback(etat => {
+  //   setModeProtege(etat.protege)
+  // }, [setModeProtege])
 
-  useEffect(
-    _=>{
-      _setEtatConnexion = comlinkProxy(setEtatConnexion)
-      preparerWorkers(setWorkers, _setEtatConnexion, setNomUsager)
-        .catch(err=>{console.error("Erreur preparation workers : %O", err)})
-    },
-    [setWorkers, setEtatConnexion, setNomUsager]
-  )
+  // useEffect(
+  //   _=>{
+  //     _setEtatConnexion = comlinkProxy(setEtatConnexion)
+  //     chargerWorkers(workers=>{
+  //       console.debug("Workers charges : %O", workers)
+  //     }).catch(err=>{console.error("Erreur preparation workers : %O", err)})
+  //   },
+  //   [setWorkers, setEtatConnexion, setNomUsager]
+  // )
 
   const changerPage = useCallback(eventPage => {
     // Verifier si event ou page
@@ -60,71 +60,123 @@ export default function App(props) {
   }, [page, setPage, setParamsPage])
 
 
+  // Chargement des proprietes et workers
+  useEffect(()=>{
+      importerWorkers(setWorkers)
+        .then(()=>{ console.debug("Chargement de l'application complete") })
+        .catch(err=>{console.error("Erreur chargement application : %O", err)})
+  }, [setWorkers])
+
+  useEffect(()=>{
+    if(workers) {
+      if(workers.connexion) {
+        connecter(workers, setUsager, setEtatConnexion)
+          .then(infoConnexion=>{console.debug("Info connexion : %O", infoConnexion)})
+          .catch(err=>{console.debug("Erreur de connexion")})
+      }
+    }
+  }, [workers, setUsager, setEtatConnexion])
+
+  useEffect(()=>{
+    if(!etatConnexion) return 
+    // workers.connexion.enregistrerCallbackMajFichier(proxy(data=>{
+    //   // console.debug("callbackMajFichier data: %O", data)
+    //   setEvenementFichier(data)
+    // }))
+    //   .catch(err=>{console.error("Erreur enregistrerCallbackMajFichier : %O", err)})
+    // workers.connexion.enregistrerCallbackMajCollection(proxy(data=>{
+    //   // console.debug("callbackMajCollection data: %O", data)
+    //   setEvenementCollection(data)
+    // }))
+    //   .catch(err=>{console.error("Erreur enregistrerCallbackMajCollection : %O", err)})
+
+    workers.chiffrage.getIdmgLocal().then(idmg=>{
+      console.debug("IDMG local chiffrage : %O", idmg)
+      setIdmg(idmg)
+    })
+  }, [etatConnexion, setIdmg])
+    
   const rootProps = {
-    nomUsager, modeProtege, changerPage, page, paramsPage
+    usager, changerPage, page, paramsPage
   }
 
   return <Layout
             changerPage={changerPage}
             page={page}
-            rootProps={rootProps}>
+            rootProps={rootProps}
+            idmg={idmg}>
 
             <ApplicationSenseursPassifs workers={workers}
-                                        rootProps={rootProps} />
+                                        rootProps={rootProps} 
+                                        etatConnexion={etatConnexion} />
          </Layout>
 
 }
 
-async function preparerWorkers(setWorkers, setEtatConnexion, setNomUsager) {
-  if(!_workers && setEtatConnexion && setNomUsager) {
-    const workers = await setupWorkers()
-    console.debug("Workers charges : %O", workers)
-    _workers = workers  // Conserver globalement, utilise pour callbacks
-
-    const {connexion, chiffrage, x509} = workers
-    const connexionWorker = connexion.connexionWorker,
-          chiffrageWorker = chiffrage.chiffrageWorker,
-          x509Worker = x509.x509Worker
-
-    const _preparerWorkersAvecCles = async nomUsager => {
-      console.debug("Preparation workers avec cle de l'usager %s", nomUsager)
-      setNomUsager(nomUsager)
-      await preparerWorkersAvecCles(nomUsager, chiffrageWorker, connexionWorker, x509Worker)
-      console.debug("preparerWorkersAvecCles pret pour l'usager %s", nomUsager)
-    }
-
-    console.debug("Set callbacks connexion worker")
-    await connexionWorker.setCallbacks(
-      comlinkProxy(setEtatConnexion),
-      x509Worker,
-      comlinkProxy(_preparerWorkersAvecCles)
-    )
-
-    /* Helper pour connecter le worker avec socketIo.
-       - connexionWorker : proxu de connexionWorker deja initialise
-       - app : this d'une classe React */
-    const opts = {location: window.location.href}
-    console.debug("Connexion a socket.io avec %O", opts)
-    const infoIdmg = await connexionWorker.connecter(opts)
-    console.debug("Connexion socket.io completee, info idmg : %O", infoIdmg)
-
-    // Indique a l'application que les workers sont prets
-    setWorkers({
-      connexion: connexionWorker,
-      chiffrage: chiffrageWorker,
-      x509: x509Worker,
-    })
-  }
+async function importerWorkers(setWorkers) {
+  const { chargerWorkers } = await import('./workers/workerLoader')
+  const workers = chargerWorkers()
+  setWorkers(workers)
 }
 
+async function connecter(workers, setUsager, setEtatConnexion) {
+  const { connecter: connecterWorker } = await import('./workers/connecter')
+  return connecterWorker(workers, setUsager, setEtatConnexion)
+}
+
+// async function preparerWorkers(setWorkers, setEtatConnexion, setNomUsager) {
+//   if(!_workers && setEtatConnexion && setNomUsager) {
+//     const workers = await setupWorkers()
+//     console.debug("Workers charges : %O", workers)
+//     _workers = workers  // Conserver globalement, utilise pour callbacks
+
+//     const {connexion, chiffrage, x509} = workers
+//     const connexionWorker = connexion.connexionWorker,
+//           chiffrageWorker = chiffrage.chiffrageWorker,
+//           x509Worker = x509.x509Worker
+
+//     const _preparerWorkersAvecCles = async nomUsager => {
+//       console.debug("Preparation workers avec cle de l'usager %s", nomUsager)
+//       setNomUsager(nomUsager)
+//       await preparerWorkersAvecCles(nomUsager, chiffrageWorker, connexionWorker, x509Worker)
+//       console.debug("preparerWorkersAvecCles pret pour l'usager %s", nomUsager)
+//     }
+
+//     console.debug("Set callbacks connexion worker")
+//     await connexionWorker.setCallbacks(
+//       comlinkProxy(setEtatConnexion),
+//       x509Worker,
+//       comlinkProxy(_preparerWorkersAvecCles)
+//     )
+
+//     /* Helper pour connecter le worker avec socketIo.
+//        - connexionWorker : proxu de connexionWorker deja initialise
+//        - app : this d'une classe React */
+//     const opts = {location: window.location.href}
+//     console.debug("Connexion a socket.io avec %O", opts)
+//     const infoIdmg = await connexionWorker.connecter(opts)
+//     console.debug("Connexion socket.io completee, info idmg : %O", infoIdmg)
+
+//     // Indique a l'application que les workers sont prets
+//     setWorkers({
+//       connexion: connexionWorker,
+//       chiffrage: chiffrageWorker,
+//       x509: x509Worker,
+//     })
+//   }
+// }
+
 function ApplicationSenseursPassifs(props) {
+
+  console.debug("!!! ApplicationSenseursPassifs Proppys : %O", props)
 
   const [listeNoeuds, setListeNoeuds] = useState('')
 
   const connexion = props.workers.connexion,
-        modeProtege = props.rootProps.modeProtege
+        etatConnexion = props.etatConnexion,
+        modeProtege = etatConnexion?etatConnexion.protege:false
 
-  const traiterMessageNoeudsHandler = useCallback(comlinkProxy(msg => {
+  const traiterMessageNoeudsHandler = useCallback(proxy(msg => {
     console.debug("Message noeuds recu : %O", msg)
     majNoeud(msg, _contexte.listeNoeuds, _contexte.setListeNoeuds)
   }), [])

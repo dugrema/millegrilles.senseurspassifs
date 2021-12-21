@@ -43,7 +43,7 @@ function verifierAutorisation(socket, securite, certificatForge) {
     let prive = false, protege = false
 
     const extensions = extraireExtensionsMillegrille(certificatForge)
-    // console.debug("!!! www.verifierAutorisation extensions %O", extensions)
+    console.debug("!!! www.verifierAutorisation extensions %O", extensions)
 
     if(['proprietaire', 'delegue'].includes(extensions.delegationGlobale)) {
         // Deleguation globale donne tous les acces

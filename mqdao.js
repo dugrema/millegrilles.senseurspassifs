@@ -25,19 +25,20 @@ export function challenge(socket, params) {
 }
 
 export function getListeNoeuds(socket, params) {
-    return transmettreRequete(socket, params, 'documentsParTuuid')
+    console.debug("!!! Message listeNoeuds: %O", params)
+    return transmettreRequete(socket, params, 'listeNoeuds')
 }
 
 export function getListeSenseursNoeud(socket, params) {
-    return transmettreRequete(socket, params, 'documentsParTuuid')
+    return transmettreRequete(socket, params, 'listeSenseursPourNoeud')
 }
 
 export function majNoeud(socket, params) {
-    return transmettreCommande(socket, params, 'nouvelleCollection')
+    return transmettreCommande(socket, params, 'majNoeud')
 }
 
 export function majSenseur(socket, params) {
-    return transmettreCommande(socket, params, 'nouvelleCollection')
+    return transmettreCommande(socket, params, 'majSenseur')
 }
 
 async function transmettreRequete(socket, params, action, opts) {
@@ -77,6 +78,7 @@ async function transmettreCommande(socket, params, action, opts) {
 
 /* Fonction de verification pour eviter abus de l'API */
 function verifierMessage(message, domaine, action) {
+    console.debug("Verifier domaine %s action %s pour %O", domaine, action, message)
     const entete = message['en-tete'] || {},
           domaineRecu = entete.domaine,
           actionRecue = entete.action
@@ -84,7 +86,7 @@ function verifierMessage(message, domaine, action) {
     if(actionRecue !== action) throw new Error(`Mismatch action (${actionRecue} !== ${action})"`)
 }
 
-export async function ecouterEvenementsSenseurs(socket, params, cb) {
+export async function ecouterEvenementsSenseurs(socket, cb) {
     const opts = {
         routingKeys: ['evenement.SenseursPassifs.lectureConfirmee'],
         exchange: [L3Protege],
@@ -92,13 +94,13 @@ export async function ecouterEvenementsSenseurs(socket, params, cb) {
     socket.subscribe(opts, cb)
 }
 
-export async function retirerEvenementsSenseurs(socket, params, cb) {
+export async function retirerEvenementsSenseurs(socket, cb) {
     const routingKeys = ['3.protege/evenement.SenseursPassifs.lectureConfirmee']
     socket.unsubscribe({routingKeys})
     if(cb) cb(true)
 }
 
-export async function ecouterEvenementsNoeuds(socket, params, cb) {
+export async function ecouterEvenementsNoeuds(socket, cb) {
     const opts = {
         routingKeys: ['evenement.SenseursPassifs.majNoeudConfirmee'],
         exchange: [L3Protege],
@@ -106,7 +108,7 @@ export async function ecouterEvenementsNoeuds(socket, params, cb) {
     socket.subscribe(opts, cb)
 }
 
-export async function retirerEvenementsNoeuds(socket, params, cb) {
+export async function retirerEvenementsNoeuds(socket, cb) {
     const routingKeys = ['3.protege/evenement.SenseursPassifs.majNoeudConfirmee']
     socket.unsubscribe({routingKeys})
     if(cb) cb(true)
