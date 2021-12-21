@@ -1,9 +1,14 @@
-import React, {useState, useEffect, useCallback} from 'react'
+import React, {Suspense, useState, useEffect, useCallback} from 'react'
 import { Container, Row, Col, Nav, Navbar } from 'react-bootstrap'
 import { proxy } from 'comlink'
 import { Trans } from 'react-i18next'
 
+import { LayoutApplication, HeaderApplication, FooterApplication, styles as stylesCommuns } from '@dugrema/millegrilles.reactjs'
+
+import Menu from './Menu'
 import { SectionContenu } from './SectionContenu'
+
+import './App.css'
 
 var manifestImport = {
   date: "DUMMY-Date",
@@ -18,7 +23,7 @@ const manifest = manifestImport
 
 const _contexte = {}  // Contexte global pour comlink proxy callbacks
 
-export default function App(props) {
+function App(props) {
   const [workers, setWorkers] = useState('')
   const [usager, setUsager] = useState('')
   const [page, setPage] = useState('Accueil')
@@ -100,17 +105,53 @@ export default function App(props) {
     usager, changerPage, page, paramsPage
   }
 
-  return <Layout
-            changerPage={changerPage}
-            page={page}
+  // return <Layout
+  //           changerPage={changerPage}
+  //           page={page}
+  //           rootProps={rootProps}
+  //           idmg={idmg}>
+
+  //           <ApplicationSenseursPassifs workers={workers}
+  //                                       rootProps={rootProps} 
+  //                                       etatConnexion={etatConnexion} />
+  //        </Layout>
+
+  return (
+    <LayoutApplication>
+      
+      <HeaderApplication>
+        <Menu 
+          workers={workers} 
+          usager={usager} 
+          etatConnexion={etatConnexion} 
+          setPage={setPage}
+        />
+      </HeaderApplication>
+
+      <Container>
+        <Suspense fallback={<Attente />}>
+          <ApplicationSenseursPassifs 
             rootProps={rootProps}
-            idmg={idmg}>
+            workers={workers} 
+            usager={usager}
+            etatConnexion={etatConnexion} 
+            page={page}
+          />
+        </Suspense>
+      </Container>
 
-            <ApplicationSenseursPassifs workers={workers}
-                                        rootProps={rootProps} 
-                                        etatConnexion={etatConnexion} />
-         </Layout>
+      <FooterApplication>
+        <Footer workers={workers} idmg={idmg} />
+      </FooterApplication>
+      
+    </LayoutApplication>
+  )
+}
 
+export default App
+
+function Attente(props) {
+  return <p>Chargement en cours</p>
 }
 
 async function importerWorkers(setWorkers) {
@@ -124,51 +165,9 @@ async function connecter(workers, setUsager, setEtatConnexion) {
   return connecterWorker(workers, setUsager, setEtatConnexion)
 }
 
-// async function preparerWorkers(setWorkers, setEtatConnexion, setNomUsager) {
-//   if(!_workers && setEtatConnexion && setNomUsager) {
-//     const workers = await setupWorkers()
-//     console.debug("Workers charges : %O", workers)
-//     _workers = workers  // Conserver globalement, utilise pour callbacks
-
-//     const {connexion, chiffrage, x509} = workers
-//     const connexionWorker = connexion.connexionWorker,
-//           chiffrageWorker = chiffrage.chiffrageWorker,
-//           x509Worker = x509.x509Worker
-
-//     const _preparerWorkersAvecCles = async nomUsager => {
-//       console.debug("Preparation workers avec cle de l'usager %s", nomUsager)
-//       setNomUsager(nomUsager)
-//       await preparerWorkersAvecCles(nomUsager, chiffrageWorker, connexionWorker, x509Worker)
-//       console.debug("preparerWorkersAvecCles pret pour l'usager %s", nomUsager)
-//     }
-
-//     console.debug("Set callbacks connexion worker")
-//     await connexionWorker.setCallbacks(
-//       comlinkProxy(setEtatConnexion),
-//       x509Worker,
-//       comlinkProxy(_preparerWorkersAvecCles)
-//     )
-
-//     /* Helper pour connecter le worker avec socketIo.
-//        - connexionWorker : proxu de connexionWorker deja initialise
-//        - app : this d'une classe React */
-//     const opts = {location: window.location.href}
-//     console.debug("Connexion a socket.io avec %O", opts)
-//     const infoIdmg = await connexionWorker.connecter(opts)
-//     console.debug("Connexion socket.io completee, info idmg : %O", infoIdmg)
-
-//     // Indique a l'application que les workers sont prets
-//     setWorkers({
-//       connexion: connexionWorker,
-//       chiffrage: chiffrageWorker,
-//       x509: x509Worker,
-//     })
-//   }
-// }
-
 function ApplicationSenseursPassifs(props) {
 
-  console.debug("!!! ApplicationSenseursPassifs Proppys : %O", props)
+  // console.debug("!!! ApplicationSenseursPassifs Proppys : %O", props)
 
   const [listeNoeuds, setListeNoeuds] = useState('')
 
@@ -211,11 +210,12 @@ function ApplicationSenseursPassifs(props) {
 
   const rootProps = {
     ...props.rootProps,
+    modeProtege,
     manifest,
   }
 
   let pageRender
-  if(!props.rootProps.modeProtege) {
+  if(!etatConnexion || !etatConnexion.protege) {
     pageRender = <p>Attente de connexion</p>
   } else {
     // 3. Afficher application
@@ -227,7 +227,11 @@ function ApplicationSenseursPassifs(props) {
                                  majNoeud={traiterMessageNoeudsHandler} />
   }
 
-  return pageRender
+  return (
+    <Container className="main-body">
+      {pageRender}
+    </Container>
+  )
 
 }
 
@@ -292,69 +296,66 @@ function Contenu(props) {
 
 function Footer(props) {
 
-  const idmg = props.rootProps.idmg
-  var qrCode = 'QR'
+  const idmg = props.idmg
 
   return (
-    <Container fluid className="footer bg-info">
+    <Container>
       <Row>
-        <Col sm={2} className="footer-left"></Col>
-        <Col sm={8} className="footer-center">
-          <div className="millegrille-footer">
+        <Col>
+          <div>
             <div>IDMG : {idmg}</div>
             <div>
-              <Trans>application.coupdoeilAdvert</Trans>{' '}
+              Senseurs Passifs pour MilleGrilles
             </div>
           </div>
         </Col>
-        <Col sm={2} className="footer-right">{qrCode}</Col>
       </Row>
     </Container>
   )
 }
 
-function Menu(props) {
+// function Menu(props) {
 
-  let boutonProtege
-  if(props.rootProps.modeProtege) {
-    boutonProtege = <i className="fa fa-lg fa-lock protege"/>
-  } else {
-    boutonProtege = <i className="fa fa-lg fa-unlock"/>
-  }
+//   let boutonProtege
+//   if(props.rootProps.modeProtege) {
+//     boutonProtege = <i className="fa fa-lg fa-lock protege"/>
+//   } else {
+//     boutonProtege = <i className="fa fa-lg fa-unlock"/>
+//   }
 
-  return (
-    <Navbar collapseOnSelect expand="md" bg="info" variant="dark" fixed="top">
-      <Navbar.Brand href='/'><i className="fa fa-home"/></Navbar.Brand>
-      <Navbar.Toggle aria-controls="responsive-navbar-menu" />
-      <Navbar.Collapse id="responsive-navbar-menu">
+//   return (
+//     <Navbar collapseOnSelect expand="md" bg="info" variant="dark" fixed="top">
+//       <Navbar.Brand href='/'><i className="fa fa-home"/></Navbar.Brand>
+//       <Navbar.Toggle aria-controls="responsive-navbar-menu" />
+//       <Navbar.Collapse id="responsive-navbar-menu">
 
-        <MenuItems changerPage={props.changerPage}/>
+//         <MenuItems changerPage={props.changerPage}/>
 
-        <Nav className="justify-content-end">
-          <Nav.Link onClick={props.rootProps.toggleProtege}>{boutonProtege}</Nav.Link>
-          <Nav.Link onClick={props.rootProps.changerLanguage}><Trans>menu.changerLangue</Trans></Nav.Link>
-        </Nav>
-      </Navbar.Collapse>
-    </Navbar>
-  )
-}
+//         <Nav className="justify-content-end">
+//           <Nav.Link onClick={props.rootProps.toggleProtege}>{boutonProtege}</Nav.Link>
+//           <Nav.Link onClick={props.rootProps.changerLanguage}><Trans>menu.changerLangue</Trans></Nav.Link>
+//         </Nav>
+//       </Navbar.Collapse>
+//     </Navbar>
+//   )
+// }
 
-export function MenuItems(props) {
+// export function MenuItems(props) {
 
-  const changerPage = event => {
-    props.changerPage(event)
-  }
+//   const changerPage = event => {
+//     props.changerPage(event)
+//   }
 
-  return (
-    <Nav className="mr-auto" activeKey={props.section} onSelect={changerPage}>
+//   return (
+//     <Nav className="mr-auto" activeKey={props.section} onSelect={changerPage}>
 
-      <Nav.Item>
-        <Nav.Link eventKey='Accueil'>
-          <Trans>menu.Accueil</Trans>
-        </Nav.Link>
-      </Nav.Item>
+//       <Nav.Item>
+//         <Nav.Link eventKey='Accueil'>
+//           <Trans>menu.Accueil</Trans>
+//         </Nav.Link>
+//       </Nav.Item>
 
-    </Nav>
-  )
+//     </Nav>
+//   )
 
-}
+// }

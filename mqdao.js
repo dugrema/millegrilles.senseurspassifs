@@ -25,7 +25,6 @@ export function challenge(socket, params) {
 }
 
 export function getListeNoeuds(socket, params) {
-    console.debug("!!! Message listeNoeuds: %O", params)
     return transmettreRequete(socket, params, 'listeNoeuds')
 }
 
@@ -43,14 +42,16 @@ export function majSenseur(socket, params) {
 
 async function transmettreRequete(socket, params, action, opts) {
     opts = opts || {}
-    const domaine = opts.domaine || DOMAINE_SENSEURSPASSIFS
+    const entete = params['en-tete'] || {}
+    const domaine = opts.domaine || entete.domaine || DOMAINE_SENSEURSPASSIFS
+    const partition = opts.partition || entete.partition
     const exchange = opts.exchange || L3Protege
     try {
         verifierMessage(params, domaine, action)
         return await socket.amqpdao.transmettreRequete(
             domaine, 
             params, 
-            {action, exchange, noformat: true, decoder: true}
+            {action, partition, exchange, noformat: true, decoder: true}
         )
     } catch(err) {
         console.error("mqdao.transmettreRequete ERROR : %O", err)
@@ -60,7 +61,9 @@ async function transmettreRequete(socket, params, action, opts) {
 
 async function transmettreCommande(socket, params, action, opts) {
     opts = opts || {}
-    const domaine = opts.domaine || DOMAINE_SENSEURSPASSIFS
+    const entete = params['en-tete'] || {}
+    const domaine = opts.domaine || entete.domaine || DOMAINE_SENSEURSPASSIFS
+    const partition = opts.partition || entete.partition
     const exchange = opts.exchange || L3Protege
     const nowait = opts.nowait
     try {
@@ -68,7 +71,7 @@ async function transmettreCommande(socket, params, action, opts) {
         return await socket.amqpdao.transmettreCommande(
             domaine, 
             params, 
-            {action, exchange, noformat: true, decoder: true, nowait}
+            {action, partition, exchange, noformat: true, decoder: true, nowait}
         )
     } catch(err) {
         console.error("mqdao.transmettreCommande ERROR : %O", err)

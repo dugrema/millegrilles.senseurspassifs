@@ -7,21 +7,49 @@ function getListeNoeuds() {
   return ConnexionClient.emitBlocking('getListeNoeuds', {}, {domaine: CONST_DOMAINE_SENSEURSPASSIFS, action: 'listeNoeuds', ajouterCertificat: true})
 }
 
-function getListeSenseursNoeud(params) {
-  return ConnexionClient.emitBlocking('getListeSenseursNoeud', params, {domaine: CONST_DOMAINE_SENSEURSPASSIFS, action: 'getListeSenseursNoeud', ajouterCertificat: true})
+function getListeSenseursNoeud(noeud_id) {
+  console.debug("getListeSenseursNoeud, noeud_id: %s", noeud_id)
+  return ConnexionClient.emitBlocking(
+    'getListeSenseursNoeud', 
+    {noeud_id}, 
+    {
+      domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+      action: 'listeSenseursPourNoeud', 
+      ajouterCertificat: true,
+      partition: noeud_id,
+    }
+  )
 }
 
-function majNoeud(params) {
-  return ConnexionClient.emitBlocking('majNoeud', params, {domaine: CONST_DOMAINE_SENSEURSPASSIFS, action: 'majNoeud', ajouterCertificat: true})
+function majNoeud(partition, params) {
+  return ConnexionClient.emitBlocking(
+    'majNoeud', 
+    params, 
+    {
+      domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+      action: 'majNoeud', 
+      ajouterCertificat: true,
+      partition,
+    }
+  )
 }
 
-function majSenseur(params) {
-  return ConnexionClient.emitBlocking('majSenseur', params, {domaine: CONST_DOMAINE_SENSEURSPASSIFS, action: 'majSenseur', ajouterCertificat: true})
+function majSenseur(partition, params) {
+  return ConnexionClient.emitBlocking(
+    'majSenseur', 
+    params, 
+    {
+      domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+      action: 'majSenseur', 
+      ajouterCertificat: true,
+      partition,
+    }
+  )
 }
 
 async function ecouterEvenementsSenseurs(cb) {
   ConnexionClient.socketOn('evenement.SenseursPassifs.lectureConfirmee', cb)
-  const resultat = await ConnexionClient.emitBlocking('ecouterTranscodageProgres', {}, {noformat: true})
+  const resultat = await ConnexionClient.emitBlocking('ecouterEvenementsSenseurs', {}, {noformat: true})
   if(!resultat) {
     throw new Error("Erreur ecouterEvenementsSenseurs")
   }
