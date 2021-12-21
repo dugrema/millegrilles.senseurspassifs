@@ -1,8 +1,7 @@
-# FROM node:14
-FROM docker.maceroc.com/millegrilles_webappbase:1.42.1
+# FROM node:16
+FROM docker.maceroc.com/millegrilles_webappbase:1.47.0
 
-ENV MG_CONSIGNATION_HTTP=https://fichiers \
-    APP_FOLDER=/usr/src/app \
+ENV APP_FOLDER=/usr/src/app \
     NODE_ENV=production \
     PORT=443
 
