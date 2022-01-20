@@ -37,9 +37,9 @@ export default function Sommaire(props) {
 
   useEffect(()=>{
     if(!senseurs && connexion && modeProtege && noeuds) {
-      Promise.all(noeuds.map(item=>connexion.getListeSenseursNoeud(partition, item.noeud_id)))
+      Promise.all(noeuds.map(item=>connexion.getListeSenseursNoeud(item.noeud_id, {partition})))
         .then(resultat=>{
-          console.debug("Senseurs charges : %O", resultat)
+          console.debug("Senseurs charges noeud : %O", resultat)
           // setSenseurs(senseurs)
           let senseurs = []
           resultat.forEach(res=>{

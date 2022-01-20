@@ -1,13 +1,14 @@
 import { proxy } from 'comlink'
 
-const CONST_APP_URL = 'senseurspassifs'
+// const CONST_APP_URL = 'senseurspassifs'
+const URL_SOCKET = 'senseurspassifs/socket.io'
 
 export async function connecter(workers, setUsagerState, setEtatConnexion) {
     const { connexion } = workers
   
     // console.debug("Set callbacks connexion worker")
     const location = new URL(window.location.href)
-    location.pathname = CONST_APP_URL
+    location.pathname = URL_SOCKET
     console.info("Connecter a %O", location.href)
 
     // Preparer callbacks
@@ -24,7 +25,7 @@ async function setUsager(workers, nomUsager, setUsagerState, opts) {
     // console.debug("setUsager '%s'", nomUsager)
     const { getUsager } = await import('@dugrema/millegrilles.reactjs')
     const { forgecommon } = await import('@dugrema/millegrilles.utiljs')
-    const { pki } = await import('node-forge')
+    const { pki } = await import('@dugrema/node-forge')
     const { extraireExtensionsMillegrille } = forgecommon
     const usager = await getUsager(nomUsager)
     // console.debug("Usager info : %O", usager)
@@ -32,18 +33,23 @@ async function setUsager(workers, nomUsager, setUsagerState, opts) {
     if(usager && usager.certificat) {
         const { connexion, chiffrage, x509 } = workers
         const fullchain = usager.certificat
-        const caPem = [...fullchain].pop()
-
-        const certificatPem = fullchain.join('')
-
+        const caPem = usager.ca
+        const clePriveePem = usager.clePriveePem
+        
         // Initialiser le CertificateStore
         await chiffrage.initialiserCertificateStore(caPem, {isPEM: true, DEBUG: false})
         await x509.init(caPem)
 
         // Init cles privees
-        await chiffrage.initialiserFormatteurMessage(certificatPem, usager.dechiffrer, usager.signer, {DEBUG: true})
-        await connexion.initialiserFormatteurMessage(certificatPem, usager.signer, {DEBUG: false})
-    
+        // await chiffrage.initialiserFormatteurMessage(certificatPem, usager.dechiffrer, usager.signer, {DEBUG: true})
+        await connexion.initialiserFormatteurMessage(
+            usager.certificat,
+            clePriveePem,
+            {
+              DEBUG: true
+            }
+        )
+
         const certForge = pki.certificateFromPem(fullchain[0])
         const extensions = extraireExtensionsMillegrille(certForge)
 

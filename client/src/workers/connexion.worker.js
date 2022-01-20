@@ -1,5 +1,9 @@
 import { expose } from 'comlink'
 import * as ConnexionClient from '@dugrema/millegrilles.reactjs/src/connexionClient'
+import { hacheurs } from '@dugrema/millegrilles.reactjs'
+import { setHacheurs } from '@dugrema/millegrilles.utiljs'
+
+setHacheurs(hacheurs)
 
 const CONST_DOMAINE_SENSEURSPASSIFS = 'SenseursPassifs'
 
@@ -7,7 +11,9 @@ function getListeNoeuds() {
   return ConnexionClient.emitBlocking('getListeNoeuds', {}, {domaine: CONST_DOMAINE_SENSEURSPASSIFS, action: 'listeNoeuds', ajouterCertificat: true})
 }
 
-function getListeSenseursNoeud(noeud_id) {
+function getListeSenseursNoeud(noeud_id, opts) {
+  opts = opts || {}
+  const partition = opts.partition || noeud_id
   console.debug("getListeSenseursNoeud, noeud_id: %s", noeud_id)
   return ConnexionClient.emitBlocking(
     'getListeSenseursNoeud', 
@@ -16,7 +22,7 @@ function getListeSenseursNoeud(noeud_id) {
       domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
       action: 'listeSenseursPourNoeud', 
       ajouterCertificat: true,
-      partition: noeud_id,
+      partition,
     }
   )
 }

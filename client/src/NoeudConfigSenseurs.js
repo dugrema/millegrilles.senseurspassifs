@@ -82,6 +82,7 @@ class Senseur extends React.Component {
     }
 
     if(changement) {
+      console.debug("Sauvegarder changement senseur sur partition: %s, transaction: %O", partition, transaction)
       let reponse = await wsa.majSenseur(partition, transaction)
       console.debug("Reponse majSenseur : %O", reponse)
     }

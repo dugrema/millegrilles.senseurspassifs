@@ -77,7 +77,7 @@ function App(props) {
       if(workers.connexion) {
         connecter(workers, setUsager, setEtatConnexion)
           .then(infoConnexion=>{console.debug("Info connexion : %O", infoConnexion)})
-          .catch(err=>{console.debug("Erreur de connexion")})
+          .catch(err=>{console.debug("Erreur de connexion : %O", err)})
       }
     }
   }, [workers, setUsager, setEtatConnexion])

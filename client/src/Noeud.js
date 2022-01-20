@@ -55,7 +55,7 @@ export function Noeud(props) {
     if(modeProtege && noeud && noeud.partition) {
       console.debug("Charger liste senseurs pour : %O", noeud)
       let partition = noeud.partition
-      connexion.getListeSenseursNoeud(partition, noeud_id)
+      connexion.getListeSenseursNoeud(noeud_id, {partition})
         .then(listeSenseurs=>{
           console.debug("Senseurs charges : %O", listeSenseurs)
           setListeSenseurs(listeSenseurs.senseurs)
@@ -202,12 +202,6 @@ function AfficherInformationNoeud(props) {
                 majSenseur={props.majSenseur} />
     </div>
   )
-}
-
-async function chargerSenseurs(wsa, setState, noeud_id) {
-  const senseurs = await wsa.getListeSenseursNoeud(noeud_id)
-  console.debug("Senseurs:\n%O", senseurs)
-  setState({senseurs: senseurs.senseurs})
 }
 
 function traiterLecture(noeud_id, evenement, senseurs, setSenseurs) {
