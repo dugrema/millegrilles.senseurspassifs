@@ -5,8 +5,6 @@ import {proxy as comlinkProxy} from 'comlink'
 
 import { Trans } from 'react-i18next';
 
-import {getCertificats, getClesPrivees} from './components/pkiHelper'
-import {splitPEMCerts} from '@dugrema/millegrilles.common/lib/forgecommon'
 import {setupWorkers, cleanupWorkers, preparerWorkersAvecCles} from './workers/workers.load'
 
 import { ApplicationSenseursPassifs } from './App'

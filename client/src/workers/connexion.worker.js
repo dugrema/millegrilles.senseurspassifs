@@ -1,9 +1,9 @@
 import { expose } from 'comlink'
 import * as ConnexionClient from '@dugrema/millegrilles.reactjs/src/connexionClient'
 import { hacheurs } from '@dugrema/millegrilles.reactjs'
-import { setHacheurs } from '@dugrema/millegrilles.utiljs'
+// import { setHacheurs } from '@dugrema/millegrilles.utiljs'
 
-setHacheurs(hacheurs)
+// setHacheurs(hacheurs)
 
 const CONST_DOMAINE_SENSEURSPASSIFS = 'SenseursPassifs'
 

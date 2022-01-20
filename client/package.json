@@ -23,7 +23,7 @@
   },
   "scripts": {
     "start": "export WDS_SOCKET_PATH=/senseurspassifs/sockjs-node && rescripts start",
-    "build": "rescripts build"
+    "build": "BABEL_ENV=production NODE_ENV=production rescripts build"
   },
   "eslintConfig": {
     "extends": "react-app"

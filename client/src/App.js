@@ -1,7 +1,6 @@
 import React, {Suspense, useState, useEffect, useCallback} from 'react'
-import { Container, Row, Col, Nav, Navbar } from 'react-bootstrap'
+import { Container, Row, Col } from 'react-bootstrap'
 import { proxy } from 'comlink'
-import { Trans } from 'react-i18next'
 
 import { LayoutApplication, HeaderApplication, FooterApplication, styles as stylesCommuns } from '@dugrema/millegrilles.reactjs'
 

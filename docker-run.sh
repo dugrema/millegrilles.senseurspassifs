@@ -21,7 +21,7 @@ export MG_MQ_URL=amqps://$HOST_MQ:5673
 export MG_REDIS_HOST=mg-dev5
 export PORT=3013
 
-export DEBUG=millegrilles:common:server4,millegrilles:maitrecomptes:authentification
+export DEBUG=www,millegrilles:server5,millegrilles:maitrecomptes:authentification
 # export DEBUG=millegrilles:*
 
 docker run --rm -it \

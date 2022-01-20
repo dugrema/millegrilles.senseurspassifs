@@ -5,19 +5,18 @@ import ConnexionWorker from './connexion.worker'
 
 // Exemple de loader pour web workers
 export function chargerWorkers() {
-    const {worker: chiffrage} = charger(ChiffrageWorker)
-    const {worker: connexion} = charger(ConnexionWorker)
-
     // Chiffrage et x509 sont combines, reduit taille de l'application
+    const {worker: chiffrage} = charger(ChiffrageWorker)
     const x509 = chiffrage
+
+    const {worker: connexion} = charger(ConnexionWorker)
+    connexion.setX509Worker(chiffrage).catch(err=>console.error("Erreur chargement connexion worker : %O", err))
 
     const workers = {
         chiffrage, 
         connexion, 
         x509,
     }
-
-    connexion.setX509Worker(chiffrage).catch(err=>console.error("Erreur chargement connexion worker : %O", err))
 
     return workers
 }
