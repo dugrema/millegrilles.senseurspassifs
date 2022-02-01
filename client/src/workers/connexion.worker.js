@@ -1,6 +1,6 @@
 import { expose } from 'comlink'
 import * as ConnexionClient from '@dugrema/millegrilles.reactjs/src/connexionClient'
-import { hacheurs } from '@dugrema/millegrilles.reactjs'
+// import { hacheurs } from '@dugrema/millegrilles.reactjs'
 // import { setHacheurs } from '@dugrema/millegrilles.utiljs'
 
 // setHacheurs(hacheurs)

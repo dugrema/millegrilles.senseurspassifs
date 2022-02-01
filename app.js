@@ -1,15 +1,15 @@
 import debugLib from 'debug'
 import express from 'express'
 
-import { server5 } from '@dugrema/millegrilles.nodejs'
-import utiljs from '@dugrema/millegrilles.utiljs'
+import { server5 } from '@dugrema/millegrilles.nodejs/src/server5.js'
+import forgecommon from '@dugrema/millegrilles.utiljs/src/forgecommon.js'
 
 import { configurerEvenements } from './appSocketIo.js'
 import routeCollections from './routes/senseurspassifs.js'
 import * as mqdao from './mqdao.js'
 
 const debug = debugLib('app')
-const { extraireExtensionsMillegrille } = utiljs.forgecommon
+const { extraireExtensionsMillegrille } = forgecommon
 
 export default async function app(params) {
     debug("Server app params %O", params)

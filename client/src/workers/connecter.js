@@ -23,8 +23,8 @@ export async function connecter(workers, setUsagerState, setEtatConnexion) {
 async function setUsager(workers, nomUsager, setUsagerState, opts) {
     opts = opts || {}
     // console.debug("setUsager '%s'", nomUsager)
-    const { getUsager } = await import('@dugrema/millegrilles.reactjs')
-    const { forgecommon } = await import('@dugrema/millegrilles.utiljs')
+    const { getUsager } = await import('@dugrema/millegrilles.reactjs/src/dbUsager')
+    const forgecommon = await import('@dugrema/millegrilles.utiljs/src/forgecommon')
     const { pki } = await import('@dugrema/node-forge')
     const { extraireExtensionsMillegrille } = forgecommon
     const usager = await getUsager(nomUsager)
