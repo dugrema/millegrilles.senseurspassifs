@@ -4,7 +4,7 @@ import debugLib from 'debug'
 import app from '../app.js'
 
 const debug = debugLib('www')
-debug("Demarrer server5")
+debug("Demarrer server6")
 
 // Initialiser le serveur
 app()

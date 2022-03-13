@@ -1,10 +1,10 @@
 {
   "name": "millegrilles.senseurspassifs.client",
-  "version": "2022.0.0",
+  "version": "2022.2.0",
   "private": true,
   "dependencies": {
-    "@dugrema/millegrilles.reactjs": "git+ssh://git.maceroc.com/git/millegrilles.reactjs#2022.0.0",
-    "@dugrema/millegrilles.utiljs": "git+ssh://git.maceroc.com/git/millegrilles.utiljs#2022.0.0",
+    "@dugrema/millegrilles.reactjs": "git+ssh://git.maceroc.com/git/millegrilles.reactjs#2022.2",
+    "@dugrema/millegrilles.utiljs": "git+ssh://git.maceroc.com/git/millegrilles.utiljs#2022.2",
     "@testing-library/jest-dom": "^5.16.1",
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",

@@ -1,7 +1,7 @@
 import debugLib from 'debug'
 import express from 'express'
 
-import { server5 } from '@dugrema/millegrilles.nodejs/src/server5.js'
+import server6 from '@dugrema/millegrilles.nodejs/src/server6.js'
 import forgecommon from '@dugrema/millegrilles.utiljs/src/forgecommon.js'
 
 import { configurerEvenements } from './appSocketIo.js'
@@ -14,7 +14,7 @@ const { extraireExtensionsMillegrille } = forgecommon
 export default async function app(params) {
     debug("Server app params %O", params)
     const app = express()
-    const {server, socketIo, amqpdao: amqpdaoInst} = await server5(
+    const {server, socketIo, amqpdao: amqpdaoInst} = await server6(
         app,
         configurerEvenements,
         {pathApp: '/senseurspassifs', verifierAutorisation, exchange: '3.protege'}
