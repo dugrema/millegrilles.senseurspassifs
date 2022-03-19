@@ -17,7 +17,7 @@ export default async function app(params) {
     const {server, socketIo, amqpdao: amqpdaoInst} = await server6(
         app,
         configurerEvenements,
-        {pathApp: '/senseurspassifs', verifierAutorisation, exchange: '3.protege'}
+        {pathApp: '/senseurspassifs', verifierAutorisation, exchange: '2.prive'}
     )
 
     socketIo.use((socket, next)=>{
@@ -47,12 +47,12 @@ function verifierAutorisation(socket, securite, certificatForge) {
 
     if(['proprietaire', 'delegue'].includes(extensions.delegationGlobale)) {
         // Deleguation globale donne tous les acces
-        debug("Usager proprietaire, acces 3.protege OK")
+        debug("Usager proprietaire, acces protege OK")
         prive = true
         protege = true
     } else if(extensions.delegationsDomaines.includes('collections')) {
         // Delegation au domaine coupdoeil
-        debug("Usager delegue domaine collections, acces 3.protege OK")
+        debug("Usager delegue domaine collections, acces protege OK")
         prive = true
         protege = true
     } 

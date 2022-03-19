@@ -1,7 +1,8 @@
 import debugLib from 'debug'
 const debug = debugLib('mqdao')
 
-const L3Protege = '3.protege'
+// const L3Protege = '3.protege'
+const L2Prive = '2.prive'
 
 const DOMAINE_SENSEURSPASSIFS = 'SenseursPassifs'
 
@@ -45,7 +46,7 @@ async function transmettreRequete(socket, params, action, opts) {
     const entete = params['en-tete'] || {}
     const domaine = opts.domaine || entete.domaine || DOMAINE_SENSEURSPASSIFS
     const partition = opts.partition || entete.partition
-    const exchange = opts.exchange || L3Protege
+    const exchange = opts.exchange || L2Prive
     try {
         verifierMessage(params, domaine, action)
         return await socket.amqpdao.transmettreRequete(
@@ -64,7 +65,7 @@ async function transmettreCommande(socket, params, action, opts) {
     const entete = params['en-tete'] || {}
     const domaine = opts.domaine || entete.domaine || DOMAINE_SENSEURSPASSIFS
     const partition = opts.partition || entete.partition
-    const exchange = opts.exchange || L3Protege
+    const exchange = opts.exchange || L2Prive
     const nowait = opts.nowait
     try {
         verifierMessage(params, domaine, action)
@@ -92,7 +93,7 @@ function verifierMessage(message, domaine, action) {
 export async function ecouterEvenementsSenseurs(socket, cb) {
     const opts = {
         routingKeys: ['evenement.SenseursPassifs.lectureConfirmee'],
-        exchange: [L3Protege],
+        exchange: [L2Prive],
     }
     socket.subscribe(opts, cb)
 }
@@ -106,7 +107,7 @@ export async function retirerEvenementsSenseurs(socket, cb) {
 export async function ecouterEvenementsNoeuds(socket, cb) {
     const opts = {
         routingKeys: ['evenement.SenseursPassifs.majNoeudConfirmee'],
-        exchange: [L3Protege],
+        exchange: [L2Prive],
     }
     socket.subscribe(opts, cb)
 }

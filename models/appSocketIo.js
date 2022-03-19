@@ -308,14 +308,14 @@ function downgradePrive(socket, params) {
 function ecouterEvenementsSenseurs(socket, params, cb) {
   const opts = {
     routingKeys: ROUTING_KEYS_SENSEURS,
-    exchange: ['3.protege'],
+    exchange: ['2.prive'],
   }
   debug("Params : %O, cb: %O", params, cb)
   socket.subscribe(opts, cb)
 }
 
 function retirerEvenementsSenseurs(socket, params, cb) {
-  const routingKeys = ROUTING_KEYS_SENSEURS.map(item=>'3.protege.'+item)
+  const routingKeys = ROUTING_KEYS_SENSEURS.map(item=>'2.prive.'+item)
   socket.unsubscribe({routingKeys})
   debug("retirerEvenementsSenseurs")
   if(cb) cb(true)
@@ -324,14 +324,14 @@ function retirerEvenementsSenseurs(socket, params, cb) {
 function ecouterEvenementsNoeuds(socket, params, cb) {
   const opts = {
     routingKeys: ROUTING_KEYS_NOEUDS,
-    exchange: ['3.protege'],
+    exchange: ['2.prive'],
   }
   debug("Params : %O, cb: %O", params, cb)
   socket.subscribe(opts, cb)
 }
 
 function retirerEvenementsNoeuds(socket, params, cb) {
-  const routingKeys = ROUTING_KEYS_NOEUDS.map(item=>'3.protege.'+item)
+  const routingKeys = ROUTING_KEYS_NOEUDS.map(item=>'2.prive.'+item)
   socket.unsubscribe({routingKeys})
   debug("retirerEvenementsSenseurs")
   if(cb) cb(true)
