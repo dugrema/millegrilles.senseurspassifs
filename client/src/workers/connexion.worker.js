@@ -53,36 +53,59 @@ function majSenseur(partition, params) {
   )
 }
 
-async function ecouterEvenementsSenseurs(cb) {
-  ConnexionClient.socketOn('evenement.SenseursPassifs.lectureConfirmee', cb)
-  const resultat = await ConnexionClient.emitBlocking('ecouterEvenementsSenseurs', {}, {noformat: true})
-  if(!resultat) {
-    throw new Error("Erreur ecouterEvenementsSenseurs")
-  }
+// Evenements
+
+// async function ecouterEvenementsSenseurs(cb) {
+//   ConnexionClient.socketOn('evenement.SenseursPassifs.lectureConfirmee', cb)
+//   const resultat = await ConnexionClient.emitBlocking('ecouterEvenementsSenseurs', {}, {noformat: true})
+//   if(!resultat) {
+//     throw new Error("Erreur ecouterEvenementsSenseurs")
+//   }
+// }
+
+// async function retirerEvenementsSenseurs() {
+//   ConnexionClient.socketOff('evenement.SenseursPassifs.lectureConfirmee')
+//   const resultat = await ConnexionClient.emitBlocking('retirerEvenementsSenseurs', {}, {noformat: true})
+//   if(!resultat) {
+//     throw new Error("Erreur retirerEvenementsSenseurs")
+//   }
+// }
+
+function ecouterEvenementsSenseurs(cb) { 
+  const params = {}
+  return ConnexionClient.subscribe('ecouterEvenementsSenseurs', cb, params)
 }
 
-async function retirerEvenementsSenseurs() {
-  ConnexionClient.socketOff('evenement.SenseursPassifs.lectureConfirmee')
-  const resultat = await ConnexionClient.emitBlocking('retirerEvenementsSenseurs', {}, {noformat: true})
-  if(!resultat) {
-    throw new Error("Erreur retirerEvenementsSenseurs")
-  }
+function retirerEvenementsSenseurs(cb) { 
+  const params = {}
+  return ConnexionClient.unsubscribe('retirerEvenementsSenseurs', cb, params) 
 }
 
-async function ecouterEvenementsNoeuds(cb) {
-  ConnexionClient.socketOn('evenement.SenseursPassifs.majNoeudConfirmee', cb)
-  const resultat = await ConnexionClient.emitBlocking('ecouterEvenementsNoeuds', {}, {noformat: true})
-  if(!resultat) {
-    throw new Error("Erreur ecouterEvenementsNoeuds")
-  }
+
+// async function ecouterEvenementsNoeuds(cb) {
+//   ConnexionClient.socketOn('evenement.SenseursPassifs.majNoeudConfirmee', cb)
+//   const resultat = await ConnexionClient.emitBlocking('ecouterEvenementsNoeuds', {}, {noformat: true})
+//   if(!resultat) {
+//     throw new Error("Erreur ecouterEvenementsNoeuds")
+//   }
+// }
+
+// async function retirerEvenementsNoeuds() {
+//   ConnexionClient.socketOff('evenement.SenseursPassifs.majNoeudConfirmee')
+//   const resultat = await ConnexionClient.emitBlocking('retirerEvenementsNoeuds', {}, {noformat: true})
+//   if(!resultat) {
+//     throw new Error("Erreur retirerEvenementsNoeuds")
+//   }
+// }
+
+function ecouterEvenementsNoeuds(cb) { 
+  const params = {}
+  return ConnexionClient.subscribe('ecouterEvenementsNoeuds', cb, params)
 }
 
-async function retirerEvenementsNoeuds() {
-  ConnexionClient.socketOff('evenement.SenseursPassifs.majNoeudConfirmee')
-  const resultat = await ConnexionClient.emitBlocking('retirerEvenementsNoeuds', {}, {noformat: true})
-  if(!resultat) {
-    throw new Error("Erreur retirerEvenementsNoeuds")
-  }
+function retirerEvenementsNoeuds(cb) { 
+  const params = {}
+  return ConnexionClient.unsubscribe('retirerEvenementsNoeuds', cb, params) 
 }
 
 // Exposer methodes du Worker

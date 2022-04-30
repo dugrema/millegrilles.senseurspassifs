@@ -1,10 +1,10 @@
-import React, {useState, useEffect, useCallback} from 'react'
+import React, {useState, useEffect, useMemo} from 'react'
 import { Row, Col } from 'react-bootstrap'
 import {proxy as comlinkProxy} from 'comlink'
 
 import {DateTimeAfficher} from './components/ReactFormatters'
 
-const _contexteCallback = {}
+// const _contexteCallback = {}
 
 const CONST_CHAMPS_SOMMAIRE = [
   // {suffix: 'epoch', format: val=>{new Date(val*1000)}},
@@ -18,25 +18,28 @@ export default function Sommaire(props) {
   // console.debug("Sommaire proppys : %O", props)
 
   const [senseurs, setSenseurs] = useState('')
+  const [messageSenseur, addMessageSenseur] = useState('')
 
   const connexion = props.workers.connexion,
-        modeProtege = props.rootProps.modeProtege,
+        etatAuthentifie = props.etatAuthentifie,
         noeuds = props.listeNoeuds.noeuds,
         partition = props.listeNoeuds.partition
 
-  const messageRecu = useCallback(comlinkProxy(message => {
-    // console.debug("Message : %O", message)
-    traiterLecture(message, _contexteCallback.senseurs, _contexteCallback.setSenseurs)
-  }), [])
+  const messageRecuCb = useMemo(()=>comlinkProxy(addMessageSenseur), [addMessageSenseur])
 
   // Entretien contexte callback comlink proxy
   useEffect(()=>{
-    _contexteCallback.senseurs = senseurs
-    _contexteCallback.setSenseurs = setSenseurs
-  }, [senseurs, setSenseurs])
+    if(messageSenseur) {
+      console.debug("Message senseur : %O", messageSenseur)
+      traiterLecture(messageSenseur, senseurs, setSenseurs)      
+      addMessageSenseur('') // Clear queue
+    }
+  }, [messageSenseur, senseurs, setSenseurs])
 
   useEffect(()=>{
-    if(!senseurs && connexion && modeProtege && noeuds) {
+    console.debug("!!! connexion : %O, etatAuthentifie: %O, noeuds: %O", connexion, etatAuthentifie, noeuds)
+    if(connexion && etatAuthentifie && noeuds) {
+      console.debug("Chargement senseurs pour noeuds : %O", noeuds)
       Promise.all(noeuds.map(item=>connexion.getListeSenseursNoeud(item.noeud_id, {partition})))
         .then(resultat=>{
           console.debug("Senseurs charges noeud : %O", resultat)
@@ -47,15 +50,18 @@ export default function Sommaire(props) {
           })
           setSenseurs(senseurs)
         })
+        .catch(err=>console.error("Erreur chargement senseurs : %O", err))
     }
+  }, [connexion, etatAuthentifie, noeuds, messageRecuCb])
 
-    if(connexion && messageRecu) {
-      connexion.ecouterEvenementsSenseurs(messageRecu)
+  useEffect(()=>{
+    if(connexion && etatAuthentifie && messageRecuCb) {
+      connexion.ecouterEvenementsSenseurs(messageRecuCb)
       return ()=>{
-        connexion.retirerEvenementsSenseurs()
+        connexion.retirerEvenementsSenseurs(messageRecuCb)
       }
     }
-  }, [connexion, modeProtege, noeuds, senseurs, messageRecu])
+  }, [connexion, etatAuthentifie, messageRecuCb])
 
   if(!props.listeNoeuds) return ''
 

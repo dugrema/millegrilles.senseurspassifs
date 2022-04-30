@@ -1,14 +1,15 @@
-import React, {useState, useCallback} from 'react'
+import React, {useCallback} from 'react'
 import { Row, Col, Button } from 'react-bootstrap'
 
 import Sommaire from './SommaireSenseurs'
 
 export function Accueil(props) {
 
-  const changerPage = props.rootProps.changerPage
+  const { workers, etatAuthentifie, listeNoeuds} = props
+  const rootProps = props.rootProps || {}
+  const { changerPage } = rootProps
 
   const selectionnerNoeud = useCallback(event => {
-    const changerPage = props.rootProps.changerPage
     const {value} = event.currentTarget
 
     // Simuler event
@@ -16,6 +17,7 @@ export function Accueil(props) {
       value: 'Noeud',
       dataset: {noeud_id: value}
     }
+    
     // console.debug("Afficher noeud :\n%O", pageInfo)
     changerPage({currentTarget: pageInfo})
   }, [changerPage])
@@ -23,12 +25,13 @@ export function Accueil(props) {
   return (
     <div>
       <h1>Senseurs Passifs</h1>
-      <ListeNoeuds listeNoeuds={props.listeNoeuds} selectionnerNoeud={selectionnerNoeud} />
+      <ListeNoeuds listeNoeuds={listeNoeuds} selectionnerNoeud={selectionnerNoeud} />
 
       <h2>Sommaire</h2>
-      <Sommaire listeNoeuds={props.listeNoeuds}
-                workers={props.workers}
-                rootProps={props.rootProps} />
+      <Sommaire listeNoeuds={listeNoeuds}
+                workers={workers}
+                rootProps={rootProps} 
+                etatAuthentifie={etatAuthentifie} />
     </div>
   )
 

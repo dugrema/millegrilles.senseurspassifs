@@ -6,13 +6,13 @@ const L2Prive = '2.prive'
 
 const DOMAINE_SENSEURSPASSIFS = 'SenseursPassifs'
 
-const ROUTING_KEYS_NOEUDS = [
-'evenement.SenseursPassifs.majNoeudConfirmee'
-]
+// const ROUTING_KEYS_NOEUDS = [
+// 'evenement.SenseursPassifs.majNoeudConfirmee'
+// ]
 
-const ROUTING_KEYS_SENSEURS = [
-'evenement.SenseursPassifs.lectureConfirmee',
-]
+// const ROUTING_KEYS_SENSEURS = [
+// 'evenement.SenseursPassifs.lectureConfirmee',
+// ]
       
 export function challenge(socket, params) {
     // Repondre avec un message signe
@@ -90,31 +90,77 @@ function verifierMessage(message, domaine, action) {
     if(actionRecue !== action) throw new Error(`Mismatch action (${actionRecue} !== ${action})"`)
 }
 
-export async function ecouterEvenementsSenseurs(socket, cb) {
-    const opts = {
-        routingKeys: ['evenement.SenseursPassifs.lectureConfirmee'],
-        exchange: [L2Prive],
+// export async function ecouterEvenementsSenseurs(socket, cb) {
+//     const opts = {
+//         routingKeys: ['evenement.SenseursPassifs.lectureConfirmee'],
+//         exchange: [L2Prive],
+//     }
+//     socket.subscribe(opts, cb)
+// }
+
+// export async function retirerEvenementsSenseurs(socket, cb) {
+//     const routingKeys = ['3.protege/evenement.SenseursPassifs.lectureConfirmee']
+//     socket.unsubscribe({routingKeys})
+//     if(cb) cb(true)
+// }
+
+// export async function ecouterEvenementsNoeuds(socket, cb) {
+//     const opts = {
+//         routingKeys: ['evenement.SenseursPassifs.majNoeudConfirmee'],
+//         exchange: [L2Prive],
+//     }
+//     socket.subscribe(opts, cb)
+// }
+
+// export async function retirerEvenementsNoeuds(socket, cb) {
+//     const routingKeys = ['3.protege/evenement.SenseursPassifs.majNoeudConfirmee']
+//     socket.unsubscribe({routingKeys})
+//     if(cb) cb(true)
+// }
+
+const ROUTING_KEYS_SENSEURS = [
+    'evenement.SenseursPassifs.lectureConfirmee',
+]
+  
+export function ecouterEvenementsSenseurs(socket, cb) {
+    const opts = { 
+      routingKeys: ROUTING_KEYS_SENSEURS,
+      exchanges: ['2.prive'],
     }
+  
+    debug("enregistrerCallbackMajFichier : %O", opts)
     socket.subscribe(opts, cb)
 }
-
-export async function retirerEvenementsSenseurs(socket, cb) {
-    const routingKeys = ['3.protege/evenement.SenseursPassifs.lectureConfirmee']
-    socket.unsubscribe({routingKeys})
-    if(cb) cb(true)
-}
-
-export async function ecouterEvenementsNoeuds(socket, cb) {
-    const opts = {
-        routingKeys: ['evenement.SenseursPassifs.majNoeudConfirmee'],
-        exchange: [L2Prive],
+  
+export function retirerEvenementsSenseurs(socket, cb) {
+    const opts = { 
+      routingKeys: ROUTING_KEYS_SENSEURS, 
+      exchanges: ['2.prive'],
     }
+    debug("retirerCallbackMajFichier sur %O", opts)
+    socket.unsubscribe(opts, cb)
+}
+  
+const ROUTING_KEYS_NOEUDS = [
+    'evenement.SenseursPassifs.majNoeudConfirmee'
+]
+  
+export function ecouterEvenementsNoeuds(socket, cb) {
+    const opts = { 
+      routingKeys: ROUTING_KEYS_NOEUDS,
+      exchanges: ['2.prive'],
+    }
+  
+    debug("ecouterEvenementsNoeuds : %O", opts)
     socket.subscribe(opts, cb)
 }
-
-export async function retirerEvenementsNoeuds(socket, cb) {
-    const routingKeys = ['3.protege/evenement.SenseursPassifs.majNoeudConfirmee']
-    socket.unsubscribe({routingKeys})
-    if(cb) cb(true)
+  
+export function retirerEvenementsNoeuds(socket, cb) {
+    const opts = { 
+      routingKeys: ROUTING_KEYS_SENSEURS, 
+      exchanges: ['2.prive'],
+    }
+    debug("retirerEvenementsNoeuds sur %O", opts)
+    socket.unsubscribe(opts, cb)
 }
-
+  

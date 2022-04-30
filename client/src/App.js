@@ -1,4 +1,4 @@
-import React, {Suspense, useState, useEffect, useCallback} from 'react'
+import React, {Suspense, useState, useEffect, useMemo, useCallback} from 'react'
 import { Container, Row, Col } from 'react-bootstrap'
 import { proxy } from 'comlink'
 
@@ -16,33 +16,18 @@ var manifestImport = {
 
 const manifest = manifestImport
 
-// let _etatConnexion,
-//     _setEtatConnexion,
-//     _workers
-
-const _contexte = {}  // Contexte global pour comlink proxy callbacks
+// const _contexte = {}  // Contexte global pour comlink proxy callbacks
 
 function App(props) {
   const [workers, setWorkers] = useState('')
   const [usager, setUsager] = useState('')
   const [page, setPage] = useState('Accueil')
   const [paramsPage, setParamsPage] = useState('')
-  const [etatConnexion, setEtatConnexion] = useState('')
+  const [etatConnexion, setEtatConnexion] = useState(false)
+  const [etatFormatteurMessage, setEtatFormatteurMessage] = useState(false)
   const [idmg, setIdmg] = useState('')
 
-  // const setEtatConnexion = useCallback(etat => {
-  //   setModeProtege(etat.protege)
-  // }, [setModeProtege])
-
-  // useEffect(
-  //   _=>{
-  //     _setEtatConnexion = comlinkProxy(setEtatConnexion)
-  //     chargerWorkers(workers=>{
-  //       console.debug("Workers charges : %O", workers)
-  //     }).catch(err=>{console.error("Erreur preparation workers : %O", err)})
-  //   },
-  //   [setWorkers, setEtatConnexion, setNomUsager]
-  // )
+  const etatAuthentifie = usager && etatFormatteurMessage
 
   const changerPage = useCallback(eventPage => {
     // Verifier si event ou page
@@ -72,28 +57,15 @@ function App(props) {
   }, [setWorkers])
 
   useEffect(()=>{
-    if(workers) {
-      if(workers.connexion) {
-        connecter(workers, setUsager, setEtatConnexion)
-          .then(infoConnexion=>{console.debug("Info connexion : %O", infoConnexion)})
-          .catch(err=>{console.debug("Erreur de connexion : %O", err)})
-      }
+    if(workers && workers.connexion) {
+      connecter(workers, setUsager, setEtatConnexion, setEtatFormatteurMessage)
+        .then(infoConnexion=>{console.debug("Info connexion : %O", infoConnexion)})
+        .catch(err=>{console.debug("Erreur de connexion : %O", err)})
     }
-  }, [workers, setUsager, setEtatConnexion])
+  }, [workers, setUsager, setEtatConnexion, setEtatFormatteurMessage])
 
   useEffect(()=>{
     if(!etatConnexion) return 
-    // workers.connexion.enregistrerCallbackMajFichier(proxy(data=>{
-    //   // console.debug("callbackMajFichier data: %O", data)
-    //   setEvenementFichier(data)
-    // }))
-    //   .catch(err=>{console.error("Erreur enregistrerCallbackMajFichier : %O", err)})
-    // workers.connexion.enregistrerCallbackMajCollection(proxy(data=>{
-    //   // console.debug("callbackMajCollection data: %O", data)
-    //   setEvenementCollection(data)
-    // }))
-    //   .catch(err=>{console.error("Erreur enregistrerCallbackMajCollection : %O", err)})
-
     workers.chiffrage.getIdmgLocal().then(idmg=>{
       console.debug("IDMG local chiffrage : %O", idmg)
       setIdmg(idmg)
@@ -103,17 +75,6 @@ function App(props) {
   const rootProps = {
     usager, changerPage, page, paramsPage
   }
-
-  // return <Layout
-  //           changerPage={changerPage}
-  //           page={page}
-  //           rootProps={rootProps}
-  //           idmg={idmg}>
-
-  //           <ApplicationSenseursPassifs workers={workers}
-  //                                       rootProps={rootProps} 
-  //                                       etatConnexion={etatConnexion} />
-  //        </Layout>
 
   return (
     <LayoutApplication>
@@ -134,6 +95,7 @@ function App(props) {
             workers={workers} 
             usager={usager}
             etatConnexion={etatConnexion} 
+            etatAuthentifie={etatAuthentifie}
             page={page}
           />
         </Suspense>
@@ -159,9 +121,9 @@ async function importerWorkers(setWorkers) {
   setWorkers(workers)
 }
 
-async function connecter(workers, setUsager, setEtatConnexion) {
+async function connecter(...params) {
   const { connecter: connecterWorker } = await import('./workers/connecter')
-  return connecterWorker(workers, setUsager, setEtatConnexion)
+  return connecterWorker(...params)
 }
 
 function ApplicationSenseursPassifs(props) {
@@ -169,24 +131,33 @@ function ApplicationSenseursPassifs(props) {
   // console.debug("!!! ApplicationSenseursPassifs Proppys : %O", props)
 
   const [listeNoeuds, setListeNoeuds] = useState('')
+  const [messageNoeud, addMessageNoeud] = useState('')
 
   const connexion = props.workers.connexion,
-        etatConnexion = props.etatConnexion,
-        modeProtege = etatConnexion?etatConnexion.protege:false
+        etatAuthentifie = props.etatAuthentifie
 
-  const traiterMessageNoeudsHandler = useCallback(proxy(msg => {
-    console.debug("Message noeuds recu : %O", msg)
-    majNoeud(msg, _contexte.listeNoeuds, _contexte.setListeNoeuds)
-  }), [])
+  const traiterMessageNoeudsCb = useMemo(()=>proxy(addMessageNoeud), [addMessageNoeud])
 
   // Entretien du contexte global pour les callbacks comlink proxy
   useEffect(()=>{
-    _contexte.listeNoeuds = listeNoeuds
-    _contexte.setListeNoeuds = setListeNoeuds
-  }, [listeNoeuds, setListeNoeuds])
+    if(messageNoeud) {
+      majNoeud(messageNoeud, listeNoeuds, setListeNoeuds)
+      addMessageNoeud('')  // Clear queue
+    }
+  }, [messageNoeud, listeNoeuds, setListeNoeuds, addMessageNoeud])
 
   useEffect(()=>{
-    if(connexion && modeProtege) {
+    if(connexion && etatAuthentifie && traiterMessageNoeudsCb) {
+      connexion.ecouterEvenementsNoeuds(traiterMessageNoeudsCb)
+        .catch(err=>{console.error("Erreur ecouterEvenementsNoeuds: %O", err)})
+      return () => {
+        connexion.retirerEvenementsNoeuds(traiterMessageNoeudsCb)
+      }
+    }
+  }, [connexion, etatAuthentifie, traiterMessageNoeudsCb])
+
+  useEffect(()=>{
+    if(connexion && etatAuthentifie) {
       connexion.getListeNoeuds()
         .then(listeNoeuds=>{
           console.debug("Noeuds recus : %O", listeNoeuds)
@@ -196,25 +167,16 @@ function ApplicationSenseursPassifs(props) {
         })
         .catch(err=>{console.error("Erreur reception noeuds : %O", err)})
 
-      if(traiterMessageNoeudsHandler) {
-        connexion.ecouterEvenementsNoeuds(traiterMessageNoeudsHandler)
-          .catch(err=>{console.error("Erreur ecouterEvenementsNoeuds: %O", err)})
-
-        return ()=>{
-          connexion.retirerEvenementsNoeuds()
-        }
-      }
     }
-  }, [connexion, modeProtege, traiterMessageNoeudsHandler])
+  }, [connexion, etatAuthentifie])
 
   const rootProps = {
     ...props.rootProps,
-    modeProtege,
     manifest,
   }
 
   let pageRender
-  if(!etatConnexion || !etatConnexion.protege) {
+  if(!etatAuthentifie) {
     pageRender = <p>Attente de connexion</p>
   } else {
     // 3. Afficher application
@@ -223,7 +185,8 @@ function ApplicationSenseursPassifs(props) {
                                  page={rootProps.page}
                                  paramsPage={rootProps.paramsPage}
                                  listeNoeuds={listeNoeuds}
-                                 majNoeud={traiterMessageNoeudsHandler} />
+                                 majNoeud={traiterMessageNoeudsCb} 
+                                 etatAuthentifie={etatAuthentifie} />
   }
 
   return (
@@ -312,49 +275,3 @@ function Footer(props) {
     </Container>
   )
 }
-
-// function Menu(props) {
-
-//   let boutonProtege
-//   if(props.rootProps.modeProtege) {
-//     boutonProtege = <i className="fa fa-lg fa-lock protege"/>
-//   } else {
-//     boutonProtege = <i className="fa fa-lg fa-unlock"/>
-//   }
-
-//   return (
-//     <Navbar collapseOnSelect expand="md" bg="info" variant="dark" fixed="top">
-//       <Navbar.Brand href='/'><i className="fa fa-home"/></Navbar.Brand>
-//       <Navbar.Toggle aria-controls="responsive-navbar-menu" />
-//       <Navbar.Collapse id="responsive-navbar-menu">
-
-//         <MenuItems changerPage={props.changerPage}/>
-
-//         <Nav className="justify-content-end">
-//           <Nav.Link onClick={props.rootProps.toggleProtege}>{boutonProtege}</Nav.Link>
-//           <Nav.Link onClick={props.rootProps.changerLanguage}><Trans>menu.changerLangue</Trans></Nav.Link>
-//         </Nav>
-//       </Navbar.Collapse>
-//     </Navbar>
-//   )
-// }
-
-// export function MenuItems(props) {
-
-//   const changerPage = event => {
-//     props.changerPage(event)
-//   }
-
-//   return (
-//     <Nav className="mr-auto" activeKey={props.section} onSelect={changerPage}>
-
-//       <Nav.Item>
-//         <Nav.Link eventKey='Accueil'>
-//           <Trans>menu.Accueil</Trans>
-//         </Nav.Link>
-//       </Nav.Item>
-
-//     </Nav>
-//   )
-
-// }
