@@ -5,6 +5,8 @@ import { DateTimeAfficher } from './components/ReactFormatters'
 
 export function Senseurs(props) {
 
+  const { etatAuthentifie } = props
+
   var senseurs = null
   if(props.listeSenseurs) {
     // console.debug("Senseurs : %O", props.listeSenseurs)
@@ -13,6 +15,7 @@ export function Senseurs(props) {
                       noeud={props.noeud}
                       senseur={senseur}
                       rootProps={props.rootProps}
+                      etatAuthentifie={etatAuthentifie}
                       workers={props.workers}
                       setErreur={props.setErreur}
                       setConfirmation={props.setConfirmation}
@@ -100,7 +103,7 @@ class Senseur extends React.Component {
   }
 
   render() {
-    const senseur = this.props.senseur
+    const { senseur, etatAuthentifie } = this.props
     var descriptif = this.state.descriptif || senseur.descriptif || ''
     var uuidSenseur = senseur.uuid_senseur
     var modeEdition = this.props.senseursModeEdition[uuidSenseur]?true:false
@@ -143,7 +146,7 @@ class Senseur extends React.Component {
         <>
           <Button onClick={this.sauvegarderSenseur}
                   variant="secondary"
-                  disabled={!this.props.rootProps.modeProtege}>
+                  disabled={!etatAuthentifie}>
             <i className="fa fa-check" title="Sauvegarder"/>
           </Button>
           <Button onClick={this.annulerEdition}
@@ -156,7 +159,7 @@ class Senseur extends React.Component {
       boutonsHeader = (
         <Button onClick={this.activerModeEdition}
                 variant="secondary"
-                disabled={!this.props.rootProps.modeProtege}>
+                disabled={!etatAuthentifie}>
           <i className="fa fa-edit" title="Editer"/>
         </Button>
       )

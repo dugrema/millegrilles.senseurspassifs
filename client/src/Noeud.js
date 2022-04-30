@@ -16,7 +16,7 @@ export function Noeud(props) {
   const [confirmation, setConfirmation] = useState('')
   const [noeud, setNoeud] = useState('')
 
-  const modeProtege = props.rootProps.modeProtege,
+  const etatAuthentifie = props.etatAuthentifie,
         connexion = props.workers.connexion,
         listeNoeuds = props.listeNoeuds,
         noeud_id = props.paramsPage.noeud_id
@@ -52,7 +52,7 @@ export function Noeud(props) {
   }, [])
 
   useEffect(()=>{
-    if(modeProtege && noeud && noeud.partition) {
+    if(etatAuthentifie && noeud && noeud.partition) {
       console.debug("Charger liste senseurs pour : %O", noeud)
       let partition = noeud.partition
       connexion.getListeSenseursNoeud(noeud_id, {partition})
@@ -66,7 +66,7 @@ export function Noeud(props) {
         connexion.retirerEvenementsSenseurs()
       }
     }
-  }, [modeProtege, setListeSenseurs, noeud])
+  }, [etatAuthentifie, setListeSenseurs, noeud])
 
   return (
     <div>
@@ -79,6 +79,7 @@ export function Noeud(props) {
       </Alert>
       <AfficherInformationNoeud rootProps={props.rootProps}
                                 workers={props.workers}
+                                etatAuthentifie={etatAuthentifie}
                                 noeud={noeud}
                                 listeSenseurs={listeSenseurs}
                                 majNoeud={props.majNoeud}
@@ -94,12 +95,9 @@ function AfficherInformationNoeud(props) {
   const [descriptif, setDescriptif] = useState('')
   const [senseursModeEdition, setSenseursModeEdition] = useState('')
 
-  const connexion = props.workers.connexion
+  const { workers, etatAuthentifie, setConfirmation, setErreur, noeud } = props
 
-  const setConfirmation = props.setConfirmation,
-        setErreur = props.setErreur,
-        noeud = props.noeud,
-        blynkActif = noeud.blynk_actif || false
+  const connexion = workers.connexion
 
   const changerNomNoeud = useCallback(async _ => {
     if(!descriptif) { props.setErreur("Veuillez ajouter/modifier le nom du noeud"); return }
@@ -151,13 +149,13 @@ function AfficherInformationNoeud(props) {
                           onChange={event=>{setDescriptif(event.currentTarget.value)}}
                           value={descriptif || noeud.descriptif || ''}
                           placeholder="Mettre un nom pour le noeud ..."
-                          disabled={!props.rootProps.modeProtege} />
+                          disabled={!etatAuthentifie} />
           </Form.Group>
         </Col>
         <Col md={3}>
           <Button onClick={changerNomNoeud}
                   variant="secondary"
-                  disabled={!props.rootProps.modeProtege}>Changer nom</Button>
+                  disabled={!etatAuthentifie}>Changer nom</Button>
         </Col>
       </Row>
       <Row>
@@ -169,21 +167,22 @@ function AfficherInformationNoeud(props) {
         <Col md={2}>{noeud.securite}</Col>
         <Col md={8}>
           <Button variant="success"
-                  disabled={noeud.securite==='3.protege' || !props.rootProps.modeProtege}
+                  disabled={noeud.securite==='3.protege' || !etatAuthentifie}
                   onClick={changerSecurite}
                   value="3.protege">Protege</Button>
           <Button variant="dark"
-                  disabled={noeud.securite==='2.prive' || !props.rootProps.modeProtege}
+                  disabled={noeud.securite==='2.prive' || !etatAuthentifie}
                   onClick={changerSecurite}
                   value="2.prive">Prive</Button>
           <Button variant="danger"
-                  disabled={noeud.securite==='1.public' || !props.rootProps.modeProtege}
+                  disabled={noeud.securite==='1.public' || !etatAuthentifie}
                   onClick={changerSecurite}
                   value="1.public">Public</Button>
         </Col>
       </Row>
 
       <ConfigurationLCD noeud={noeud}
+                        etatAuthentifie={etatAuthentifie}
                         rootProps={props.rootProps}
                         workers={props.workers}
                         setErreur={props.setErreur}
@@ -191,6 +190,7 @@ function AfficherInformationNoeud(props) {
                         majNoeud={props.majNoeud} />
 
       <Senseurs listeSenseurs={props.listeSenseurs}
+                etatAuthentifie={etatAuthentifie}
                 noeud={noeud}
                 rootProps={props.rootProps}
                 workers={props.workers}

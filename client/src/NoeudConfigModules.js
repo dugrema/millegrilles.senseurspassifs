@@ -116,7 +116,7 @@ export class ConfigurationBlynk extends React.Component {
   }
 
   render() {
-    const noeud = this.props.noeud
+    const { noeud, etatAuthentifie } = this.props
 
     if( ! ['1.public', '2.prive'].includes(noeud.securite)) return ''
 
@@ -134,7 +134,7 @@ export class ConfigurationBlynk extends React.Component {
                         name="actif"
                         checked={this.state.actif}
                         onChange={this.changerCheckbox}
-                        disabled={!this.props.rootProps.modeProtege} />
+                        disabled={!etatAuthentifie} />
           </Col>
         </Row>
 
@@ -149,7 +149,7 @@ export class ConfigurationBlynk extends React.Component {
                             onChange={this.changerChamp}
                             value={this.state.host}
                             placeholder="Entrer le blynk Auth token"
-                            disabled={!this.props.rootProps.modeProtege} />
+                            disabled={!etatAuthentifie} />
             </Form.Group>
           </Col>
           <Form.Label column md="1" htmlFor="blynkPort">
@@ -162,7 +162,7 @@ export class ConfigurationBlynk extends React.Component {
                             onChange={this.changerChamp}
                             value={this.state.port}
                             placeholder="Entrer le blynk Auth token"
-                            disabled={!this.props.rootProps.modeProtege} />
+                            disabled={!etatAuthentifie} />
             </Form.Group>
           </Col>
         </Row>
@@ -178,7 +178,7 @@ export class ConfigurationBlynk extends React.Component {
                             onChange={this.changerChamp}
                             value={this.state.authToken}
                             placeholder="Entrer le blynk Auth token"
-                            disabled={!this.props.rootProps.modeProtege} />
+                            disabled={!etatAuthentifie} />
             </Form.Group>
           </Col>
         </Row>
@@ -187,7 +187,7 @@ export class ConfigurationBlynk extends React.Component {
           <Col>
             <Button variant="secondary"
                     onClick={this.sauvegarder}
-                    disabled={!this.props.rootProps.modeProtege}>Sauvegarder</Button>
+                    disabled={!etatAuthentifie}>Sauvegarder</Button>
           </Col>
         </Row>
       </div>
@@ -300,6 +300,7 @@ export class ConfigurationLCD extends React.Component {
   render() {
 
     // console.debug("Noeud Config LCD proppys: %O, state %O", this.props, this.state)
+    const { noeud, etatAuthentifie } = this.props
 
     return (
       <div className="config-lcd">
@@ -313,22 +314,23 @@ export class ConfigurationLCD extends React.Component {
             <Form.Check type="switch"
                         id="lcd-on"
                         name="actif"
-                        checked={(this.state.actif === '' && this.props.noeud.lcd_actif) || this.state.actif}
+                        checked={(this.state.actif === '' && noeud.lcd_actif) || this.state.actif}
                         onChange={this.changerCheckbox}
-                        disabled={!this.props.rootProps.modeProtege} />
+                        disabled={!etatAuthentifie} />
           </Col>
         </Row>
 
-        <AffichageLcd lignesAffichage={this.state.lignesAffichage || this.props.noeud.lcd_affichage || []}
+        <AffichageLcd lignesAffichage={this.state.lignesAffichage || noeud.lcd_affichage || []}
                       changerAffichage={this.changerAffichage}
                       ajouterLigneAffichage={this.ajouterLigneAffichage}
                       supprimerLigneAffichage={this.supprimerLigneAffichage}
-                      rootProps={this.props.rootProps} />
+                      rootProps={this.props.rootProps} 
+                      etatAuthentifie={etatAuthentifie} />
 
         <Row>
           <Col className="row-boutons">
             <Button onClick={this.sauvegarder} variant="secondary"
-                    disabled={!this.props.rootProps.modeProtege}>Sauvegarder</Button>
+                    disabled={!etatAuthentifie}>Sauvegarder</Button>
           </Col>
         </Row>
 
@@ -340,6 +342,8 @@ export class ConfigurationLCD extends React.Component {
 
 function AffichageLcd(props) {
 
+  const { etatAuthentifie } = props
+
   const ligneAffichageRendered = props.lignesAffichage.map((item, idx)=>{
     return (
       <LigneAffichageLcd key={idx} numeroLigne={idx}
@@ -348,7 +352,8 @@ function AffichageLcd(props) {
                          affichage={item.affichage}
                          changerAffichage={props.changerAffichage}
                          supprimerLigneAffichage={props.supprimerLigneAffichage}
-                         rootProps={props.rootProps} />
+                         rootProps={props.rootProps} 
+                         etatAuthentifie={etatAuthentifie} />
     )
   })
 
@@ -372,7 +377,7 @@ function AffichageLcd(props) {
       <Row>
         <Col className="row-boutons">
           <Button onClick={props.ajouterLigneAffichage} variant="secondary"
-                  disabled={!props.rootProps.modeProtege}>
+                  disabled={!etatAuthentifie}>
             Ajouter ligne
           </Button>
         </Col>
@@ -382,6 +387,8 @@ function AffichageLcd(props) {
 }
 
 function LigneAffichageLcd(props) {
+
+  const { etatAuthentifie } = props
 
   const numeroLigne = props.numeroLigne
 
@@ -396,12 +403,12 @@ function LigneAffichageLcd(props) {
                           data-ligne={numeroLigne}
                           onChange={props.changerAffichage}
                           value={props.affichage} placeholder="Temp %s"
-                          disabled={!props.rootProps.modeProtege} />
+                          disabled={!etatAuthentifie} />
           </Form.Group>
         </Col>
         <Col md={1}>
           <Button onClick={props.supprimerLigneAffichage} value={numeroLigne}
-                  variant="secondary" disabled={!props.rootProps.modeProtege}>
+                  variant="secondary" disabled={!etatAuthentifie}>
             <i className="fa fa-close"/>
           </Button>
         </Col>
@@ -416,7 +423,7 @@ function LigneAffichageLcd(props) {
                           data-ligne={numeroLigne}
                           onChange={props.changerAffichage}
                           value={props.uuid} placeholder="UUID"
-                          disabled={!props.rootProps.modeProtege} />
+                          disabled={!etatAuthentifie} />
           </Form.Group>
         </Col>
 
@@ -428,7 +435,7 @@ function LigneAffichageLcd(props) {
                           data-ligne={numeroLigne}
                           onChange={props.changerAffichage}
                           value={props.appareil} placeholder="appareil/donnee"
-                          disabled={!props.rootProps.modeProtege} />
+                          disabled={!etatAuthentifie} />
           </Form.Group>
         </Col>
 
