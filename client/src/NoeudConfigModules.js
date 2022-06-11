@@ -25,13 +25,13 @@ export class ConfigurationBlynk extends React.Component {
 
     const host = this.state.host,
           port = Number(this.state.port),
-          noeud_id = this.props.noeud.noeud_id
+          instance_id = this.props.noeud.instance_id
 
-    console.debug("changerServerBlynk %s:%s, noeud_id: ", host, port, noeud_id)
+    console.debug("changerServerBlynk %s:%s, instance_id: ", host, port, instance_id)
 
     try {
-      await wsa.setServerBlynk(noeud_id, host, port)
-      // this.props.rootProps.majNoeud({noeud_id, blynk_host: host, blynk_port: port})
+      await wsa.setServerBlynk(instance_id, host, port)
+      // this.props.rootProps.majNoeud({instance_id, blynk_host: host, blynk_port: port})
       this.props.setConfirmation("Configuration hote/port Blynk modifiee.")
     } catch (err) {
       this.props.setErreur(''+err)
@@ -42,13 +42,13 @@ export class ConfigurationBlynk extends React.Component {
     const wsa = this.props.workers.connexion
 
     const authToken = this.state.authToken,
-          noeud_id = this.props.noeud.noeud_id
+          instance_id = this.props.noeud.instance_id
 
-    console.debug("changerToken noeud_id: %s", noeud_id)
+    console.debug("changerToken instance_id: %s", instance_id)
 
     try {
-      await wsa.setAuthTokenBlynk(noeud_id, authToken)
-      // this.props.rootProps.majNoeud({noeud_id, blynk_auth: authToken})
+      await wsa.setAuthTokenBlynk(instance_id, authToken)
+      // this.props.rootProps.majNoeud({instance_id, blynk_auth: authToken})
       this.props.setConfirmation("Configuration auth token Blynk modifiee.")
     } catch(err) {
       this.props.setErreur(''+err)
@@ -58,7 +58,7 @@ export class ConfigurationBlynk extends React.Component {
   sauvegarder = async _ => {
     const wsa = this.props.workers.connexion
     const noeud = this.props.noeud,
-          noeud_id = this.props.noeud.noeud_id
+          instance_id = this.props.noeud.instance_id
 
     const host = this.state.host,
           port = Number(this.state.port || 9443),
@@ -73,8 +73,8 @@ export class ConfigurationBlynk extends React.Component {
       const actifCourant = this.props.noeud.blynk_actif
       if(actifCourant !== actif) {
         console.debug("Sauvegarder activite blynk: actif=%s", actif)
-        await wsa.setActiviteBlynk(noeud_id, actif)
-        // this.props.rootProps.majNoeud({noeud_id, blynk_actif: actif})
+        await wsa.setActiviteBlynk(instance_id, actif)
+        // this.props.rootProps.majNoeud({instance_id, blynk_actif: actif})
         confirmations += "Configuration activite Blynk modifiee. "
       }
     } catch(err) {
@@ -87,8 +87,8 @@ export class ConfigurationBlynk extends React.Component {
 
       if(host && port && (host !== hostCourant || port !== portCourant)) {
         console.debug("Sauvegarder info host/port blynk: host=%s, port=%d", host, port)
-        await wsa.setServerBlynk(noeud_id, host, port)
-        // this.props.rootProps.majNoeud({noeud_id, blynk_host: host, blynk_port: port})
+        await wsa.setServerBlynk(instance_id, host, port)
+        // this.props.rootProps.majNoeud({instance_id, blynk_host: host, blynk_port: port})
         confirmations += "Configuration hote/port Blynk modifiee. "
       }
     } catch (err) {
@@ -99,8 +99,8 @@ export class ConfigurationBlynk extends React.Component {
       const authTokenCourant = noeud.blynk_auth
 
       if(authToken && authToken !== authTokenCourant) {
-        await wsa.setAuthTokenBlynk(noeud_id, authToken)
-        // this.props.rootProps.majNoeud({noeud_id, blynk_auth: authToken})
+        await wsa.setAuthTokenBlynk(instance_id, authToken)
+        // this.props.rootProps.majNoeud({instance_id, blynk_auth: authToken})
         confirmations += "Configuration auth token Blynk modifiee. "
       }
     } catch(err) {
@@ -251,7 +251,7 @@ export class ConfigurationLCD extends React.Component {
 
   sauvegarder = async _ => {
     const wsa = this.props.workers.connexion
-    const noeud_id = this.props.noeud.noeud_id, partition = this.props.noeud.partition
+    const instance_id = this.props.noeud.instance_id, partition = this.props.noeud.partition
 
     var confirmations = ''
     const actif = this.state.actif === true,
@@ -259,16 +259,16 @@ export class ConfigurationLCD extends React.Component {
           vpinNavigation = this.state.vpinNavigation,
           lignesAffichage = this.state.lignesAffichage
 
-    const transaction = {noeud_id}
+    const transaction = {instance_id}
 
     // Sauvegarder activite LCD si changee
     try {
       const actifCourant = this.props.noeud.lcd_actif
       if(actifCourant !== actif) {
         console.debug("Sauvegarder info lcd : actif=%s", actif)
-        //await wsa.setActiviteLcd(noeud_id, actif)
+        //await wsa.setActiviteLcd(instance_id, actif)
         transaction.lcd_actif = actif
-        // this.props.rootProps.majNoeud({noeud_id, lcd_actif: actif})
+        // this.props.rootProps.majNoeud({instance_id, lcd_actif: actif})
         confirmations += "Configuration activite LCD modifiee. "
       }
     } catch(err) {
@@ -279,9 +279,9 @@ export class ConfigurationLCD extends React.Component {
     try {
       if(this.state.changementLignesAffichage) {
         console.debug("Sauvegarder configuration affichage LCD : %O", lignesAffichage)
-        // await wsa.setAffichageLcd(noeud_id, lignesAffichage)
+        // await wsa.setAffichageLcd(instance_id, lignesAffichage)
         transaction.lcd_affichage = lignesAffichage
-        // this.props.rootProps.majNoeud({noeud_id, lcd_affichage: lignesAffichage})
+        // this.props.rootProps.majNoeud({instance_id, lcd_affichage: lignesAffichage})
         confirmations += "Configuration affichage LCD modifiee. "
       }
     } catch(err) {

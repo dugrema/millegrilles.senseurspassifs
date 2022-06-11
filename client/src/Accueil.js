@@ -15,7 +15,7 @@ export function Accueil(props) {
     // Simuler event
     const pageInfo = {
       value: 'Noeud',
-      dataset: {noeud_id: value}
+      dataset: {instance_id: value}
     }
     
     // console.debug("Afficher noeud :\n%O", pageInfo)
@@ -42,7 +42,7 @@ function ListeNoeuds(props) {
   if(!props.listeNoeuds) return ''
 
   const listeNoeuds = props.listeNoeuds.noeuds.map(noeud=>{
-    return <NoeudItem key={noeud.noeud_id} noeud={noeud} partition={noeud.partition} selectionnerNoeud={props.selectionnerNoeud} />
+    return <NoeudItem key={noeud.instance_id} noeud={noeud} partition={noeud.partition} selectionnerNoeud={props.selectionnerNoeud} />
   })
 
   return (
@@ -58,8 +58,8 @@ function NoeudItem(props) {
   return (
     <Row>
       <Col>
-        <Button onClick={props.selectionnerNoeud} value={noeud.noeud_id} variant="link">
-          {noeud.descriptif?noeud.descriptif:noeud.noeud_id}
+        <Button onClick={props.selectionnerNoeud} value={noeud.instance_id} variant="link">
+          {noeud.descriptif?noeud.descriptif:noeud.instance_id}
         </Button>
       </Col>
     </Row>

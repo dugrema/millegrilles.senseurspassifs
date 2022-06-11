@@ -40,7 +40,7 @@ export default function Sommaire(props) {
     console.debug("!!! connexion : %O, etatAuthentifie: %O, noeuds: %O", connexion, etatAuthentifie, noeuds)
     if(connexion && etatAuthentifie && noeuds) {
       console.debug("Chargement senseurs pour noeuds : %O", noeuds)
-      Promise.all(noeuds.map(item=>connexion.getListeSenseursNoeud(item.noeud_id, {partition})))
+      Promise.all(noeuds.map(item=>connexion.getListeSenseursNoeud(item.instance_id, {partition})))
         .then(resultat=>{
           console.debug("Senseurs charges noeud : %O", resultat)
           // setSenseurs(senseurs)
@@ -67,8 +67,8 @@ export default function Sommaire(props) {
 
   const noeudsTries = [...props.listeNoeuds.noeuds]
   noeudsTries.sort((a,b)=>{
-    const nomA = a.descriptif || a.noeud_id,
-          nomB = b.descriptif || b.noeud_id
+    const nomA = a.descriptif || a.instance_id,
+          nomB = b.descriptif || b.instance_id
 
     return nomA.localeCompare(nomB)
   })
@@ -87,15 +87,15 @@ function ListeNoeuds(props) {
 
   return props.noeuds.map(noeud=>{
 
-    const noeud_id = noeud.noeud_id,
+    const instance_id = noeud.instance_id,
           listeSenseurs = Object.values(props.senseurs),
-          senseurs = listeSenseurs.filter(item=>item.noeud_id===noeud_id),
-          nom = noeud.descriptif || noeud.noeud_id
+          senseurs = listeSenseurs.filter(item=>item.instance_id===instance_id),
+          nom = noeud.descriptif || noeud.instance_id
 
     // console.debug("Senseurs : %O (Proppys %O)", senseurs, props)
 
     return (
-      <div key={noeud.noeud_id}>
+      <div key={noeud.instance_id}>
         <Row>
           <Col>{nom}</Col>
         </Row>

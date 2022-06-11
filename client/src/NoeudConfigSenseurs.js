@@ -73,8 +73,8 @@ class Senseur extends React.Component {
 
     const uuid_senseur = this.props.senseur.uuid_senseur,
           partition = this.props.noeud.partition,
-          noeud_id = this.props.noeud.noeud_id
-    const transaction = {uuid_senseur, noeud_id}
+          instance_id = this.props.noeud.instance_id
+    const transaction = {uuid_senseur, instance_id}
 
     let changement = false
 

@@ -201,11 +201,11 @@ function majNoeud(evenement, listeNoeuds, setNoeuds) {
   console.debug("majNoeud message recu : %O", evenement)
   const {message, exchange} = evenement
 
-  const noeud_id = message.noeud_id
+  const instance_id = message.instance_id
 
   var trouve = false
   const noeudsMaj = listeNoeuds.noeuds.map(noeud=>{
-    if(noeud.noeud_id === noeud_id) {
+    if(noeud.instance_id === instance_id) {
       trouve = true
       var copieNoeud = Object.assign({}, noeud)
       copieNoeud = Object.assign(copieNoeud, message)

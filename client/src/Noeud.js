@@ -19,11 +19,11 @@ export function Noeud(props) {
   const etatAuthentifie = props.etatAuthentifie,
         connexion = props.workers.connexion,
         listeNoeuds = props.listeNoeuds,
-        noeud_id = props.paramsPage.noeud_id
+        instance_id = props.paramsPage.instance_id
 
   // Conserver noeud
   const instNoeud = listeNoeuds.noeuds.filter(noeud=>{
-    return noeud.noeud_id === noeud_id
+    return noeud.instance_id === instance_id
   })[0] // Filtrer, garder premier element
   useEffect(()=>{ setNoeud(instNoeud) }, [instNoeud])
 
@@ -34,17 +34,17 @@ export function Noeud(props) {
   }, [listeSenseurs, setListeSenseurs])
 
   const messageRecu = useCallback(comlinkProxy(message => {
-    traiterLecture(noeud_id, message, _contexteCallback.listeSenseurs, _contexteCallback.setListeSenseurs)
-  }), [noeud_id])
+    traiterLecture(instance_id, message, _contexteCallback.listeSenseurs, _contexteCallback.setListeSenseurs)
+  }), [instance_id])
 
   const changerSecurite = useCallback(async event => {
     const {value} = event.currentTarget
-    const noeud_id = props.rootProps.paramsPage.noeud_id
+    const instance_id = props.rootProps.paramsPage.instance_id
 
     setErreur()
 
     try {
-      const reponse = await connexion.changerSecuriteNoeud(noeud_id, value)
+      const reponse = await connexion.changerSecuriteNoeud(instance_id, value)
       console.debug("Reponse commande changer securite\n%O", reponse)
     } catch(err) {
       setErreur(''+err)
@@ -55,7 +55,7 @@ export function Noeud(props) {
     if(etatAuthentifie && noeud && noeud.partition) {
       console.debug("Charger liste senseurs pour : %O", noeud)
       let partition = noeud.partition
-      connexion.getListeSenseursNoeud(noeud_id, {partition})
+      connexion.getListeSenseursNoeud(instance_id, {partition})
         .then(listeSenseurs=>{
           console.debug("Senseurs charges : %O", listeSenseurs)
           setListeSenseurs(listeSenseurs.senseurs)
@@ -101,10 +101,10 @@ function AfficherInformationNoeud(props) {
 
   const changerNomNoeud = useCallback(async _ => {
     if(!descriptif) { props.setErreur("Veuillez ajouter/modifier le nom du noeud"); return }
-    const noeud_id = noeud.noeud_id, partition = noeud.partition
+    const instance_id = noeud.instance_id, partition = noeud.partition
 
     try {
-      const reponse = await connexion.majNoeud(partition, {noeud_id, descriptif})
+      const reponse = await connexion.majNoeud(partition, {instance_id, descriptif})
       console.debug("Reponse changer nom noeud : %O", reponse)
       await props.majNoeud({message: reponse})
     } catch (err) {
@@ -114,10 +114,10 @@ function AfficherInformationNoeud(props) {
 
   const changerSecurite = useCallback(async event => {
     const securite = event.currentTarget.value
-    const noeud_id = noeud.noeud_id, partition = noeud.partition
+    const instance_id = noeud.instance_id, partition = noeud.partition
 
     try {
-      const reponse = await connexion.majNoeud(partition, {noeud_id, securite})
+      const reponse = await connexion.majNoeud(partition, {instance_id, securite})
       console.debug("Reponse changer nom noeud : %O", reponse)
       await props.majNoeud({message: reponse})
     } catch (err) {
@@ -160,7 +160,7 @@ function AfficherInformationNoeud(props) {
       </Row>
       <Row>
         <Col md={2} className="label">Noeud Id</Col>
-        <Col>{noeud.noeud_id}</Col>
+        <Col>{noeud.instance_id}</Col>
       </Row>
       <Row>
         <Col md={2} className="label">Securite</Col>
@@ -204,15 +204,15 @@ function AfficherInformationNoeud(props) {
   )
 }
 
-function traiterLecture(noeud_id, evenement, senseurs, setSenseurs) {
+function traiterLecture(instance_id, evenement, senseurs, setSenseurs) {
   const message = evenement.message,
         uuid_senseur = message.uuid_senseur
 
   // console.debug("Lecture recue :\n%O\nSenseurs: %O", message, senseurs)
 
-  // Verifier que le messages est pour le noeud_id courant
-  const noeudIdRecu = message.noeud_id
-  if(noeud_id !== noeudIdRecu) return  // Rien a faire
+  // Verifier que le messages est pour le instance_id courant
+  const noeudIdRecu = message.instance_id
+  if(instance_id !== noeudIdRecu) return  // Rien a faire
 
   var trouve = false
   const copieSenseurs = senseurs.map(senseurExistant=>{

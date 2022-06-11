@@ -11,13 +11,13 @@ function getListeNoeuds() {
   return ConnexionClient.emitBlocking('getListeNoeuds', {}, {domaine: CONST_DOMAINE_SENSEURSPASSIFS, action: 'listeNoeuds', ajouterCertificat: true})
 }
 
-function getListeSenseursNoeud(noeud_id, opts) {
+function getListeSenseursNoeud(instance_id, opts) {
   opts = opts || {}
-  const partition = opts.partition || noeud_id
-  console.debug("getListeSenseursNoeud, noeud_id: %s", noeud_id)
+  const partition = opts.partition || instance_id
+  console.debug("getListeSenseursNoeud, instance_id: %s", instance_id)
   return ConnexionClient.emitBlocking(
     'getListeSenseursNoeud', 
-    {noeud_id}, 
+    {instance_id}, 
     {
       domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
       action: 'listeSenseursPourNoeud', 
@@ -277,10 +277,10 @@ expose({
 //   )
 // }
 
-// function getListeSenseursNoeud(partition, noeud_id) {
+// function getListeSenseursNoeud(partition, instance_id) {
 //   return connexionClient.emitBlocking(
 //     'SenseursPassifs/getListeSenseursNoeud',
-//     {partition, noeud_id},
+//     {partition, instance_id},
 //     {domaine: 'SenseursPassifs', action: 'listeSenseursPourNoeud', attacherCertificat: true}
 //   )
 // }
