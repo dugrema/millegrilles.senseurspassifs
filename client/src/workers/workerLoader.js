@@ -1,28 +1,30 @@
-import { wrap } from 'comlink'
-
-import ChiffrageWorker from './chiffrage.worker'
-import ConnexionWorker from './connexion.worker'
+import { wrap, releaseProxy } from 'comlink'
 
 // Exemple de loader pour web workers
-export function chargerWorkers() {
-    // Chiffrage et x509 sont combines, reduit taille de l'application
-    const {worker: chiffrage} = charger(ChiffrageWorker)
-    const x509 = chiffrage
+export function setupWorkers() {
 
-    const {worker: connexion} = charger(ConnexionWorker)
-    connexion.setX509Worker(chiffrage).catch(err=>console.error("Erreur chargement connexion worker : %O", err))
+  // Chiffrage et x509 sont combines, reduit taille de l'application
+  const connexion = wrapWorker(new Worker(new URL('./connexion.worker', import.meta.url), {type: 'module'}))
+  const chiffrage = wrapWorker(new Worker(new URL('./chiffrage.worker', import.meta.url), {type: 'module'}))
 
-    const workers = {
-        chiffrage, 
-        connexion, 
-        x509,
-    }
+  const workers = { chiffrage, connexion }
 
-    return workers
+  return workers
 }
 
-function charger(ClasseWorker) {
-    const instance = new ClasseWorker()
-    const worker = wrap(instance)
-    return {instance, worker}
+function wrapWorker(worker) {
+  const proxy = wrap(worker)
+  return {proxy, worker}
+}
+
+export function cleanupWorkers(workers) {
+  Object.values(workers).forEach((workerInstance) => {
+    try {
+      const {worker, proxy} = workerInstance
+      proxy[releaseProxy]()
+      worker.terminate()
+    } catch(err) {
+      console.warn("Errreur fermeture worker : %O\n(Workers: %O)", err, workers)
+    }
+  })
 }

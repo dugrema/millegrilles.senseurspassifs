@@ -30,7 +30,7 @@ async function setUsager(workers, nomUsager, setUsagerState, opts) {
     console.debug("Usager info : %O", usager)
     
     if(usager && usager.certificat) {
-        const { connexion, chiffrage, x509 } = workers
+        const { connexion, chiffrage } = workers
         const fullchain = usager.certificat,
               caPem = usager.ca
 
@@ -38,8 +38,6 @@ async function setUsager(workers, nomUsager, setUsagerState, opts) {
 
         // Initialiser le CertificateStore
         await chiffrage.initialiserCertificateStore(caPem, {isPEM: true, DEBUG: false})
-
-        await x509.init(caPem)
 
         // Init cles privees
         await chiffrage.initialiserFormatteurMessage(certificatPem, usager.clePriveePem, {DEBUG: false})

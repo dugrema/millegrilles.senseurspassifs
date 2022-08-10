@@ -2,10 +2,12 @@ import React, {Suspense, useState, useEffect, useMemo, useCallback} from 'react'
 import { Container, Row, Col } from 'react-bootstrap'
 import { proxy } from 'comlink'
 
-import { LayoutApplication, HeaderApplication, FooterApplication, styles as stylesCommuns } from '@dugrema/millegrilles.reactjs'
+import { LayoutApplication, HeaderApplication, FooterApplication } from '@dugrema/millegrilles.reactjs'
 
 import Menu from './Menu'
 import { SectionContenu } from './SectionContenu'
+
+import { setupWorkers, cleanupWorkers } from './workers/workerLoader'
 
 import './App.css'
 
@@ -46,14 +48,21 @@ function App(props) {
 
     setPage(pageSelectionnee)
     setParamsPage(paramsPage || '')
-  }, [page, setPage, setParamsPage])
+  }, [setPage, setParamsPage])
 
 
   // Chargement des proprietes et workers
   useEffect(()=>{
-      importerWorkers(setWorkers)
-        .then(()=>{ console.debug("Chargement de l'application complete") })
-        .catch(err=>{console.error("Erreur chargement application : %O", err)})
+      const workerInstances = setupWorkers()
+      const workers = Object.keys(workerInstances).reduce((acc, item)=>{
+        acc[item] = workerInstances[item].proxy
+        return acc
+      }, {})
+      setWorkers(workers)
+      return () => {
+        console.info("Cleanup workers")
+        cleanupWorkers(workerInstances)
+      }
   }, [setWorkers])
 
   useEffect(()=>{
@@ -70,7 +79,7 @@ function App(props) {
       console.debug("IDMG local chiffrage : %O", idmg)
       setIdmg(idmg)
     })
-  }, [etatConnexion, setIdmg])
+  }, [workers, etatConnexion, setIdmg])
     
   const rootProps = {
     usager, changerPage, page, paramsPage
@@ -115,11 +124,11 @@ function Attente(props) {
   return <p>Chargement en cours</p>
 }
 
-async function importerWorkers(setWorkers) {
-  const { chargerWorkers } = await import('./workers/workerLoader')
-  const workers = chargerWorkers()
-  setWorkers(workers)
-}
+// async function importerWorkers(setWorkers) {
+//   const { chargerWorkers } = await import('./workers/workerLoader')
+//   const workers = chargerWorkers()
+//   setWorkers(workers)
+// }
 
 async function connecter(...params) {
   const { connecter: connecterWorker } = await import('./workers/connecter')
@@ -244,14 +253,6 @@ function Entete(props) {
   return (
     <Container>
       <Menu changerPage={props.changerPage} rootProps={props.rootProps}/>
-    </Container>
-  )
-}
-
-function Contenu(props) {
-  return (
-    <Container className="main-body">
-      {props.page}
     </Container>
   )
 }
