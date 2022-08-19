@@ -7,7 +7,7 @@ import { Senseurs } from './NoeudConfigSenseurs'
 
 const _contexteCallback = {}
 
-export function Noeud(props) {
+function Noeud(props) {
 
   // console.debug("Proppys %O", props)
 
@@ -89,6 +89,8 @@ export function Noeud(props) {
     </div>
   )
 }
+
+export default Noeud
 
 function AfficherInformationNoeud(props) {
 

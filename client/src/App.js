@@ -1,55 +1,51 @@
 import React, {Suspense, useState, useEffect, useMemo, useCallback} from 'react'
-import { Container, Row, Col } from 'react-bootstrap'
+import Container from 'react-bootstrap/Container'
+import Nav from 'react-bootstrap/Nav'
+import Navbar from 'react-bootstrap/Navbar'
+import NavDropdown from 'react-bootstrap/NavDropdown'
 import { proxy } from 'comlink'
 
-import { LayoutApplication, HeaderApplication, FooterApplication } from '@dugrema/millegrilles.reactjs'
-
-import Menu from './Menu'
-import { SectionContenu } from './SectionContenu'
+// import { LayoutApplication, HeaderApplication, FooterApplication } from '@dugrema/millegrilles.reactjs'
+import { LayoutMillegrilles, ModalErreur, Menu as MenuMillegrilles, DropDownLanguage, ModalInfo } from '@dugrema/millegrilles.reactjs'
 
 import { setupWorkers, cleanupWorkers } from './workers/workerLoader'
 
+import { useTranslation } from 'react-i18next'
+import './i18n'
+
+// Importer JS global
+import 'react-bootstrap/dist/react-bootstrap.min.js'
+
+// Importer cascade CSS global
+import 'bootstrap/dist/css/bootstrap.min.css'
+import 'font-awesome/css/font-awesome.min.css'
+import '@dugrema/millegrilles.reactjs/dist/index.css'
+
+import manifest from './manifest.build'
+
+import './index.scss'
 import './App.css'
 
-var manifestImport = {
-  date: "DUMMY-Date",
-  version: "DUMMY-Version",
-}
-
-const manifest = manifestImport
+const Accueil = React.lazy( () => import('./Accueil') )
+const Noeud = React.lazy( () => import('./Noeud') )
 
 // const _contexte = {}  // Contexte global pour comlink proxy callbacks
 
 function App(props) {
+
+  const { i18n, t } = useTranslation()
+
   const [workers, setWorkers] = useState('')
   const [usager, setUsager] = useState('')
-  const [page, setPage] = useState('Accueil')
-  const [paramsPage, setParamsPage] = useState('')
+  const [sectionAfficher, setSectionAfficher] = useState('')
   const [etatConnexion, setEtatConnexion] = useState(false)
   const [etatFormatteurMessage, setEtatFormatteurMessage] = useState(false)
   const [idmg, setIdmg] = useState('')
+  const [erreur, setErreur] = useState('')
+  
+  const handlerCloseErreur = () => setErreur(false)
 
   const etatAuthentifie = usager && etatFormatteurMessage
-
-  const changerPage = useCallback(eventPage => {
-    // Verifier si event ou page
-    let pageSelectionnee
-    var paramsPage = null
-    if(eventPage.currentTarget) {
-      var target = eventPage.currentTarget
-      pageSelectionnee = target.value
-      var dataset = target.dataset
-      if(dataset) {
-        paramsPage = {...dataset}
-      }
-    } else {
-      pageSelectionnee = eventPage
-    }
-
-    setPage(pageSelectionnee)
-    setParamsPage(paramsPage || '')
-  }, [setPage, setParamsPage])
-
 
   // Chargement des proprietes et workers
   useEffect(()=>{
@@ -80,55 +76,75 @@ function App(props) {
       setIdmg(idmg)
     })
   }, [workers, etatConnexion, setIdmg])
-    
-  const rootProps = {
-    usager, changerPage, page, paramsPage
-  }
+  
+  // const rootProps = {
+  //   usager, changerPage, page, paramsPage
+  // }
+
+  const menu = (
+    <MenuApp 
+        i18n={i18n} 
+        etatConnexion={etatConnexion}
+        idmg={idmg}
+        workers={workers} 
+        setSectionAfficher={setSectionAfficher} />
+  ) 
 
   return (
-    <LayoutApplication>
-      
-      <HeaderApplication>
-        <Menu 
-          workers={workers} 
-          usager={usager} 
-          etatConnexion={etatConnexion} 
-          setPage={setPage}
-        />
-      </HeaderApplication>
+      <LayoutMillegrilles menu={menu}>
 
-      <Container>
-        <Suspense fallback={<Attente />}>
-          <ApplicationSenseursPassifs 
-            rootProps={rootProps}
-            workers={workers} 
-            usager={usager}
-            etatConnexion={etatConnexion} 
-            etatAuthentifie={etatAuthentifie}
-            page={page}
-          />
-        </Suspense>
-      </Container>
+          <Container className="contenu">
 
-      <FooterApplication>
-        <Footer workers={workers} idmg={idmg} />
-      </FooterApplication>
+              <Suspense fallback={<Attente workers={workers} idmg={idmg} etatConnexion={etatAuthentifie} />}>
+                <ApplicationSenseursPassifs 
+                    workers={workers}
+                    usager={usager}
+                    etatAuthentifie={etatAuthentifie}
+                    setSectionAfficher={setSectionAfficher}
+                  />
+              </Suspense>
+
+          </Container>
+
+          <ModalErreur show={!!erreur} err={erreur.err} message={erreur.message} titre={t('Erreur.titre')} fermer={handlerCloseErreur} />
+
+      </LayoutMillegrilles>
+  )  
+
+  // return (
+  //   <LayoutApplication>
       
-    </LayoutApplication>
-  )
+  //     <HeaderApplication>
+  //       <Menu 
+  //         workers={workers} 
+  //         usager={usager} 
+  //         etatConnexion={etatConnexion} 
+  //         setPage={setPage}
+  //       />
+  //     </HeaderApplication>
+
+  //     <Container>
+  //       <Suspense fallback={<Attente />}>
+  //         <ApplicationSenseursPassifs 
+  //           rootProps={rootProps}
+  //           workers={workers} 
+  //           usager={usager}
+  //           etatConnexion={etatConnexion} 
+  //           etatAuthentifie={etatAuthentifie}
+  //           page={page}
+  //         />
+  //       </Suspense>
+  //     </Container>
+
+  //     <FooterApplication>
+  //       <Footer workers={workers} idmg={idmg} />
+  //     </FooterApplication>
+      
+  //   </LayoutApplication>
+  // )
 }
 
 export default App
-
-function Attente(props) {
-  return <p>Chargement en cours</p>
-}
-
-// async function importerWorkers(setWorkers) {
-//   const { chargerWorkers } = await import('./workers/workerLoader')
-//   const workers = chargerWorkers()
-//   setWorkers(workers)
-// }
 
 async function connecter(...params) {
   const { connecter: connecterWorker } = await import('./workers/connecter')
@@ -138,12 +154,11 @@ async function connecter(...params) {
 function ApplicationSenseursPassifs(props) {
 
   // console.debug("!!! ApplicationSenseursPassifs Proppys : %O", props)
+  const { workers, sectionAfficher, etatAuthentifie } = props
+  const connexion = workers.connexion
 
   const [listeNoeuds, setListeNoeuds] = useState('')
   const [messageNoeud, addMessageNoeud] = useState('')
-
-  const connexion = props.workers.connexion,
-        etatAuthentifie = props.etatAuthentifie
 
   const traiterMessageNoeudsCb = useMemo(()=>proxy(addMessageNoeud), [addMessageNoeud])
 
@@ -179,28 +194,39 @@ function ApplicationSenseursPassifs(props) {
     }
   }, [connexion, etatAuthentifie])
 
-  const rootProps = {
-    ...props.rootProps,
-    manifest,
-  }
+  // const rootProps = {
+  //   ...props.rootProps,
+  //   manifest,
+  // }
 
-  let pageRender
-  if(!etatAuthentifie) {
-    pageRender = <p>Attente de connexion</p>
-  } else {
-    // 3. Afficher application
-    pageRender = <SectionContenu rootProps={rootProps}
-                                 workers={props.workers}
-                                 page={rootProps.page}
-                                 paramsPage={rootProps.paramsPage}
-                                 listeNoeuds={listeNoeuds}
-                                 majNoeud={traiterMessageNoeudsCb} 
-                                 etatAuthentifie={etatAuthentifie} />
+  // let pageRender
+  // if(!etatAuthentifie) {
+  //   pageRender = <p>Attente de connexion</p>
+  // } else {
+  //   // 3. Afficher application
+  //   pageRender = <SectionContenu rootProps={rootProps}
+  //                                workers={props.workers}
+  //                                page={rootProps.page}
+  //                                paramsPage={rootProps.paramsPage}
+  //                                listeNoeuds={listeNoeuds}
+  //                                majNoeud={traiterMessageNoeudsCb} 
+  //                                etatAuthentifie={etatAuthentifie} />
+  // }
+
+  let Page
+  switch(sectionAfficher) {
+    case 'Noeud': Page = Noeud; break
+    default: Page = Accueil
   }
 
   return (
     <Container className="main-body">
-      {pageRender}
+      <Page 
+          workers={props.workers}
+          listeNoeuds={listeNoeuds}
+          majNoeud={traiterMessageNoeudsCb} 
+          etatAuthentifie={etatAuthentifie}      
+        />
     </Container>
   )
 
@@ -233,46 +259,64 @@ function majNoeud(evenement, listeNoeuds, setNoeuds) {
   setNoeuds({...listeNoeuds, noeuds: noeudsMaj})
 }
 
-export function Layout(props) {
+function MenuApp(props) {
 
-  // Application independante (probablement pour DEV)
+  const { i18n, etatConnexion, idmg, setSectionAfficher} = props
+
+  const { t } = useTranslation()
+  const [showModalInfo, setShowModalInfo] = useState(false)
+  const handlerCloseModalInfo = useCallback(()=>setShowModalInfo(false), [setShowModalInfo])
+
+  const handlerSelect = eventKey => {
+      switch(eventKey) {
+        case 'information': setShowModalInfo(true); break
+        case 'Noeud': setSectionAfficher('Noeud'); break
+        default:
+      }
+  }
+
+  const handlerChangerLangue = eventKey => {i18n.changeLanguage(eventKey)}
+  const brand = (
+      <Navbar.Brand>
+          <Nav.Link title={t('titre')}>
+              {t('titre')}
+          </Nav.Link>
+      </Navbar.Brand>
+  )
+
   return (
-    <div className="flex-wrapper">
+      <>
+          <MenuMillegrilles brand={brand} labelMenu="Menu" etatConnexion={etatConnexion} onSelect={handlerSelect}>
+            <Nav.Link eventKey="information" title="Afficher l'information systeme">
+                {t('menu.information')}
+            </Nav.Link>
+            <DropDownLanguage title={t('menu.language')} onSelect={handlerChangerLangue}>
+                <NavDropdown.Item eventKey="en-US">English</NavDropdown.Item>
+                <NavDropdown.Item eventKey="fr-CA">Francais</NavDropdown.Item>
+            </DropDownLanguage>
+            <Nav.Link eventKey="deconnecter" title={t('deconnecter')}>
+                {t('menu.deconnecter')}
+            </Nav.Link>
+          </MenuMillegrilles>
+          <ModalInfo 
+              show={showModalInfo} 
+              fermer={handlerCloseModalInfo} 
+              manifest={manifest} 
+              idmg={idmg} />
+      </>
+  )
+}
+
+function Attente(_props) {
+  return (
       <div>
-        <Entete changerPage={props.changerPage}
-                rootProps={props.rootProps} />
-        {props.children}
+          <p className="titleinit">Preparation de Coup D'Oeil</p>
+          <p>Veuillez patienter durant le chargement de la page.</p>
+          <ol>
+              <li>Initialisation</li>
+              <li>Chargement des composants dynamiques</li>
+              <li>Connexion a la page</li>
+          </ol>
       </div>
-      <Footer rootProps={props.rootProps}/>
-    </div>
-  )
-
-}
-
-function Entete(props) {
-  return (
-    <Container>
-      <Menu changerPage={props.changerPage} rootProps={props.rootProps}/>
-    </Container>
-  )
-}
-
-function Footer(props) {
-
-  const idmg = props.idmg
-
-  return (
-    <Container>
-      <Row>
-        <Col>
-          <div>
-            <div>IDMG : {idmg}</div>
-            <div>
-              Senseurs Passifs pour MilleGrilles
-            </div>
-          </div>
-        </Col>
-      </Row>
-    </Container>
   )
 }

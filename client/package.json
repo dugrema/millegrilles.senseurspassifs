@@ -3,13 +3,14 @@
   "version": "2022.5.0",
   "private": true,
   "dependencies": {
-    "@dugrema/millegrilles.reactjs": "git+ssh://git.maceroc.com/git/millegrilles.reactjs#2022.5",
+    "@dugrema/millegrilles.reactjs": "github:dugrema/millegrilles.reactjs#2022.5",
     "buffer": "^6.0.3",
     "comlink": "^4.3.1",
     "crypto-browserify": "^3.12.0",
     "font-awesome": "~4.7.0",
     "i18next": "^21.9.0",
     "i18next-browser-languagedetector": "^6.1.4",
+    "i18next-http-backend": "^1.4.1",
     "path-browserify": "^1.0.1",
     "react": "^18.2.0",
     "react-app-rewired": "^2.2.1",
@@ -17,10 +18,11 @@
     "react-dom": "^18.2.0",
     "react-i18next": "^11.18.3",
     "react-scripts": "5.0.1",
+    "sass": "^1.54.4",
     "stream-browserify": "^3.0.0"
   },
   "peerDependencies": {
-    "@dugrema/millegrilles.utiljs": "git+ssh://git.maceroc.com/git/millegrilles.utiljs#2022.5",
+    "@dugrema/millegrilles.utiljs": "github:dugrema/millegrilles.utiljs#2022.5",
     "bootstrap": "^5.1",
     "idb": "^7",
     "socket.io-client": "^4"

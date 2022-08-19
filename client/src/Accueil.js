@@ -3,7 +3,7 @@ import { Row, Col, Button } from 'react-bootstrap'
 
 import Sommaire from './SommaireSenseurs'
 
-export function Accueil(props) {
+function Accueil(props) {
 
   const { workers, etatAuthentifie, listeNoeuds} = props
   const rootProps = props.rootProps || {}
@@ -36,6 +36,8 @@ export function Accueil(props) {
   )
 
 }
+
+export default Accueil
 
 function ListeNoeuds(props) {
 
