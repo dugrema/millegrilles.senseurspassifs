@@ -35,3 +35,8 @@ $xsmall-width: map.get($grid-breakpoints, xs);
     background: #fff;
     padding: 0.3rem;
 }
+
+/* Cards */
+.card-senseur {
+    background-color: $second-color;
+}

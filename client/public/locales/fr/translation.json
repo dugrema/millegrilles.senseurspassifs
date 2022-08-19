@@ -1,0 +1,25 @@
+{
+    "titre": "Senseurs Passifs",
+    "application": {
+        "nom": "Senseurs Passifs"
+    },
+    "menu": {
+        "instances": "Instances",
+        "domaines": "Domaines",
+        "information": "Information",
+        "language": "Language",
+        "deconnecter": "Deconnecter"
+    },
+    "layout-millegrilles": {
+        "modal-info-titre": "Information MilleGrille",
+        "modal-info-application": "Application",
+        "modal-info-nom": "Nom",
+        "modal-info-version": "Version",
+        "modal-info-date": "Date",
+        "modal-info-systeme": "Système",
+        "idmg": "Identificateur MilleGrille (IDMG)"
+    },
+    "Noeud": {
+        "titre": "Instance"
+    }
+}

@@ -5,27 +5,18 @@ import Sommaire from './SommaireSenseurs'
 
 function Accueil(props) {
 
-  const { workers, etatAuthentifie, listeNoeuds} = props
+  const { workers, listeNoeuds, setNoeudId, etatAuthentifie } = props
   const rootProps = props.rootProps || {}
-  const { changerPage } = rootProps
 
-  const selectionnerNoeud = useCallback(event => {
+  const handlerSelectionnerNoeud = useCallback(event => {
     const {value} = event.currentTarget
-
-    // Simuler event
-    const pageInfo = {
-      value: 'Noeud',
-      dataset: {instance_id: value}
-    }
-    
-    // console.debug("Afficher noeud :\n%O", pageInfo)
-    changerPage({currentTarget: pageInfo})
-  }, [changerPage])
+    setNoeudId(value)
+  }, [setNoeudId])
 
   return (
     <div>
       <h1>Senseurs Passifs</h1>
-      <ListeNoeuds listeNoeuds={listeNoeuds} selectionnerNoeud={selectionnerNoeud} />
+      <ListeNoeuds listeNoeuds={listeNoeuds} selectionnerNoeud={handlerSelectionnerNoeud} />
 
       <h2>Sommaire</h2>
       <Sommaire listeNoeuds={listeNoeuds}

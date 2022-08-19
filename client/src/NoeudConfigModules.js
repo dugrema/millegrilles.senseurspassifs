@@ -1,5 +1,7 @@
-import React from 'react'
+import React, {useState, useCallback, useEffect} from 'react'
 import { Row, Col, Button, Form } from 'react-bootstrap';
+
+import { BoutonActif } from '@dugrema/millegrilles.reactjs'
 
 export class ConfigurationBlynk extends React.Component {
 
@@ -195,26 +197,22 @@ export class ConfigurationBlynk extends React.Component {
   }
 }
 
-export class ConfigurationLCD extends React.Component {
+export function ConfigurationLCD(props) {
 
-  state = {
-    actif: '',
-    lignesAffichage: '',
-    changementLignesAffichage: false,
-  }
+  const { workers, noeud, etatAuthentifie, majNoeud, setErreur } = props
+  const connexion = workers.connexion
 
-  changerChamp = event => {
-    const {name, value} = event.currentTarget
-    this.setState({[name]: value})
-  }
+  const [actif, setActif] = useState(noeud.lcd_actif || false)
+  const [lignesAffichage, setLignesAffichage] = useState(noeud.lcd_affichage || [])
+  const [changementLignesAffichage, setChangementLignesAffichage] = useState(false)
 
-  changerCheckbox = event => {
-    const {name, checked} = event.currentTarget
-    this.setState({[name]: checked})
-  }
+  const handlerChangerActif = useCallback(event=>{
+    const value = event.currentTarget.checked
+    setActif(value)
+  }, [setActif])
 
-  changerAffichage = event => {
-    let lignesAffichage = this.state.lignesAffichage || this.props.noeud.lcd_affichage || []
+  const handlerChangerAffichage = useCallback(event => {
+    // let lignesAffichage = this.state.lignesAffichage || this.props.noeud.lcd_affichage || []
     const {name, value, dataset} = event.currentTarget
     const numeroLigne = Number(dataset.ligne)
     const nouvellesLignesAffichage = lignesAffichage.map((item, idx)=>{
@@ -224,121 +222,71 @@ export class ConfigurationLCD extends React.Component {
         return item
       }
     })
-    this.setState({lignesAffichage: nouvellesLignesAffichage, changementLignesAffichage: true})
-  }
+    setLignesAffichage(nouvellesLignesAffichage)
+    setChangementLignesAffichage(true)
+  }, [lignesAffichage, setLignesAffichage, setChangementLignesAffichage])
 
-  ajouterLigneAffichage = _ => {
-    let lignesAffichage = this.state.lignesAffichage || this.props.noeud.lcd_affichage || []
-    lignesAffichage = [
-      ...lignesAffichage,
-      {uuid: '', appareil: '', affichage: ''}
-    ]
-    this.setState({
-      lignesAffichage,
-      changementLignesAffichage: true,
-    })
-  }
+  const handlerAjouterLigneAffichage = useCallback(()=>{
+    setLignesAffichage([...lignesAffichage, {uuid: '', appareil: '', affichage: ''}])
+    setChangementLignesAffichage(true)
+  }, [lignesAffichage, setLignesAffichage, setChangementLignesAffichage])
 
-  supprimerLigneAffichage = event => {
-    let lignesAffichage = this.state.lignesAffichage || this.props.noeud.lcd_affichage || []
+  const handlerSupprimerLigneAffichage = useCallback(event=>{
     const numeroLigne = Number(event.currentTarget.value)
     const nouvellesLignesAffichage = lignesAffichage.filter((_, idx)=>{
       if(idx === numeroLigne) return false
       return true
     })
-    this.setState({lignesAffichage: nouvellesLignesAffichage, changementLignesAffichage: true})
-  }
+    setLignesAffichage(nouvellesLignesAffichage)
+    setChangementLignesAffichage(true)
+  }, [lignesAffichage, setLignesAffichage, setChangementLignesAffichage])
 
-  sauvegarder = async _ => {
-    const wsa = this.props.workers.connexion
-    const instance_id = this.props.noeud.instance_id, partition = this.props.noeud.partition
+  const handlerSauvegarder = useCallback(()=>{
+    console.debug("Handler sauvegarder : actif : %O, lignesAffichage : %O", actif, lignesAffichage)
+    sauvegarder(connexion, majNoeud, noeud, actif, changementLignesAffichage, lignesAffichage).catch(setErreur)
+  }, [connexion, majNoeud, noeud, actif, changementLignesAffichage, lignesAffichage, setErreur])
 
-    var confirmations = ''
-    const actif = this.state.actif === true,
-          vpinOnOff = this.state.vpinOnOff,
-          vpinNavigation = this.state.vpinNavigation,
-          lignesAffichage = this.state.lignesAffichage
+  // Chargement noeud sur changement
+  useEffect(()=>{
+    if(!noeud) return
+    console.debug("Reload noeud : %O", noeud)
+    setActif(noeud.lcd_actif || false)
+    setLignesAffichage(noeud.lcd_affichage)
+  }, [noeud, setActif, setLignesAffichage])
 
-    const transaction = {instance_id}
+  return (
+    <div className="config-lcd">
+      <Row><Col><h2>LCD</h2></Col></Row>
 
-    // Sauvegarder activite LCD si changee
-    try {
-      const actifCourant = this.props.noeud.lcd_actif
-      if(actifCourant !== actif) {
-        console.debug("Sauvegarder info lcd : actif=%s", actif)
-        //await wsa.setActiviteLcd(instance_id, actif)
-        transaction.lcd_actif = actif
-        // this.props.rootProps.majNoeud({instance_id, lcd_actif: actif})
-        confirmations += "Configuration activite LCD modifiee. "
-      }
-    } catch(err) {
-      this.props.setErreur(''+err)
-    }
+      <Row className="row-switch-activation">
+        <Form.Label column md={2} htmlFor="lcd-on">
+          LCD actif
+        </Form.Label>
+        <Col md={2}>
+          <Form.Check type="switch"
+                      id="lcd-on"
+                      checked={actif}
+                      onChange={handlerChangerActif}
+                      disabled={!etatAuthentifie} />
+        </Col>
+      </Row>
 
-    // Sauvegarder la configuration d'affichage
-    try {
-      if(this.state.changementLignesAffichage) {
-        console.debug("Sauvegarder configuration affichage LCD : %O", lignesAffichage)
-        // await wsa.setAffichageLcd(instance_id, lignesAffichage)
-        transaction.lcd_affichage = lignesAffichage
-        // this.props.rootProps.majNoeud({instance_id, lcd_affichage: lignesAffichage})
-        confirmations += "Configuration affichage LCD modifiee. "
-      }
-    } catch(err) {
-      this.props.setErreur(''+err)
-    }
+      <AffichageLcd lignesAffichage={lignesAffichage}
+                    changerAffichage={handlerChangerAffichage}
+                    ajouterLigneAffichage={handlerAjouterLigneAffichage}
+                    supprimerLigneAffichage={handlerSupprimerLigneAffichage}
+                    etatAuthentifie={etatAuthentifie} />
 
-    let reponse = await wsa.majNoeud(partition, transaction)
-    await this.props.majNoeud({message: reponse})
+      <Row>
+        <Col className="row-boutons">
+          <Button onClick={handlerSauvegarder} variant="secondary"
+                  disabled={!etatAuthentifie}>Sauvegarder</Button>
+        </Col>
+      </Row>
 
-    if(confirmations) {
-      this.props.setConfirmation(confirmations)
-      this.setState({lcd_affichage: '', changementLignesAffichage: false, lignesAffichage: ''})
-    }
-  }
-
-  render() {
-
-    // console.debug("Noeud Config LCD proppys: %O, state %O", this.props, this.state)
-    const { noeud, etatAuthentifie } = this.props
-
-    return (
-      <div className="config-lcd">
-        <Row><Col><h2>LCD</h2></Col></Row>
-
-        <Row className="row-switch-activation">
-          <Form.Label column md={2} htmlFor="lcd-on">
-            LCD actif
-          </Form.Label>
-          <Col md={2}>
-            <Form.Check type="switch"
-                        id="lcd-on"
-                        name="actif"
-                        checked={(this.state.actif === '' && noeud.lcd_actif) || this.state.actif}
-                        onChange={this.changerCheckbox}
-                        disabled={!etatAuthentifie} />
-          </Col>
-        </Row>
-
-        <AffichageLcd lignesAffichage={this.state.lignesAffichage || noeud.lcd_affichage || []}
-                      changerAffichage={this.changerAffichage}
-                      ajouterLigneAffichage={this.ajouterLigneAffichage}
-                      supprimerLigneAffichage={this.supprimerLigneAffichage}
-                      rootProps={this.props.rootProps} 
-                      etatAuthentifie={etatAuthentifie} />
-
-        <Row>
-          <Col className="row-boutons">
-            <Button onClick={this.sauvegarder} variant="secondary"
-                    disabled={!etatAuthentifie}>Sauvegarder</Button>
-          </Col>
-        </Row>
-
-      </div>
-    )
-  }
+    </div>
+  )
 }
-
 
 function AffichageLcd(props) {
 
@@ -444,4 +392,27 @@ function LigneAffichageLcd(props) {
       <hr />
     </>
   )
+}
+
+async function sauvegarder(connexion, majNoeud, noeud, actif, changementLignesAffichage, lignesAffichage) {
+  const instance_id = noeud.instance_id,
+        partition = noeud.partition,
+        transaction = { instance_id }
+  
+  // Sauvegarder activite LCD si changee
+  const actifCourant = noeud.lcd_actif
+  if(actifCourant !== actif) {
+    transaction.lcd_actif = actif
+  }
+
+  // Sauvegarder la configuration d'affichage
+  if(changementLignesAffichage) {
+    transaction.lcd_affichage = lignesAffichage
+  }
+
+  console.debug("Sauvegarder transaction (partition: %s): %O", partition, transaction)
+
+  let reponse = await connexion.majNoeud(partition, transaction)
+  await majNoeud({message: reponse})
+
 }

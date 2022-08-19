@@ -1,4 +1,4 @@
-h1 {
+/* h1 {
   font-size: 2em;
   padding-top: 1em;
   color: skyblue;
@@ -12,8 +12,8 @@ h2 {
 h3 {
   font-size: 1.3em;
   color: skyblue;
-}
-
+} */
+/* 
 label, .label {
   color: skyblue;
   text-align: right;
@@ -36,7 +36,7 @@ label, .label {
 
 .App-link {
   color: #61dafb;
-}
+} */
 
 .bouton {
   text-align: right;
@@ -76,7 +76,6 @@ input.pin {
   padding: 1em;
 }
 
-div.table {}
 div.table div.table-header {
   background-color: #9eb1bb;
   font-weight: bolder;

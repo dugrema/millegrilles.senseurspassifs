@@ -16,14 +16,14 @@ const CONST_CHAMPS_SOMMAIRE = [
 export default function Sommaire(props) {
 
   // console.debug("Sommaire proppys : %O", props)
+  const { workers, etatAuthentifie, listeNoeuds } = props
 
   const [senseurs, setSenseurs] = useState('')
   const [messageSenseur, addMessageSenseur] = useState('')
 
-  const connexion = props.workers.connexion,
-        etatAuthentifie = props.etatAuthentifie,
-        noeuds = props.listeNoeuds.noeuds,
-        partition = props.listeNoeuds.partition
+  const connexion = workers.connexion,
+        noeuds = listeNoeuds.noeuds,
+        partition = listeNoeuds.partition
 
   const messageRecuCb = useMemo(()=>comlinkProxy(addMessageSenseur), [addMessageSenseur])
 
@@ -37,12 +37,12 @@ export default function Sommaire(props) {
   }, [messageSenseur, senseurs, setSenseurs])
 
   useEffect(()=>{
-    console.debug("!!! connexion : %O, etatAuthentifie: %O, noeuds: %O", connexion, etatAuthentifie, noeuds)
+    // console.debug("!!! connexion : %O, etatAuthentifie: %O, noeuds: %O", connexion, etatAuthentifie, noeuds)
     if(connexion && etatAuthentifie && noeuds) {
-      console.debug("Chargement senseurs pour noeuds : %O", noeuds)
+      // console.debug("Chargement senseurs pour noeuds : %O", noeuds)
       Promise.all(noeuds.map(item=>connexion.getListeSenseursNoeud(item.instance_id, {partition})))
         .then(resultat=>{
-          console.debug("Senseurs charges noeud : %O", resultat)
+          // console.debug("Senseurs charges noeud : %O", resultat)
           // setSenseurs(senseurs)
           let senseurs = []
           resultat.forEach(res=>{
@@ -100,8 +100,7 @@ function ListeNoeuds(props) {
           <Col>{nom}</Col>
         </Row>
 
-        <ListeSenseurs {...props}
-                       noeud={noeud}
+        <ListeSenseurs noeud={noeud}
                        senseurs={senseurs} />
       </div>
     )

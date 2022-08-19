@@ -42,6 +42,7 @@ function App(props) {
   const [etatFormatteurMessage, setEtatFormatteurMessage] = useState(false)
   const [idmg, setIdmg] = useState('')
   const [erreur, setErreur] = useState('')
+  const [noeudId, setNoeudId] = useState('')
   
   const handlerCloseErreur = () => setErreur(false)
 
@@ -86,8 +87,7 @@ function App(props) {
         i18n={i18n} 
         etatConnexion={etatConnexion}
         idmg={idmg}
-        workers={workers} 
-        setSectionAfficher={setSectionAfficher} />
+        workers={workers} />
   ) 
 
   return (
@@ -100,7 +100,8 @@ function App(props) {
                     workers={workers}
                     usager={usager}
                     etatAuthentifie={etatAuthentifie}
-                    setSectionAfficher={setSectionAfficher}
+                    noeudId={noeudId}
+                    setNoeudId={setNoeudId}
                   />
               </Suspense>
 
@@ -154,13 +155,15 @@ async function connecter(...params) {
 function ApplicationSenseursPassifs(props) {
 
   // console.debug("!!! ApplicationSenseursPassifs Proppys : %O", props)
-  const { workers, sectionAfficher, etatAuthentifie } = props
+  const { workers, sectionAfficher, etatAuthentifie, noeudId, setNoeudId } = props
   const connexion = workers.connexion
 
   const [listeNoeuds, setListeNoeuds] = useState('')
   const [messageNoeud, addMessageNoeud] = useState('')
 
   const traiterMessageNoeudsCb = useMemo(()=>proxy(addMessageNoeud), [addMessageNoeud])
+
+  const handlerFermer = () => setNoeudId('')
 
   // Entretien du contexte global pour les callbacks comlink proxy
   useEffect(()=>{
@@ -213,10 +216,9 @@ function ApplicationSenseursPassifs(props) {
   //                                etatAuthentifie={etatAuthentifie} />
   // }
 
-  let Page
-  switch(sectionAfficher) {
-    case 'Noeud': Page = Noeud; break
-    default: Page = Accueil
+  let Page = Accueil
+  if(noeudId) {
+    Page = Noeud
   }
 
   return (
@@ -224,8 +226,11 @@ function ApplicationSenseursPassifs(props) {
       <Page 
           workers={props.workers}
           listeNoeuds={listeNoeuds}
-          majNoeud={traiterMessageNoeudsCb} 
           etatAuthentifie={etatAuthentifie}      
+          noeudId={noeudId}
+          setNoeudId={setNoeudId}
+          majNoeud={traiterMessageNoeudsCb} 
+          fermer={handlerFermer}
         />
     </Container>
   )

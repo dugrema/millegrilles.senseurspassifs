@@ -2,24 +2,27 @@ import React, {useState, useEffect, useCallback} from 'react'
 import { Row, Col, Button, Form, Alert } from 'react-bootstrap'
 import {proxy as comlinkProxy} from 'comlink'
 
-import { ConfigurationBlynk, ConfigurationLCD } from './NoeudConfigModules'
+import { ConfigurationLCD } from './NoeudConfigModules'
 import { Senseurs } from './NoeudConfigSenseurs'
+
+import { BoutonActif } from '@dugrema/millegrilles.reactjs'
+import { useTranslation } from 'react-i18next'
 
 const _contexteCallback = {}
 
 function Noeud(props) {
 
   // console.debug("Proppys %O", props)
+  const { workers, noeudId, listeNoeuds, etatAuthentifie, fermer } = props
+
+  const { t } = useTranslation()
 
   const [listeSenseurs, setListeSenseurs] = useState([])
   const [erreur, setErreur] = useState('')
-  const [confirmation, setConfirmation] = useState('')
   const [noeud, setNoeud] = useState('')
 
-  const etatAuthentifie = props.etatAuthentifie,
-        connexion = props.workers.connexion,
-        listeNoeuds = props.listeNoeuds,
-        instance_id = props.paramsPage.instance_id
+  const connexion = workers.connexion,
+        instance_id = noeudId
 
   // Conserver noeud
   const instNoeud = listeNoeuds.noeuds.filter(noeud=>{
@@ -70,12 +73,19 @@ function Noeud(props) {
 
   return (
     <div>
-      <h1>Noeud</h1>
+      
+      <Row>
+          <Col xs={10} md={11}>
+              <h2>{t('Noeud.titre')}</h2>
+          </Col>
+          <Col xs={2} md={1} className="bouton">
+              <Button onClick={fermer} variant="secondary"><i className='fa fa-remove'/></Button>
+          </Col>
+      </Row>
+
+
       <Alert variant="danger" show={erreur?true:false} dismissible onClose={_=>setErreur()}>
         {erreur}
-      </Alert>
-      <Alert variant="success" show={confirmation?true:false} dismissible onClose={_=>setConfirmation()}>
-        {confirmation}
       </Alert>
       <AfficherInformationNoeud rootProps={props.rootProps}
                                 workers={props.workers}
@@ -84,8 +94,7 @@ function Noeud(props) {
                                 listeSenseurs={listeSenseurs}
                                 majNoeud={props.majNoeud}
                                 changerSecurite={changerSecurite}
-                                setErreur={setErreur}
-                                setConfirmation={setConfirmation} />
+                                setErreur={setErreur} />
     </div>
   )
 }
@@ -96,6 +105,7 @@ function AfficherInformationNoeud(props) {
 
   const [descriptif, setDescriptif] = useState('')
   const [senseursModeEdition, setSenseursModeEdition] = useState('')
+  const [etatBoutonChangeNom, setEtatBoutonChangeNom] = useState('')
 
   const { workers, etatAuthentifie, setConfirmation, setErreur, noeud } = props
 
@@ -109,10 +119,12 @@ function AfficherInformationNoeud(props) {
       const reponse = await connexion.majNoeud(partition, {instance_id, descriptif})
       console.debug("Reponse changer nom noeud : %O", reponse)
       await props.majNoeud({message: reponse})
+      setEtatBoutonChangeNom('succes')
     } catch (err) {
+      setEtatBoutonChangeNom('echec')
       props.setErreur(''+err)
     }
-  }, [connexion, descriptif, noeud, setConfirmation, setErreur])
+  }, [connexion, descriptif, noeud, setConfirmation, setErreur, setEtatBoutonChangeNom])
 
   const changerSecurite = useCallback(async event => {
     const securite = event.currentTarget.value
@@ -140,6 +152,8 @@ function AfficherInformationNoeud(props) {
     setSenseursModeEdition(senseursModeEditionMaj)
   }, [setSenseursModeEdition])
 
+  useEffect(()=>setEtatBoutonChangeNom(''), [descriptif])
+
   return (
     <div className="config-page">
       <Row>
@@ -155,9 +169,13 @@ function AfficherInformationNoeud(props) {
           </Form.Group>
         </Col>
         <Col md={3}>
-          <Button onClick={changerNomNoeud}
-                  variant="secondary"
-                  disabled={!etatAuthentifie}>Changer nom</Button>
+          <BoutonActif 
+            onClick={changerNomNoeud}
+            variant="secondary"
+            etat={etatBoutonChangeNom}
+            disabled={!etatAuthentifie}>
+              Changer nom
+          </BoutonActif>
         </Col>
       </Row>
       <Row>
