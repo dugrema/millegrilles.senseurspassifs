@@ -275,6 +275,8 @@ function MenuApp(props) {
   const handlerSelect = eventKey => {
       switch(eventKey) {
         case 'information': setShowModalInfo(true); break
+        case 'portail': window.location = '/millegrilles'; break
+        case 'deconnecter': window.location = '/millegrilles/authentification/fermer'; break
         case 'Noeud': setSectionAfficher('Noeud'); break
         default:
       }
@@ -299,7 +301,10 @@ function MenuApp(props) {
                 <NavDropdown.Item eventKey="en-US">English</NavDropdown.Item>
                 <NavDropdown.Item eventKey="fr-CA">Francais</NavDropdown.Item>
             </DropDownLanguage>
-            <Nav.Link eventKey="deconnecter" title={t('deconnecter')}>
+            <Nav.Link eventKey="portail" title={t('menu.portail')}>
+                {t('menu.portail')}
+            </Nav.Link>
+            <Nav.Link eventKey="deconnecter" title={t('menu.deconnecter')}>
                 {t('menu.deconnecter')}
             </Nav.Link>
           </MenuMillegrilles>

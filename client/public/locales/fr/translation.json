@@ -8,7 +8,8 @@
         "domaines": "Domaines",
         "information": "Information",
         "language": "Language",
-        "deconnecter": "Deconnecter"
+        "portail": "Portail",
+        "deconnecter": "Déconnecter"
     },
     "layout-millegrilles": {
         "modal-info-titre": "Information MilleGrille",
