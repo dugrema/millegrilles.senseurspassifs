@@ -205,6 +205,12 @@ export function ConfigurationLCD(props) {
   const [actif, setActif] = useState(noeud.lcd_actif || false)
   const [lignesAffichage, setLignesAffichage] = useState(noeud.lcd_affichage || [])
   const [changementLignesAffichage, setChangementLignesAffichage] = useState(false)
+  const [etatSauvegarder, setEtatSauvegarder] = useState('')
+
+  const handlerErreur = useCallback((err, message)=>{
+    setEtatSauvegarder('echec')
+    setErreur(err, message)
+  }, [setErreur, setEtatSauvegarder])
 
   const handlerChangerActif = useCallback(event=>{
     const value = event.currentTarget.checked
@@ -243,8 +249,11 @@ export function ConfigurationLCD(props) {
 
   const handlerSauvegarder = useCallback(()=>{
     console.debug("Handler sauvegarder : actif : %O, lignesAffichage : %O", actif, lignesAffichage)
-    sauvegarder(connexion, majNoeud, noeud, actif, changementLignesAffichage, lignesAffichage).catch(setErreur)
-  }, [connexion, majNoeud, noeud, actif, changementLignesAffichage, lignesAffichage, setErreur])
+    setEtatSauvegarder('')
+    sauvegarder(connexion, majNoeud, noeud, actif, changementLignesAffichage, lignesAffichage)
+      .then(()=>setEtatSauvegarder('succes'))
+      .catch(handlerErreur)
+  }, [connexion, majNoeud, noeud, actif, changementLignesAffichage, lignesAffichage, setEtatSauvegarder, handlerErreur])
 
   // Chargement noeud sur changement
   useEffect(()=>{
@@ -279,8 +288,13 @@ export function ConfigurationLCD(props) {
 
       <Row>
         <Col className="row-boutons">
-          <Button onClick={handlerSauvegarder} variant="secondary"
-                  disabled={!etatAuthentifie}>Sauvegarder</Button>
+          <BoutonActif 
+              onClick={handlerSauvegarder} 
+              variant="secondary"
+              etat={etatSauvegarder}
+              disabled={!etatAuthentifie}>
+                Sauvegarder
+            </BoutonActif>
         </Col>
       </Row>
 
