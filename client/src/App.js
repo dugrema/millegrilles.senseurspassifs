@@ -87,7 +87,8 @@ function App(props) {
         i18n={i18n} 
         etatConnexion={etatConnexion}
         idmg={idmg}
-        workers={workers} />
+        workers={workers} 
+        usager={usager} />
   ) 
 
   return (
@@ -266,7 +267,7 @@ function majNoeud(evenement, listeNoeuds, setNoeuds) {
 
 function MenuApp(props) {
 
-  const { i18n, etatConnexion, idmg, setSectionAfficher} = props
+  const { i18n, etatConnexion, idmg, setSectionAfficher, usager } = props
 
   const { t } = useTranslation()
   const [showModalInfo, setShowModalInfo] = useState(false)
@@ -312,7 +313,8 @@ function MenuApp(props) {
               show={showModalInfo} 
               fermer={handlerCloseModalInfo} 
               manifest={manifest} 
-              idmg={idmg} />
+              idmg={idmg} 
+              usager={usager} />
       </>
   )
 }

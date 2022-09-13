@@ -233,7 +233,8 @@ export function ConfigurationLCD(props) {
   }, [lignesAffichage, setLignesAffichage, setChangementLignesAffichage])
 
   const handlerAjouterLigneAffichage = useCallback(()=>{
-    setLignesAffichage([...lignesAffichage, {uuid: '', appareil: '', affichage: ''}])
+    const la = lignesAffichage || []
+    setLignesAffichage([...la, {uuid: '', appareil: '', affichage: ''}])
     setChangementLignesAffichage(true)
   }, [lignesAffichage, setLignesAffichage, setChangementLignesAffichage])
 
@@ -305,8 +306,9 @@ export function ConfigurationLCD(props) {
 function AffichageLcd(props) {
 
   const { etatAuthentifie } = props
+  const lignesAffichage = props.lignesAffichage || []
 
-  const ligneAffichageRendered = props.lignesAffichage.map((item, idx)=>{
+  const ligneAffichageRendered = lignesAffichage.map((item, idx)=>{
     return (
       <LigneAffichageLcd key={idx} numeroLigne={idx}
                          uuid={item.uuid}
