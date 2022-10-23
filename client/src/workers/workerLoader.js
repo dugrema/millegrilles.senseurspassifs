@@ -9,6 +9,26 @@ export function setupWorkers() {
 
   const workers = { chiffrage, connexion }
 
+  const location = new URL(window.location)
+  location.pathname = '/fiche.json'
+
+  import('axios')
+    .then(axiosImport=>{
+        const axios = axiosImport.default
+        console.debug("Axios : ", axios)
+        return axios.get(location.href)
+      })
+    .then(reponse=>{
+      const fiche = reponse.data || {}
+      const ca = fiche.ca
+      if(ca) {
+        return connexion.proxy.initialiserCertificateStore(ca, {isPEM: true, DEBUG: false})
+      }
+    })
+    .catch(err=>{
+      console.error("Erreur chargement fiche systeme : %O", err)
+    })
+
   return workers
 }
 
