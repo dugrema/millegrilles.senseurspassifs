@@ -108,9 +108,11 @@ class Senseur extends React.Component {
     var uuidSenseur = senseur.uuid_senseur
     var modeEdition = this.props.senseursModeEdition[uuidSenseur]?true:false
 
-    const timestampExpire = new Date().getTime() / 1000 - 300  // Expiration 5 minutes
+    const timestampVieux = new Date().getTime() / 1000 - 300  // Vieux 5 minutes
+    const timestampExpire = timestampVieux - 1500  // Expiration 30 minutes
 
-    var apps = ''
+    var apps = '',
+        classnameTimestamp = ''
     if(senseur && senseur.senseurs) {
       apps = Object.keys(senseur.senseurs).map(nomApp=>{
         const app = senseur.senseurs[nomApp]
@@ -131,6 +133,12 @@ class Senseur extends React.Component {
         if(item > acc) return item
         return acc
       }, 0)
+    }
+
+    if(!timestampSenseur || timestampSenseur < timestampExpire) {
+      classnameTimestamp = 'expire'
+    } else if(timestampSenseur < timestampVieux) {
+      classnameTimestamp = 'vieux'
     }
 
     var rowUuid = ''
@@ -186,7 +194,7 @@ class Senseur extends React.Component {
           </Container>
         </Card.Header>
 
-        <div className="card-senseur-timestamp">
+        <div className={"card-senseur-timestamp " + classnameTimestamp}>
           <DateTimeAfficher date={timestampSenseur} />
         </div>
 
@@ -217,15 +225,22 @@ function AfficherAppareil(props) {
   else if(props.app.type === 'pression') format = " kPa"
   else if(props.app.type === 'millivolt') format = " mV"
 
+  let valeur = ''
+  if(props.app.valeur) {
+    valeur = props.app.valeur + '' + format
+  } else if(props.app.valeur_str) {
+    valeur = props.app.valeur_str
+  }
+
   return (
     <Container className="card-senseur-contenu">
       <Row className="card-senseur-app">
         <Col lg={7}>
           {statusToken}
-          {props.nomApp.replace('/', ' / ')}
+          {props.nomApp.replace('/', '/')}
         </Col>
         <Col lg={5}>
-          {props.app.valeur}{format}
+          {valeur}
         </Col>
       </Row>
     </Container>

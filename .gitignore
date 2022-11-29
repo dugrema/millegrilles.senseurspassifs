@@ -23,3 +23,5 @@ yarn-error.log*
 
 /sessions
 /static
+
+settings.json

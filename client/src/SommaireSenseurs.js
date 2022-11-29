@@ -121,10 +121,20 @@ function ListeSenseurs(props) {
     return nomA.localeCompare(nomB)
   })
 
+  const timestampVieux = new Date().getTime() / 1000 - 300  // Vieux 5 minutes
+  const timestampExpire = timestampVieux - 1500  // Expiration 30 minutes
+
   return senseurs.map(item=>{
     const nom = item.descriptif || item.uuid_senseur,
           dateLecture = item.derniere_lecture
 
+    var classnameTimestamp = ''
+    if(!dateLecture || dateLecture < timestampExpire) {
+      classnameTimestamp = 'expire'
+    } else if(dateLecture < timestampVieux) {
+      classnameTimestamp = 'vieux'
+    }
+      
     const cols = CONST_CHAMPS_SOMMAIRE.map((champ, idx)=>{
       let valeur = ''
 
@@ -146,7 +156,7 @@ function ListeSenseurs(props) {
     return (
       <Row key={item.uuid_senseur}>
         <Col xs={6} sm={3} className="senseur-nom">{nom}</Col>
-        <Col xs={6} sm={3} className="senseur-date"><DateTimeAfficher date={dateLecture} /></Col>
+        <Col xs={6} sm={3} className={"senseur-date " + classnameTimestamp}><DateTimeAfficher date={dateLecture} /></Col>
         {cols}
       </Row>
     )
