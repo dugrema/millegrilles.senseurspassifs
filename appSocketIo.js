@@ -25,13 +25,10 @@ export function configurerEvenements(socket) {
     ]
   }
 
-  console.debug("!!! Evenements configuration : %O", configurationEvenements)
-
   return configurationEvenements
 }
 
 async function traiter(socket, methode, {params, cb}) {
-  console.debug("!!! traiter %O", params)
   const reponse = await methode(socket, params)
   if(cb) cb(reponse)
 }

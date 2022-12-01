@@ -22,23 +22,43 @@ export function challenge(socket, params) {
         nomUsager: socket.nomUsager,
         userId: socket.userId,
     }
-    return socket.amqpdao.pki.formatterMessage(reponse, 'challenge', {ajouterCertificat: true})
+    try {
+        return socket.amqpdao.pki.formatterMessage(reponse, 'challenge', {ajouterCertificat: true})
+    } catch(err) {
+        console.error("ERROR mqdao.challenge %O", err)
+    }
 }
 
 export function getListeNoeuds(socket, params) {
-    return transmettreRequete(socket, params, 'listeNoeuds')
+    try {
+        return transmettreRequete(socket, params, 'listeNoeuds')
+    } catch(err) {
+        console.error("ERROR mqdao.getListeNoeuds %O", err)
+    }
 }
 
 export function getListeSenseursNoeud(socket, params) {
-    return transmettreRequete(socket, params, 'listeSenseursPourNoeud')
+    try {
+        return transmettreRequete(socket, params, 'listeSenseursPourNoeud')
+    } catch(err) {
+        console.error("ERROR mqdao.getListeSenseursNoeud %O", err)
+    }
 }
 
 export function majNoeud(socket, params) {
-    return transmettreCommande(socket, params, 'majNoeud')
+    try {
+        return transmettreCommande(socket, params, 'majNoeud')
+    } catch(err) {
+        console.error("ERROR mqdao.majNoeud %O", err)
+    }
 }
 
 export function majSenseur(socket, params) {
-    return transmettreCommande(socket, params, 'majSenseur')
+    try {
+        return transmettreCommande(socket, params, 'majSenseur')
+    } catch(err) {
+        console.error("ERROR mqdao.majSenseur %O", err)
+    }
 }
 
 async function transmettreRequete(socket, params, action, opts) {
@@ -128,8 +148,12 @@ export function ecouterEvenementsSenseurs(socket, cb) {
       exchanges: ['2.prive'],
     }
   
-    debug("enregistrerCallbackMajFichier : %O", opts)
-    socket.subscribe(opts, cb)
+    try {
+        debug("enregistrerCallbackMajFichier : %O", opts)
+        socket.subscribe(opts, cb)
+    } catch(err) {
+        console.error("ERROR ecouterEvenementsSenseurs %O", err)
+    }
 }
   
 export function retirerEvenementsSenseurs(socket, cb) {
@@ -138,7 +162,11 @@ export function retirerEvenementsSenseurs(socket, cb) {
       exchanges: ['2.prive'],
     }
     debug("retirerCallbackMajFichier sur %O", opts)
-    socket.unsubscribe(opts, cb)
+    try {
+        socket.unsubscribe(opts, cb)
+    } catch(err) {
+        console.error("ERROR retirerEvenementsSenseurs %O", err)
+    }
 }
   
 const ROUTING_KEYS_NOEUDS = [
@@ -152,7 +180,11 @@ export function ecouterEvenementsNoeuds(socket, cb) {
     }
   
     debug("ecouterEvenementsNoeuds : %O", opts)
-    socket.subscribe(opts, cb)
+    try {
+        socket.subscribe(opts, cb)
+    } catch(err) {
+        console.error("ERROR ecouterEvenementsNoeuds %O", err)
+    }
 }
   
 export function retirerEvenementsNoeuds(socket, cb) {
@@ -161,6 +193,10 @@ export function retirerEvenementsNoeuds(socket, cb) {
       exchanges: ['2.prive'],
     }
     debug("retirerEvenementsNoeuds sur %O", opts)
-    socket.unsubscribe(opts, cb)
+    try {
+        socket.unsubscribe(opts, cb)
+    } catch(err) {
+        console.error("ERROR retirerEvenementsNoeuds %O", err)
+    }
 }
   
