@@ -28,6 +28,7 @@ import './App.css'
 
 const Accueil = React.lazy( () => import('./Accueil') )
 const Noeud = React.lazy( () => import('./Noeud') )
+const Configuration = React.lazy( () => import('./Configuration') )
 
 // const _contexte = {}  // Contexte global pour comlink proxy callbacks
 
@@ -40,7 +41,7 @@ function App(props) {
   const [sectionAfficher, setSectionAfficher] = useState('')
   const [etatConnexion, setEtatConnexion] = useState(false)
   const [etatFormatteurMessage, setEtatFormatteurMessage] = useState(false)
-  const [idmg, setIdmg] = useState('')
+  const [infoConnexion, setInfoConnexion] = useState('')
   const [erreur, setErreur] = useState('')
   const [noeudId, setNoeudId] = useState('')
   
@@ -65,19 +66,14 @@ function App(props) {
   useEffect(()=>{
     if(workers && workers.connexion) {
       connecter(workers, setUsager, setEtatConnexion, setEtatFormatteurMessage)
-        .then(infoConnexion=>{console.debug("Info connexion : %O", infoConnexion)})
+        .then(infoConnexion=>{
+          console.debug("Info connexion : %O", infoConnexion)
+          setInfoConnexion(infoConnexion)
+        })
         .catch(err=>{console.debug("Erreur de connexion : %O", err)})
     }
-  }, [workers, setUsager, setEtatConnexion, setEtatFormatteurMessage])
+  }, [workers, setInfoConnexion, setUsager, setEtatConnexion, setEtatFormatteurMessage])
 
-  useEffect(()=>{
-    if(!etatConnexion) return 
-    workers.chiffrage.getIdmgLocal().then(idmg=>{
-      console.debug("IDMG local chiffrage : %O", idmg)
-      setIdmg(idmg)
-    })
-  }, [workers, etatConnexion, setIdmg])
-  
   // const rootProps = {
   //   usager, changerPage, page, paramsPage
   // }
@@ -86,9 +82,10 @@ function App(props) {
     <MenuApp 
         i18n={i18n} 
         etatConnexion={etatConnexion}
-        idmg={idmg}
+        infoConnexion={infoConnexion}
         workers={workers} 
-        usager={usager} />
+        usager={usager} 
+        setSectionAfficher={setSectionAfficher} />
   ) 
 
   return (
@@ -96,13 +93,17 @@ function App(props) {
 
           <Container className="contenu">
 
-              <Suspense fallback={<Attente workers={workers} idmg={idmg} etatConnexion={etatAuthentifie} />}>
+              <Suspense fallback={<Attente workers={workers} idinfoConnexionmg={infoConnexion} etatConnexion={etatAuthentifie} />}>
                 <ApplicationSenseursPassifs 
                     workers={workers}
                     usager={usager}
                     etatAuthentifie={etatAuthentifie}
+                    etatConnexion={etatConnexion}
+                    infoConnexion={infoConnexion}
                     noeudId={noeudId}
                     setNoeudId={setNoeudId}
+                    sectionAfficher={sectionAfficher}
+                    setSectionAfficher={setSectionAfficher}
                   />
               </Suspense>
 
@@ -113,37 +114,6 @@ function App(props) {
       </LayoutMillegrilles>
   )  
 
-  // return (
-  //   <LayoutApplication>
-      
-  //     <HeaderApplication>
-  //       <Menu 
-  //         workers={workers} 
-  //         usager={usager} 
-  //         etatConnexion={etatConnexion} 
-  //         setPage={setPage}
-  //       />
-  //     </HeaderApplication>
-
-  //     <Container>
-  //       <Suspense fallback={<Attente />}>
-  //         <ApplicationSenseursPassifs 
-  //           rootProps={rootProps}
-  //           workers={workers} 
-  //           usager={usager}
-  //           etatConnexion={etatConnexion} 
-  //           etatAuthentifie={etatAuthentifie}
-  //           page={page}
-  //         />
-  //       </Suspense>
-  //     </Container>
-
-  //     <FooterApplication>
-  //       <Footer workers={workers} idmg={idmg} />
-  //     </FooterApplication>
-      
-  //   </LayoutApplication>
-  // )
 }
 
 export default App
@@ -155,8 +125,7 @@ async function connecter(...params) {
 
 function ApplicationSenseursPassifs(props) {
 
-  // console.debug("!!! ApplicationSenseursPassifs Proppys : %O", props)
-  const { workers, sectionAfficher, etatAuthentifie, noeudId, setNoeudId } = props
+  const { workers, usager, etatConnexion, infoConnexion, sectionAfficher, setSectionAfficher, etatAuthentifie, noeudId, setNoeudId } = props
   const connexion = workers.connexion
 
   const [listeNoeuds, setListeNoeuds] = useState('')
@@ -198,28 +167,13 @@ function ApplicationSenseursPassifs(props) {
     }
   }, [connexion, etatAuthentifie])
 
-  // const rootProps = {
-  //   ...props.rootProps,
-  //   manifest,
-  // }
-
-  // let pageRender
-  // if(!etatAuthentifie) {
-  //   pageRender = <p>Attente de connexion</p>
-  // } else {
-  //   // 3. Afficher application
-  //   pageRender = <SectionContenu rootProps={rootProps}
-  //                                workers={props.workers}
-  //                                page={rootProps.page}
-  //                                paramsPage={rootProps.paramsPage}
-  //                                listeNoeuds={listeNoeuds}
-  //                                majNoeud={traiterMessageNoeudsCb} 
-  //                                etatAuthentifie={etatAuthentifie} />
-  // }
-
-  let Page = Accueil
-  if(noeudId) {
-    Page = Noeud
+  let Page = null
+  switch(sectionAfficher) {
+    case 'Configuration':
+      Page = Configuration; break
+    default:
+      if(noeudId) Page = Noeud
+      else Page = Accueil
   }
 
   return (
@@ -228,9 +182,13 @@ function ApplicationSenseursPassifs(props) {
           workers={props.workers}
           listeNoeuds={listeNoeuds}
           etatAuthentifie={etatAuthentifie}      
+          etatConnexion={etatConnexion}
+          infoConnexion={infoConnexion}
+          usager={usager}
           noeudId={noeudId}
           setNoeudId={setNoeudId}
           majNoeud={traiterMessageNoeudsCb} 
+          setSectionAfficher={setSectionAfficher}
           fermer={handlerFermer}
         />
     </Container>
@@ -273,20 +231,19 @@ function MenuApp(props) {
   const [showModalInfo, setShowModalInfo] = useState(false)
   const handlerCloseModalInfo = useCallback(()=>setShowModalInfo(false), [setShowModalInfo])
 
-  const handlerSelect = eventKey => {
+  const handlerSelect = useCallback(eventKey => {
       switch(eventKey) {
-        case 'information': setShowModalInfo(true); break
-        case 'portail': window.location = '/millegrilles'; break
-        case 'deconnecter': window.location = '/millegrilles/authentification/fermer'; break
-        case 'Noeud': setSectionAfficher('Noeud'); break
+        case 'configuration': 
+          setSectionAfficher('Configuration'); break
         default:
+          setSectionAfficher('')
       }
-  }
+  }, [setSectionAfficher])
 
   const handlerChangerLangue = eventKey => {i18n.changeLanguage(eventKey)}
   const brand = (
       <Navbar.Brand>
-          <Nav.Link title={t('titre')}>
+          <Nav.Link onClick={handlerSelect} title={t('titre')}>
               {t('titre')}
           </Nav.Link>
       </Navbar.Brand>
@@ -297,6 +254,9 @@ function MenuApp(props) {
           <MenuMillegrilles brand={brand} labelMenu="Menu" etatConnexion={etatConnexion} onSelect={handlerSelect}>
             <Nav.Link eventKey="information" title="Afficher l'information systeme">
                 {t('menu.information')}
+            </Nav.Link>
+            <Nav.Link eventKey="configuration" title="Configuration des appareils">
+                {t('menu.configuration')}
             </Nav.Link>
             <DropDownLanguage title={t('menu.language')} onSelect={handlerChangerLangue}>
                 <NavDropdown.Item eventKey="en-US">English</NavDropdown.Item>
