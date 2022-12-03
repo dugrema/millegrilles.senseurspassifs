@@ -22,43 +22,31 @@ export function challenge(socket, params) {
         nomUsager: socket.nomUsager,
         userId: socket.userId,
     }
-    try {
-        return socket.amqpdao.pki.formatterMessage(reponse, 'challenge', {ajouterCertificat: true})
-    } catch(err) {
-        console.error("ERROR mqdao.challenge %O", err)
-    }
+    return socket.amqpdao.pki.formatterMessage(reponse, 'challenge', {ajouterCertificat: true})
 }
 
 export function getListeNoeuds(socket, params) {
-    try {
-        return transmettreRequete(socket, params, 'listeNoeuds')
-    } catch(err) {
-        console.error("ERROR mqdao.getListeNoeuds %O", err)
-    }
+    return transmettreRequete(socket, params, 'listeNoeuds')
 }
 
 export function getListeSenseursNoeud(socket, params) {
-    try {
-        return transmettreRequete(socket, params, 'listeSenseursPourNoeud')
-    } catch(err) {
-        console.error("ERROR mqdao.getListeSenseursNoeud %O", err)
-    }
+    return transmettreRequete(socket, params, 'listeSenseursPourNoeud')
 }
 
 export function majNoeud(socket, params) {
-    try {
-        return transmettreCommande(socket, params, 'majNoeud')
-    } catch(err) {
-        console.error("ERROR mqdao.majNoeud %O", err)
-    }
+    return transmettreCommande(socket, params, 'majNoeud')
 }
 
 export function majSenseur(socket, params) {
-    try {
-        return transmettreCommande(socket, params, 'majSenseur')
-    } catch(err) {
-        console.error("ERROR mqdao.majSenseur %O", err)
-    }
+    return transmettreCommande(socket, params, 'majSenseur')
+}
+
+export function challengeAppareil(socket, params) {
+    return transmettreCommande(socket, params, 'challengeAppareil')
+}
+
+export function signerAppareil(socket, params) {
+    return transmettreCommande(socket, params, 'signerAppareil')
 }
 
 async function transmettreRequete(socket, params, action, opts) {

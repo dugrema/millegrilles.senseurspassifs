@@ -53,6 +53,22 @@ function majSenseur(partition, params) {
   )
 }
 
+function challengeAppareil(commande) {
+  return ConnexionClient.emitBlocking('challengeAppareil', commande, {
+    domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+    action: 'challengeAppareil', 
+    ajouterCertificat: true,
+  })
+}
+
+function signerAppareil(commande) {
+  return ConnexionClient.emitBlocking('signerAppareil', commande, {
+    domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+    action: 'signerAppareil', 
+    ajouterCertificat: true,
+  })
+}
+
 // Evenements
 
 // async function ecouterEvenementsSenseurs(cb) {
@@ -113,7 +129,8 @@ expose({
     ...ConnexionClient, 
 
     // Requetes et commandes privees
-    getListeNoeuds, getListeSenseursNoeud, majNoeud, majSenseur,
+    getListeNoeuds, getListeSenseursNoeud, majNoeud, majSenseur, 
+    challengeAppareil, signerAppareil,
 
     // Event listeners proteges
     ecouterEvenementsSenseurs, retirerEvenementsSenseurs,
