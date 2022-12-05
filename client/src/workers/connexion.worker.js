@@ -40,6 +40,18 @@ function getAppareilsUsager(requete) {
   )
 }
 
+function majAppareil(params) {
+  return ConnexionClient.emitBlocking(
+    'majAppareil', 
+    params, 
+    {
+      domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+      action: 'majAppareil', 
+      ajouterCertificat: true,
+    }
+  )
+}
+
 function majNoeud(partition, params) {
   return ConnexionClient.emitBlocking(
     'majNoeud', 
@@ -170,11 +182,13 @@ expose({
     ...ConnexionClient, 
 
     // Requetes et commandes privees
+    getAppareilsUsager, 
+    majAppareil, 
+    challengeAppareil, signerAppareil, getAppareilsEnAttente,
+
     getListeSenseursNoeud, 
     getListeNoeuds, majNoeud, 
-    getAppareilsUsager, 
     majSenseur, 
-    challengeAppareil, signerAppareil, getAppareilsEnAttente,
 
     // Event listeners proteges
     ecouterEvenementsAppareilsUsager, retirerEvenementsAppareilsUsager,

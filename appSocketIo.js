@@ -13,13 +13,15 @@ export function configurerEvenements(socket) {
     ],
     listenersProteges: [
       {eventName: 'getAppareilsUsager', callback: (params, cb) => traiter(socket, mqdao.getAppareilsUsager, {params, cb}) },
-      {eventName: 'getListeNoeuds', callback: (params, cb) => traiter(socket, mqdao.getListeNoeuds, {params, cb}) },
-      {eventName: 'getListeSenseursNoeud', callback: (params, cb) => traiter(socket, mqdao.getListeSenseursNoeud, {params, cb}) },
-      {eventName: 'majNoeud', callback: (params, cb) => traiter(socket, mqdao.majNoeud, {params, cb}) },
-      {eventName: 'majSenseur', callback: (params, cb) => traiter(socket, mqdao.majSenseur, {params, cb}) },
       {eventName: 'challengeAppareil', callback: (params, cb) => traiter(socket, mqdao.challengeAppareil, {params, cb}) },
       {eventName: 'signerAppareil', callback: (params, cb) => traiter(socket, mqdao.signerAppareil, {params, cb}) },
       {eventName: 'getAppareilsEnAttente', callback: (params, cb) => traiter(socket, mqdao.getAppareilsEnAttente, {params, cb}) },
+      {eventName: 'majAppareil', callback: (params, cb) => traiter(socket, mqdao.majAppareil, {params, cb}) },
+
+      // {eventName: 'getListeNoeuds', callback: (params, cb) => traiter(socket, mqdao.getListeNoeuds, {params, cb}) },
+      // {eventName: 'getListeSenseursNoeud', callback: (params, cb) => traiter(socket, mqdao.getListeSenseursNoeud, {params, cb}) },
+      // {eventName: 'majNoeud', callback: (params, cb) => traiter(socket, mqdao.majNoeud, {params, cb}) },
+      // {eventName: 'majSenseur', callback: (params, cb) => traiter(socket, mqdao.majSenseur, {params, cb}) },
 
       // Listeners
       {eventName: 'ecouterEvenementsAppareilsUsager', callback: (_, cb) => {mqdao.ecouterEvenementsAppareilsUsager(socket, cb)}},

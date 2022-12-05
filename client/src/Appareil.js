@@ -7,9 +7,13 @@ import Form from 'react-bootstrap/Form';
 
 import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 
+import useWorkers, {useEtatConnexion, WorkerProvider, useUsager, useFormatteurPret, useInfoConnexion} from './WorkerContext'
+
 function Appareil(props) {
 
     const { appareil, fermer } = props
+
+    const workers = useWorkers()
 
     const [modeEdition, setModeEdition] = useState(false)
     const modeEditionHandler = useCallback(event=>{
@@ -17,19 +21,26 @@ function Appareil(props) {
     }, [setModeEdition])
 
     // Configuration sommaire
-    const [cacherListe, setCacherListe] = useState([])
+    const [cacherSenseurs, setCacherSenseurs] = useState([])
     const [descriptif, setDescriptif] = useState('')
+    const majConfigurationHandler = useCallback(()=>{
+        const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif)
+        console.debug("Maj configuration ", configMaj)
+        workers.connexion.majAppareil(configMaj)
+            .then(reponse=>console.debug("Reponse MAJ appareil : ", reponse))
+            .catch(err=>console.error("Erreur maj appareil : ", err))
+    }, [workers, appareil, descriptif, cacherSenseurs])
 
     useEffect(()=>{
         if(!appareil || modeEdition) return  // Aucune modification externe durant edit
         // Recharger parametres de l'appareil
-        setDescriptif(appareil.descriptif || '')
         const configuration = appareil.configuration || {}
-        setCacherListe(configuration.cacherSenseurs || [])
-    }, [modeEdition, appareil, setDescriptif, setCacherListe])
+        setDescriptif(configuration.descriptif || '')
+        setCacherSenseurs(configuration.cacher_senseurs || [])
+    }, [modeEdition, appareil, setDescriptif, setCacherSenseurs])
 
-
-    const nomAppareil = appareil.descriptif || appareil.uuid_appareil
+    const configuration = appareil.configuration || {}
+    const nomAppareil = configuration.descriptif || appareil.uuid_appareil
 
     return (
         <div>
@@ -66,8 +77,8 @@ function Appareil(props) {
             <AfficherSenseurs 
                 appareil={appareil} 
                 editMode={modeEdition} 
-                cacherListe={cacherListe}
-                setCacherListe={setCacherListe}
+                cacherSenseurs={cacherSenseurs}
+                setCacherSenseurs={setCacherSenseurs}
                 />
 
             <p></p>
@@ -75,7 +86,7 @@ function Appareil(props) {
             {modeEdition?
                 <Row>
                     <Col className="form-button-centrer">
-                        <Button>Sauvegarder</Button>
+                        <Button onClick={majConfigurationHandler}>Sauvegarder</Button>
                         <Button variant="secondary" onClick={fermer}>Annuler</Button>
                     </Col>
                 </Row>
@@ -131,8 +142,10 @@ function InformationAppareil(props) {
 
 
 export function AfficherSenseurs(props) {
-    const { appareil, editMode, cacherListe, setCacherListe } = props
+    const { appareil, editMode, cacherSenseurs, setCacherSenseurs } = props
     const { senseurs } = appareil
+    const configuration = appareil.configuration || {}
+    const cacherSenseursNonEdit = configuration.cacher_senseurs || []
   
     const liste = useMemo(()=>{
       if(!senseurs) return
@@ -150,11 +163,11 @@ export function AfficherSenseurs(props) {
     const toggleCacherHandler = useCallback(event=>{
         const { checked, value } = event.currentTarget
         console.debug("toggleCacherHandler value : %s, checked %s", value, checked)
-        let copie = [...cacherListe]
+        let copie = [...cacherSenseurs]
         if(!checked) copie.push(value)
         else copie = copie.filter(item=>item !== value)
-        setCacherListe(copie)
-    }, [cacherListe, setCacherListe])
+        setCacherSenseurs(copie)
+    }, [cacherSenseurs, setCacherSenseurs])
   
     if(!senseurs) return ''
   
@@ -162,9 +175,13 @@ export function AfficherSenseurs(props) {
         const senseurId = item.senseurId
         
         let selectionne = false
-        if(cacherListe) {
-            selectionne = ! cacherListe.includes(senseurId)
+        if(cacherSenseurs) {
+            selectionne = ! cacherSenseurs.includes(senseurId)
+        } else {
+            selectionne = ! cacherSenseursNonEdit.includes(senseurId)
         }
+
+        if(!editMode && !selectionne) return ''  // Cacher le senseur
         
         return (
             <Row key={senseurId}>
@@ -219,4 +236,13 @@ function AfficherValeurFormattee(props) {
     // Format non reconnu
     return valeur
 }
-  
+
+function formatterConfiguration(appareil, cacherSenseurs, descriptif) {
+    const configuration = {}
+    
+    if(appareil.configuration) Object.assign(configuration, appareil.configuration)
+    configuration.cacher_senseurs = cacherSenseurs
+    configuration.descriptif = descriptif
+
+    return {uuid_appareil: appareil.uuid_appareil, configuration}
+}

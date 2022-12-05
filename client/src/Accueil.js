@@ -104,7 +104,10 @@ function ListeAppareils(props) {
         dateExpiree = dateCourante - CONST_DATE_EXPIREE
 
   return liste.map(item=>{
-    const { derniere_lecture } = item
+    const { uuid_appareil, derniere_lecture } = item
+    const configuration = item.configuration || {}
+    const nomAppareil = configuration.descriptif || item.uuid_appareil
+
     let classNameDate = ''
     if(!derniere_lecture || derniere_lecture < dateExpiree) {
       classNameDate += ' expire'
@@ -113,16 +116,16 @@ function ListeAppareils(props) {
     }
 
     return (
-      <div key={item.uuid_appareil}>
+      <div key={uuid_appareil}>
       
         <Row>
           <Col xs={8} md={4}>
-            <Button variant="link" onClick={setUuidAppareilHandler} value={item.uuid_appareil}>
-              {item.descriptif || item.uuid_appareil}
+            <Button variant="link" onClick={setUuidAppareilHandler} value={uuid_appareil}>
+              {nomAppareil}
             </Button>
           </Col>
           <Col xs={4} md={3} xl={2} className={classNameDate}>
-            <FormatterDate value={item.derniere_lecture} />
+            <FormatterDate value={derniere_lecture} />
           </Col>
         </Row>
       

@@ -29,21 +29,25 @@ export function getAppareilsUsager(socket, params) {
     return transmettreRequete(socket, params, 'getAppareilsUsager')
 }
 
-export function getListeNoeuds(socket, params) {
-    return transmettreRequete(socket, params, 'listeNoeuds')
+export function majAppareil(socket, params) {
+    return transmettreCommande(socket, params, 'majAppareil')
 }
 
-export function getListeSenseursNoeud(socket, params) {
-    return transmettreRequete(socket, params, 'listeSenseursPourNoeud')
-}
+// export function getListeNoeuds(socket, params) {
+//     return transmettreRequete(socket, params, 'listeNoeuds')
+// }
 
-export function majNoeud(socket, params) {
-    return transmettreCommande(socket, params, 'majNoeud')
-}
+// export function getListeSenseursNoeud(socket, params) {
+//     return transmettreRequete(socket, params, 'listeSenseursPourNoeud')
+// }
 
-export function majSenseur(socket, params) {
-    return transmettreCommande(socket, params, 'majSenseur')
-}
+// export function majNoeud(socket, params) {
+//     return transmettreCommande(socket, params, 'majNoeud')
+// }
+
+// export function majSenseur(socket, params) {
+//     return transmettreCommande(socket, params, 'majSenseur')
+// }
 
 export function challengeAppareil(socket, params) {
     return transmettreCommande(socket, params, 'challengeAppareil')
