@@ -103,7 +103,7 @@ async function ecouterEvenementsAppareilsUsager(cb) {
   return ConnexionClient.subscribe('ecouterEvenementsAppareilsUsager', cb, {}) 
 }
 
-async function retirerEvenementsAppareilsUsager() {
+async function retirerEvenementsAppareilsUsager(cb) {
   // ConnexionClient.socketOff('evenement.SenseursPassifs.lectureConfirmee')
   // const resultat = await ConnexionClient.emitBlocking('retirerEvenementsAppareilsUsager', {}, {noformat: true})
   // if(!resultat) {

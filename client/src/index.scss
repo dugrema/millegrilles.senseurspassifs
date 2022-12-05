@@ -48,3 +48,20 @@ $xsmall-width: map.get($grid-breakpoints, xs);
 .expire {
     color: red;
 }
+
+.valeur-numerique {
+    text-align: right;
+}
+
+.bouton-fermer {
+    text-align: right;
+}
+
+.form-button-centrer {
+    text-align: center;
+}
+
+.form-button-centrer BUTTON {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+}

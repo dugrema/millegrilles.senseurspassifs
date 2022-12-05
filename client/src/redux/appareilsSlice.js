@@ -99,7 +99,7 @@ function mergeAppareilAction(state, action) {
                 retirer = true
             }
 
-            if(retirer) state.liste = liste.filter(item=>item.tuuid !== tuuid)
+            if(retirer) state.liste = liste.filter(item=>item.uuid_appareil !== uuid_appareil)
 
         } else if(peutAppend === true) {
             liste.push(data)

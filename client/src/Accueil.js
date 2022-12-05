@@ -1,14 +1,21 @@
-import React, {useEffect, useCallback, useMemo} from 'react'
+import React, {useState, useEffect, useCallback, useMemo} from 'react'
 import { Provider as ReduxProvider, useDispatch, useSelector } from 'react-redux'
 import { proxy } from 'comlink'
 
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
+import Button from 'react-bootstrap/Button'
 
 import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 
 import useWorkers, {useEtatPret} from './WorkerContext'
 import { push as pushAppareils, mergeAppareil } from './redux/appareilsSlice'
+
+import Appareil, {AfficherSenseurs} from './Appareil'
+
+const CONST_DATE_VIEILLE = 300,
+      CONST_DATE_EXPIREE = 1800
+
 
 function Accueil(props) {
 
@@ -18,6 +25,15 @@ function Accueil(props) {
 
   const appareils = useSelector(state=>state.appareils.listeAppareils)
 
+  // Navigation appareil
+  const [uuidAppareil, setUuidAppareil] = useState('')
+  const appareilSelectionne = useMemo(()=>{
+    if(!uuidAppareil || !appareils) return null
+    return appareils.filter(item=>item.uuid_appareil===uuidAppareil).pop()
+  }, [appareils, uuidAppareil])
+  const fermerAppareilHandler = useCallback(()=>setUuidAppareil(''), [setUuidAppareil])
+
+  // Messages, maj liste appareils
   const messageAppareilHandler = useCallback(evenement=>{
     const { routingKey, message } = evenement
     console.debug("Message appareil : %O", message)
@@ -53,12 +69,20 @@ function Accueil(props) {
     }
   }, [workers, dispatch, etatPret, messageAppareilHandlerProxy])
 
+  // Rendering
+
+  // Sous-selections
+  if(appareilSelectionne) return (  // Afficher l'appareil
+    <Appareil appareil={appareilSelectionne} fermer={fermerAppareilHandler} />
+  )
+
+  // Page accueil
   return (
     <div>
       <p>Accueil</p>
 
       <h2>Appareils</h2>
-      <ListeAppareils liste={appareils} />
+      <ListeAppareils liste={appareils} setUuidAppareil={setUuidAppareil} />
     </div>
   )
 
@@ -67,18 +91,44 @@ function Accueil(props) {
 export default Accueil
 
 function ListeAppareils(props) {
-  const { liste } = props
+  const { liste, setUuidAppareil } = props
+
+  const setUuidAppareilHandler = useCallback(event=>{
+    setUuidAppareil(event.currentTarget.value)
+  }, [setUuidAppareil])
 
   if(!liste) return <p>Aucuns appareils</p>
 
+  const dateCourante = new Date().getTime() / 1000,
+        dateVieille = dateCourante - CONST_DATE_VIEILLE,
+        dateExpiree = dateCourante - CONST_DATE_EXPIREE
+
   return liste.map(item=>{
+    const { derniere_lecture } = item
+    let classNameDate = ''
+    if(!derniere_lecture || derniere_lecture < dateExpiree) {
+      classNameDate += ' expire'
+    } else if(!derniere_lecture || derniere_lecture < dateVieille) {
+      classNameDate += ' vieux'
+    }
+
     return (
-      <Row key={item.uuid_appareil}>
-        <Col>{item.descriptif || item.uuid_appareil}</Col>
-        <Col>
-          <FormatterDate value={item.derniere_lecture} />
-        </Col>
-      </Row>
+      <div key={item.uuid_appareil}>
+      
+        <Row>
+          <Col xs={8} md={4}>
+            <Button variant="link" onClick={setUuidAppareilHandler} value={item.uuid_appareil}>
+              {item.descriptif || item.uuid_appareil}
+            </Button>
+          </Col>
+          <Col xs={4} md={3} xl={2} className={classNameDate}>
+            <FormatterDate value={item.derniere_lecture} />
+          </Col>
+        </Row>
+      
+        <AfficherSenseurs appareil={item} />
+      
+      </div>
     )
   })
 }
