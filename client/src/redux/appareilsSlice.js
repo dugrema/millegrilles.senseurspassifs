@@ -66,75 +66,46 @@ function mergeAppareilAction(state, action) {
         payload = [payload]
     }
 
-    // for (const payloadFichier of payload) {
-    //     // console.debug("mergeTuuidDataAction action: %O, cuuid courant: %O", action, state.cuuid)
-    //     let { uuid_appareil } = payloadFichier
+    for (const payloadAppareil of payload) {
+        console.debug("mergeAppareilAction action: %O", action)
+        let { uuid_appareil } = payloadAppareil
 
-    //     // Ajout flag _mergeVersion pour rafraichissement ecran
-    //     const data = {...(payloadFichier.data || {})}
-    //     data['_mergeVersion'] = mergeVersion
+        // Ajout flag _mergeVersion pour rafraichissement ecran
+        const data = {...(payloadAppareil || {})}
+        data['_mergeVersion'] = mergeVersion
 
-    //     const liste = state.listeAppareils || []
+        const liste = state.listeAppareils || []
         
-    //     let peutAppend = false
-    //     if(data.supprime === true) {
-    //         // false
-    //     } else {
-    //         peutAppend = true
-    //     }
+        let peutAppend = false
+        if(data.supprime === true) {
+            // false
+        } else {
+            peutAppend = true
+        }
 
-    //     // Trouver un fichier correspondant
-    //     let dataCourant = liste.filter(item=>item.uuid_appareil === uuid_appareil).pop()
+        // Trouver un fichier correspondant
+        let dataCourant = liste.filter(item=>item.uuid_appareil === uuid_appareil).pop()
 
-    //     // Copier donnees vers state
-    //     if(dataCourant) {
-    //         if(data) {
-    //             const copie = {...data}
+        // Copier donnees vers state
+        if(dataCourant) {
+            if(data) {
+                const copie = {...data}
+                Object.assign(dataCourant, copie)
+            }
 
-    //             // Retirer images et video, traiter separement
-    //             delete copie.images
-    //             delete copie.video
+            let retirer = false
+            if(dataCourant.supprime === true) {
+                // Le document est supprime
+                retirer = true
+            }
 
-    //             Object.assign(dataCourant, copie)
-    //         }
-    //         if(images) {
-    //             const imagesCourantes = dataCourant.images || {}
-    //             Object.assign(imagesCourantes, images)
-    //             dataCourant.images = imagesCourantes
-    //         }
-    //         if(video) {
-    //             const videoCourants = dataCourant.video || {}
-    //             Object.assign(videoCourants, video)
-    //             dataCourant.video = videoCourants
-    //         }
+            if(retirer) state.liste = liste.filter(item=>item.tuuid !== tuuid)
 
-    //         // Verifier si le fichier fait encore partie de la collection courante
-    //         const cuuids = dataCourant.cuuids || []
-    //         // console.debug("mergeTuuidDataAction Verifier si dataCourant est encore dans %s : %O", cuuidCourant, cuuids)
-    //         let retirer = false
-    //         if( source === SOURCE_CORBEILLE ) {
-    //             // Verifier si le document est toujours supprime
-    //             retirer = dataCourant.supprime !== true
-    //         } else {
-    //             if(dataCourant.supprime === true) {
-    //                 // Le document est supprime
-    //                 retirer = true
-    //             } else if( cuuidCourant ) {
-    //                 // Verifier si le fichier est encore candidat pour la liste courante
-    //                 retirer = ! cuuids.includes(cuuidCourant) 
-    //             } else {
-    //                 // Favoris
-    //                 retirer = dataCourant.favoris !== true
-    //             }
-    //         }
-
-    //         if(retirer) state.liste = liste.filter(item=>item.tuuid !== tuuid)
-
-    //     } else if(peutAppend === true) {
-    //         liste.push(data)
-    //         state.liste = liste
-    //     }
-    // }
+        } else if(peutAppend === true) {
+            liste.push(data)
+            state.liste = liste
+        }
+    }
 
     // Trier
     state.listeAppareils.sort(genererTriListe(state.sortKeys))

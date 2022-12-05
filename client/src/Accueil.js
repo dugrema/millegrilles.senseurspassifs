@@ -5,8 +5,10 @@ import { proxy } from 'comlink'
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 
+import { FormatterDate } from '@dugrema/millegrilles.reactjs'
+
 import useWorkers, {useEtatPret} from './WorkerContext'
-import { push as pushAppareils } from './redux/appareilsSlice'
+import { push as pushAppareils, mergeAppareil } from './redux/appareilsSlice'
 
 function Accueil(props) {
 
@@ -16,9 +18,14 @@ function Accueil(props) {
 
   const appareils = useSelector(state=>state.appareils.listeAppareils)
 
-  const messageAppareilHandler = useCallback(message=>{
+  const messageAppareilHandler = useCallback(evenement=>{
+    const { routingKey, message } = evenement
     console.debug("Message appareil : %O", message)
-  }, [])
+    const action = routingKey.split('.').pop()
+    if(action === 'lectureConfirmee') {
+      dispatch(mergeAppareil(message))
+    }
+  }, [dispatch])
 
   const messageAppareilHandlerProxy = useMemo(()=>{
     return proxy(messageAppareilHandler)
@@ -68,6 +75,9 @@ function ListeAppareils(props) {
     return (
       <Row key={item.uuid_appareil}>
         <Col>{item.descriptif || item.uuid_appareil}</Col>
+        <Col>
+          <FormatterDate value={item.derniere_lecture} />
+        </Col>
       </Row>
     )
   })
