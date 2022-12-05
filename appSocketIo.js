@@ -12,6 +12,7 @@ export function configurerEvenements(socket) {
     listenersPrives: [
     ],
     listenersProteges: [
+      {eventName: 'getAppareilsUsager', callback: (params, cb) => traiter(socket, mqdao.getAppareilsUsager, {params, cb}) },
       {eventName: 'getListeNoeuds', callback: (params, cb) => traiter(socket, mqdao.getListeNoeuds, {params, cb}) },
       {eventName: 'getListeSenseursNoeud', callback: (params, cb) => traiter(socket, mqdao.getListeSenseursNoeud, {params, cb}) },
       {eventName: 'majNoeud', callback: (params, cb) => traiter(socket, mqdao.majNoeud, {params, cb}) },
@@ -21,10 +22,12 @@ export function configurerEvenements(socket) {
       {eventName: 'getAppareilsEnAttente', callback: (params, cb) => traiter(socket, mqdao.getAppareilsEnAttente, {params, cb}) },
 
       // Listeners
-      {eventName: 'ecouterEvenementsSenseurs', callback: (_, cb) => {mqdao.ecouterEvenementsSenseurs(socket, cb)}},
-      {eventName: 'retirerEvenementsSenseurs', callback: (_, cb) => {mqdao.retirerEvenementsSenseurs(socket, cb)}},
-      {eventName: 'ecouterEvenementsNoeuds', callback: (_, cb) => {mqdao.ecouterEvenementsNoeuds(socket, cb)}},
-      {eventName: 'retirerEvenementsNoeuds', callback: (_, cb) => {mqdao.retirerEvenementsNoeuds(socket, cb)}},
+      {eventName: 'ecouterEvenementsAppareilsUsager', callback: (_, cb) => {mqdao.ecouterEvenementsAppareilsUsager(socket, cb)}},
+      {eventName: 'retirerEvenementsAppareilsUsager', callback: (_, cb) => {mqdao.retirerEvenementsAppareilsUsager(socket, cb)}},
+      // {eventName: 'ecouterEvenementsSenseurs', callback: (_, cb) => {mqdao.ecouterEvenementsSenseurs(socket, cb)}},
+      // {eventName: 'retirerEvenementsSenseurs', callback: (_, cb) => {mqdao.retirerEvenementsSenseurs(socket, cb)}},
+      // {eventName: 'ecouterEvenementsNoeuds', callback: (_, cb) => {mqdao.ecouterEvenementsNoeuds(socket, cb)}},
+      // {eventName: 'retirerEvenementsNoeuds', callback: (_, cb) => {mqdao.retirerEvenementsNoeuds(socket, cb)}},
     ]
   }
 

@@ -17,11 +17,16 @@ export async function connecter(workers, setUsagerState, setEtatConnexion, setEt
     const setEtatConnexionCb = proxy(setEtatConnexion)
     const setEtatFormatteurMessageCb = proxy(setEtatFormatteurMessage)
     await connexion.setCallbacks(setEtatConnexionCb, setUsagerCb, setEtatFormatteurMessageCb)
-    return connexion.connecter(location.href)
+    return connexion.connecter(location.href, {DEBUG: false})
 }
 
 async function setUsager(workers, nomUsager, setUsagerState, opts) {
     opts = opts || {}
+
+    // Desactiver usager si deja connecte - permet de reauthentifier 
+    // (i.e. useEtatPret === false tant que socket serveur pas pret)
+    await setUsagerState('')
+
     // console.debug("setUsager '%s'", nomUsager)
     const { usagerDao, forgecommon } = await import('@dugrema/millegrilles.reactjs')
     const { pki } = await import('@dugrema/node-forge')

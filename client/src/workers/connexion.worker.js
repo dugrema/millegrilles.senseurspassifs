@@ -27,6 +27,19 @@ function getListeSenseursNoeud(instance_id, opts) {
   )
 }
 
+function getAppareilsUsager(requete) {
+  requete = requete || {}
+  return ConnexionClient.emitBlocking(
+    'getAppareilsUsager',
+    requete,
+    {
+      domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+      action: 'getAppareilsUsager', 
+      ajouterCertificat: true,
+    }
+  )
+}
+
 function majNoeud(partition, params) {
   return ConnexionClient.emitBlocking(
     'majNoeud', 
@@ -79,6 +92,25 @@ function getAppareilsEnAttente(commande) {
 }
 
 // Evenements
+
+async function ecouterEvenementsAppareilsUsager(cb) {
+  // console.debug("ecouterEvenementsAppareilsUsager cb")
+  // ConnexionClient.socketOn('evenement.SenseursPassifs.lectureConfirmee', cb)
+  // const resultat = await ConnexionClient.emitBlocking('ecouterEvenementsAppareilsUsager', {}, {noformat: true})
+  // if(!resultat) {
+  //   throw new Error("Erreur ecouterEvenementsAppareilsUsager")
+  // }
+  return ConnexionClient.subscribe('ecouterEvenementsAppareilsUsager', cb, {}) 
+}
+
+async function retirerEvenementsAppareilsUsager() {
+  // ConnexionClient.socketOff('evenement.SenseursPassifs.lectureConfirmee')
+  // const resultat = await ConnexionClient.emitBlocking('retirerEvenementsAppareilsUsager', {}, {noformat: true})
+  // if(!resultat) {
+  //   throw new Error("Erreur retirerEvenementsAppareilsUsager")
+  // }
+  return ConnexionClient.unsubscribe('retirerEvenementsAppareilsUsager', cb, {}) 
+}
 
 // async function ecouterEvenementsSenseurs(cb) {
 //   ConnexionClient.socketOn('evenement.SenseursPassifs.lectureConfirmee', cb)
@@ -138,10 +170,14 @@ expose({
     ...ConnexionClient, 
 
     // Requetes et commandes privees
-    getListeNoeuds, getListeSenseursNoeud, majNoeud, majSenseur, 
+    getListeSenseursNoeud, 
+    getListeNoeuds, majNoeud, 
+    getAppareilsUsager, 
+    majSenseur, 
     challengeAppareil, signerAppareil, getAppareilsEnAttente,
 
     // Event listeners proteges
+    ecouterEvenementsAppareilsUsager, retirerEvenementsAppareilsUsager,
     // ecouterEvenementsSenseurs, retirerEvenementsSenseurs,
     // ecouterEvenementsNoeuds, retirerEvenementsNoeuds,
 

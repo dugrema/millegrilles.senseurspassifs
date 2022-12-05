@@ -25,6 +25,10 @@ export function challenge(socket, params) {
     return socket.amqpdao.pki.formatterMessage(reponse, 'challenge', {ajouterCertificat: true})
 }
 
+export function getAppareilsUsager(socket, params) {
+    return transmettreRequete(socket, params, 'getAppareilsUsager')
+}
+
 export function getListeNoeuds(socket, params) {
     return transmettreRequete(socket, params, 'listeNoeuds')
 }
@@ -100,6 +104,26 @@ function verifierMessage(message, domaine, action) {
           actionRecue = entete.action
     if(domaineRecu !== domaine) throw new Error(`Mismatch domaine (${domaineRecu} !== ${domaine})"`)
     if(actionRecue !== action) throw new Error(`Mismatch action (${actionRecue} !== ${action})"`)
+}
+
+export async function ecouterEvenementsAppareilsUsager(socket, cb) {
+    const opts = {
+        routingKeys: [`evenement.SenseursPassifs.${socket.userId}.lectureConfirmee`],
+        exchanges: [L2Prive],
+        // userId: socket.userId,
+    }
+    console.debug("ecouterEvenementsAppareilsUsager sur ", opts)
+    socket.subscribe(opts, cb)
+}
+
+export async function retirerEvenementsAppareilsUsager(socket, cb) {
+    const routingKeys = [`evenement.SenseursPassifs.${socket.userId}.lectureConfirmee`]
+    socket.unsubscribe({
+        routingKeys, 
+        exchanges: [L2Prive],
+        // userId: socket.userId,
+    })
+    if(cb) cb(true)
 }
 
 // export async function ecouterEvenementsSenseurs(socket, cb) {
