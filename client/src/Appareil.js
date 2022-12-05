@@ -27,8 +27,9 @@ function Appareil(props) {
     // Configuration sommaire
     const [cacherSenseurs, setCacherSenseurs] = useState([])
     const [descriptif, setDescriptif] = useState('')
+    const [descriptifSenseurs, setDescriptifSenseurs] = useState({})
     const majConfigurationHandler = useCallback(()=>{
-        const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif)
+        const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs)
         console.debug("Maj configuration ", configMaj)
         workers.connexion.majAppareil(configMaj)
             .then(reponse=>{
@@ -37,7 +38,7 @@ function Appareil(props) {
                 setModeEdition(false)
             })
             .catch(err=>console.error("Erreur maj appareil : ", err))
-    }, [workers, dispatch, appareil, descriptif, cacherSenseurs, setModeEdition])
+    }, [workers, dispatch, appareil, descriptif, cacherSenseurs, descriptifSenseurs, setModeEdition])
 
     useEffect(()=>{
         if(!appareil || modeEdition) return  // Aucune modification externe durant edit
@@ -45,7 +46,8 @@ function Appareil(props) {
         const configuration = appareil.configuration || {}
         setDescriptif(configuration.descriptif || '')
         setCacherSenseurs(configuration.cacher_senseurs || [])
-    }, [modeEdition, appareil, setDescriptif, setCacherSenseurs])
+        setDescriptifSenseurs(configuration.descriptif_senseurs || {})
+    }, [modeEdition, appareil, setDescriptif, setCacherSenseurs, setDescriptifSenseurs])
 
     const configuration = appareil.configuration || {}
     const nomAppareil = configuration.descriptif || appareil.uuid_appareil
@@ -87,7 +89,8 @@ function Appareil(props) {
                 editMode={modeEdition} 
                 cacherSenseurs={cacherSenseurs}
                 setCacherSenseurs={setCacherSenseurs}
-                />
+                descriptifSenseurs={descriptifSenseurs}
+                setDescriptifSenseurs={setDescriptifSenseurs} />
 
             <p></p>
             
@@ -150,11 +153,12 @@ function InformationAppareil(props) {
 
 
 export function AfficherSenseurs(props) {
-    const { appareil, editMode, cacherSenseurs, setCacherSenseurs } = props
+    const { appareil, editMode, cacherSenseurs, setCacherSenseurs, setDescriptifSenseurs } = props
     const { senseurs } = appareil
     const configuration = appareil.configuration || {}
     const cacherSenseursNonEdit = configuration.cacher_senseurs || []
-  
+    const descriptifSenseurs = props.descriptifSenseurs || configuration.descriptif_senseurs || {}
+    
     const liste = useMemo(()=>{
       if(!senseurs) return
   
@@ -163,7 +167,7 @@ export function AfficherSenseurs(props) {
         const contenu = senseurs[senseurId]
         liste.push({...contenu, senseurId})
       }
-      liste.sort(sortSenseurs)
+      liste.sort(sortSenseurs(appareil))
   
       return liste
     }, [senseurs])
@@ -177,6 +181,11 @@ export function AfficherSenseurs(props) {
         setCacherSenseurs(copie)
     }, [cacherSenseurs, setCacherSenseurs])
   
+    const majDescriptifSenseur = useCallback(event=>{
+        const {name, value} = event.currentTarget
+        setDescriptifSenseurs({...descriptifSenseurs, [name]: value})
+    }, [descriptifSenseurs, setDescriptifSenseurs])
+
     if(!senseurs) return ''
   
     return liste.map(item=>{
@@ -191,6 +200,8 @@ export function AfficherSenseurs(props) {
 
         if(!editMode && !selectionne) return ''  // Cacher le senseur
         
+        const descriptif = descriptifSenseurs[senseurId] || ''
+
         return (
             <Row key={senseurId}>
             <Col xs={1}>
@@ -198,18 +209,54 @@ export function AfficherSenseurs(props) {
                     <Form.Check checked={selectionne} onChange={toggleCacherHandler} value={senseurId} />
                 :''}
             </Col>
-            <Col xs={8} md={4} xl={2}>{item.senseurId}</Col>
-            <AfficherValeurFormattee senseur={item} />
+
+            {editMode?
+                <>
+                    <Col xs={8} md={4} xl={2}>
+                        {item.senseurId}
+                    </Col>
+                    <Col>
+                        <Form.Control 
+                            type="text" 
+                            placeholder="Chambre, salon, cuisine," 
+                            onChange={majDescriptifSenseur}
+                            name={senseurId}
+                            value={descriptif} />
+                    </Col>
+                </>
+            :
+                <>
+                    <Col xs={8} md={4} xl={2}>
+                        {descriptif || item.senseurId}
+                    </Col>
+                    <AfficherValeurFormattee senseur={item} />
+                </>
+            }
             </Row>
         )
     })
 }
 
-function sortSenseurs(a, b) {
-    const senseurIdA = a.senseurId,
-          senseurIdB = b.senseurId
-    
-    return senseurIdA.localeCompare(senseurIdB)
+function sortSenseurs(appareil) {
+
+    const configuration = appareil.configuration || {}
+    const descriptif_senseurs = configuration.descriptif_senseurs
+
+    return (a, b) => {
+        const senseurIdA = a.senseurId,
+              senseurIdB = b.senseurId
+
+        const descriptifA = descriptif_senseurs[senseurIdA],
+              descriptifB = descriptif_senseurs[senseurIdB]
+
+        if(descriptifA !== descriptifB) {
+            if(!descriptifA) return -1
+            if(!descriptifB) return 1
+            return descriptifA.localeCompare(descriptifB)
+        }
+
+        return senseurIdA.localeCompare(senseurIdB)
+    }
 }
   
 function AfficherValeurFormattee(props) {
@@ -245,12 +292,13 @@ function AfficherValeurFormattee(props) {
     return valeur
 }
 
-function formatterConfiguration(appareil, cacherSenseurs, descriptif) {
+function formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs) {
     const configuration = {}
     
     if(appareil.configuration) Object.assign(configuration, appareil.configuration)
     configuration.cacher_senseurs = cacherSenseurs
     configuration.descriptif = descriptif
+    configuration.descriptif_senseurs = descriptifSenseurs
 
     return {uuid_appareil: appareil.uuid_appareil, configuration}
 }
