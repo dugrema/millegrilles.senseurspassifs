@@ -5,6 +5,7 @@
     },
     "menu": {
         "instances": "Instances",
+        "configuration": "Configuration",
         "domaines": "Domaines",
         "information": "Information",
         "language": "Language",

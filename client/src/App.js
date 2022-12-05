@@ -1,14 +1,18 @@
 import React, {Suspense, useState, useEffect, useMemo, useCallback} from 'react'
+import { Provider as ReduxProvider, useDispatch, useSelector } from 'react-redux'
+
 import Container from 'react-bootstrap/Container'
 import Nav from 'react-bootstrap/Nav'
 import Navbar from 'react-bootstrap/Navbar'
 import NavDropdown from 'react-bootstrap/NavDropdown'
-import { proxy } from 'comlink'
 
-// import { LayoutApplication, HeaderApplication, FooterApplication } from '@dugrema/millegrilles.reactjs'
 import { LayoutMillegrilles, ModalErreur, Menu as MenuMillegrilles, DropDownLanguage, ModalInfo } from '@dugrema/millegrilles.reactjs'
 
-import { setupWorkers, cleanupWorkers } from './workers/workerLoader'
+import ErrorBoundary from './ErrorBoundary'
+import useWorkers, {useEtatConnexion, WorkerProvider, useUsager, useFormatteurPret, useInfoConnexion} from './WorkerContext'
+import storeSetup from './redux/store'
+
+import { setUserId as setUserIdAppareils } from './redux/appareilsSlice'
 
 import { useTranslation } from 'react-i18next'
 import './i18n'
@@ -27,64 +31,75 @@ import './index.scss'
 import './App.css'
 
 const Accueil = React.lazy( () => import('./Accueil') )
-const Noeud = React.lazy( () => import('./Noeud') )
+const Instances = React.lazy( () => import('./Instances') )
 const Configuration = React.lazy( () => import('./Configuration') )
 
 // const _contexte = {}  // Contexte global pour comlink proxy callbacks
 
-function App(props) {
+function App() {
+  
+  return (
+    <WorkerProvider attente={<Attente />}>
+      <ErrorBoundary>
+        <Suspense fallback={<Attente />}>
+          <ProviderReduxLayer />
+        </Suspense>
+      </ErrorBoundary>
+    </WorkerProvider>
+  )
+
+}
+export default App
+
+function ProviderReduxLayer() {
+
+  const workers = useWorkers()
+  const store = useMemo(()=>{
+    if(!workers) return
+    return storeSetup(workers)
+  }, [workers])
+
+  return (
+    <ReduxProvider store={store}>
+        <LayoutMain />
+    </ReduxProvider>
+  )
+}
+
+function LayoutMain(props) {
 
   const { i18n, t } = useTranslation()
 
-  const [workers, setWorkers] = useState('')
-  const [usager, setUsager] = useState('')
+  const dispatch = useDispatch()
+  const workers = useWorkers()
+  const usager = useUsager()
+  const etatConnexion = useEtatConnexion()
+  const etatFormatteurMessage = useFormatteurPret()
+  const infoConnexion = useInfoConnexion()
+
   const [sectionAfficher, setSectionAfficher] = useState('')
-  const [etatConnexion, setEtatConnexion] = useState(false)
-  const [etatFormatteurMessage, setEtatFormatteurMessage] = useState(false)
-  const [infoConnexion, setInfoConnexion] = useState('')
   const [erreur, setErreur] = useState('')
-  const [noeudId, setNoeudId] = useState('')
   
   const handlerCloseErreur = () => setErreur(false)
 
   const etatAuthentifie = usager && etatFormatteurMessage
 
-  // Chargement des proprietes et workers
-  useEffect(()=>{
-      const workerInstances = setupWorkers()
-      const workers = Object.keys(workerInstances).reduce((acc, item)=>{
-        acc[item] = workerInstances[item].proxy
-        return acc
-      }, {})
-      setWorkers(workers)
-      return () => {
-        console.info("Cleanup workers")
-        cleanupWorkers(workerInstances)
-      }
-  }, [setWorkers])
+  const [userId, estProprietaire] = useMemo(()=>{
+    if(!usager) return [null, null]
+    const extensions = usager.extensions
+    return [extensions.userId, extensions.delegationGlobale === 'proprietaire']
+  }, [usager])
+  console.debug("Est proprietaire : %O", estProprietaire)
 
+  // Setup userId dans redux
   useEffect(()=>{
-    if(workers && workers.connexion) {
-      connecter(workers, setUsager, setEtatConnexion, setEtatFormatteurMessage)
-        .then(infoConnexion=>{
-          console.debug("Info connexion : %O", infoConnexion)
-          setInfoConnexion(infoConnexion)
-        })
-        .catch(err=>{console.debug("Erreur de connexion : %O", err)})
-    }
-  }, [workers, setInfoConnexion, setUsager, setEtatConnexion, setEtatFormatteurMessage])
-
-  // const rootProps = {
-  //   usager, changerPage, page, paramsPage
-  // }
+    dispatch(setUserIdAppareils(userId))
+  }, [userId])
 
   const menu = (
     <MenuApp 
         i18n={i18n} 
-        etatConnexion={etatConnexion}
-        infoConnexion={infoConnexion}
-        workers={workers} 
-        usager={usager} 
+        estProprietaire={estProprietaire}
         setSectionAfficher={setSectionAfficher} />
   ) 
 
@@ -100,8 +115,6 @@ function App(props) {
                     etatAuthentifie={etatAuthentifie}
                     etatConnexion={etatConnexion}
                     infoConnexion={infoConnexion}
-                    noeudId={noeudId}
-                    setNoeudId={setNoeudId}
                     sectionAfficher={sectionAfficher}
                     setSectionAfficher={setSectionAfficher}
                   />
@@ -116,116 +129,40 @@ function App(props) {
 
 }
 
-export default App
-
-async function connecter(...params) {
-  const { connecter: connecterWorker } = await import('./workers/connecter')
-  return connecterWorker(...params)
-}
-
 function ApplicationSenseursPassifs(props) {
 
-  const { workers, usager, etatConnexion, infoConnexion, sectionAfficher, setSectionAfficher, etatAuthentifie, noeudId, setNoeudId } = props
-  const connexion = workers.connexion
-
-  const [listeNoeuds, setListeNoeuds] = useState('')
-  const [messageNoeud, addMessageNoeud] = useState('')
-
-  const traiterMessageNoeudsCb = useMemo(()=>proxy(addMessageNoeud), [addMessageNoeud])
-
-  const handlerFermer = () => setNoeudId('')
-
-  // Entretien du contexte global pour les callbacks comlink proxy
-  useEffect(()=>{
-    if(messageNoeud) {
-      majNoeud(messageNoeud, listeNoeuds, setListeNoeuds)
-      addMessageNoeud('')  // Clear queue
-    }
-  }, [messageNoeud, listeNoeuds, setListeNoeuds, addMessageNoeud])
-
-  useEffect(()=>{
-    if(connexion && etatAuthentifie && traiterMessageNoeudsCb) {
-      connexion.ecouterEvenementsNoeuds(traiterMessageNoeudsCb)
-        .catch(err=>{console.error("Erreur ecouterEvenementsNoeuds: %O", err)})
-      return () => {
-        connexion.retirerEvenementsNoeuds(traiterMessageNoeudsCb)
-      }
-    }
-  }, [connexion, etatAuthentifie, traiterMessageNoeudsCb])
-
-  useEffect(()=>{
-    if(connexion && etatAuthentifie) {
-      connexion.getListeNoeuds()
-        .then(listeNoeuds=>{
-          console.debug("Noeuds recus : %O", listeNoeuds)
-          // Injecter partition dans les noeuds
-          listeNoeuds.noeuds.forEach(n => {n.partition = listeNoeuds.partition})
-          setListeNoeuds(listeNoeuds)
-        })
-        .catch(err=>{console.error("Erreur reception noeuds : %O", err)})
-
-    }
-  }, [connexion, etatAuthentifie])
+  const { sectionAfficher, setSectionAfficher} = props
 
   let Page = null
   switch(sectionAfficher) {
+    case 'Instances':
+      Page = Instances; break
     case 'Configuration':
       Page = Configuration; break
     default:
-      if(noeudId) Page = Noeud
-      else Page = Accueil
+      Page = Accueil
   }
 
   return (
     <Container className="main-body">
-      <Page 
-          workers={props.workers}
-          listeNoeuds={listeNoeuds}
-          etatAuthentifie={etatAuthentifie}      
-          etatConnexion={etatConnexion}
-          infoConnexion={infoConnexion}
-          usager={usager}
-          noeudId={noeudId}
-          setNoeudId={setNoeudId}
-          majNoeud={traiterMessageNoeudsCb} 
-          setSectionAfficher={setSectionAfficher}
-          fermer={handlerFermer}
-        />
+      <Page setSectionAfficher={setSectionAfficher} />
     </Container>
   )
 
 }
 
-function majNoeud(evenement, listeNoeuds, setNoeuds) {
-  console.debug("majNoeud message recu : %O", evenement)
-  const {message, exchange} = evenement
-
-  const instance_id = message.instance_id
-
-  var trouve = false
-  const noeudsMaj = listeNoeuds.noeuds.map(noeud=>{
-    if(noeud.instance_id === instance_id) {
-      trouve = true
-      var copieNoeud = Object.assign({}, noeud)
-      copieNoeud = Object.assign(copieNoeud, message)
-      copieNoeud.partition = listeNoeuds.partition  // Copier partition du noeud
-      return copieNoeud
-    }
-    return noeud
-  })
-
-  if(!trouve) {
-    console.debug("majNoeud Nouveau noeud ajoute : %O", message)
-    if(!message.securite) message.securite = exchange
-    noeudsMaj.push(message)
-  }
-
-  setNoeuds({...listeNoeuds, noeuds: noeudsMaj})
-}
-
 function MenuApp(props) {
 
-  const { i18n, etatConnexion, idmg, setSectionAfficher, usager } = props
+  const { i18n, setSectionAfficher, estProprietaire } = props
+
+  const infoConnexion = useInfoConnexion()
+  const usager = useUsager()
+  const etatConnexion = useEtatConnexion()
+
+  const idmg = useMemo(()=>{
+    if(!infoConnexion) return null
+    return infoConnexion.idmg
+  }, [infoConnexion])
 
   const { t } = useTranslation()
   const [showModalInfo, setShowModalInfo] = useState(false)
@@ -233,12 +170,16 @@ function MenuApp(props) {
 
   const handlerSelect = useCallback(eventKey => {
       switch(eventKey) {
+        case 'instances': 
+          setSectionAfficher('Instances'); break
         case 'configuration': 
           setSectionAfficher('Configuration'); break
+        case 'information': 
+          setShowModalInfo(true); break
         default:
           setSectionAfficher('')
       }
-  }, [setSectionAfficher])
+  }, [setSectionAfficher, setShowModalInfo])
 
   const handlerChangerLangue = eventKey => {i18n.changeLanguage(eventKey)}
   const brand = (
@@ -252,11 +193,19 @@ function MenuApp(props) {
   return (
       <>
           <MenuMillegrilles brand={brand} labelMenu="Menu" etatConnexion={etatConnexion} onSelect={handlerSelect}>
-            <Nav.Link eventKey="information" title="Afficher l'information systeme">
-                {t('menu.information')}
-            </Nav.Link>
+
+            {estProprietaire?
+              <Nav.Link eventKey="instances" title="Gerer instances/relais">
+                {t('menu.instances')}
+              </Nav.Link>
+            :''}
+
             <Nav.Link eventKey="configuration" title="Configuration des appareils">
                 {t('menu.configuration')}
+            </Nav.Link>
+
+            <Nav.Link eventKey="information" title="Afficher l'information systeme">
+                {t('menu.information')}
             </Nav.Link>
             <DropDownLanguage title={t('menu.language')} onSelect={handlerChangerLangue}>
                 <NavDropdown.Item eventKey="en-US">English</NavDropdown.Item>
@@ -268,6 +217,7 @@ function MenuApp(props) {
             <Nav.Link eventKey="deconnecter" title={t('menu.deconnecter')}>
                 {t('menu.deconnecter')}
             </Nav.Link>
+
           </MenuMillegrilles>
           <ModalInfo 
               show={showModalInfo} 

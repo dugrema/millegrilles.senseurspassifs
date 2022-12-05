@@ -1,32 +1,62 @@
-import {useState, useCallback, useEffect} from 'react'
+import {useState, useCallback, useEffect, useMemo} from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 import Modal from 'react-bootstrap/Modal'
+import Row from 'react-bootstrap/Row'
+import Col from 'react-bootstrap/Col'
+import Tab from 'react-bootstrap/Tab'
+import Tabs from 'react-bootstrap/Tabs'
+
+import { getRandom } from '@dugrema/millegrilles.utiljs/src/random'
+
+import useWorkers, {useEtatConnexion, WorkerProvider, useUsager, useFormatteurPret, useInfoConnexion} from './WorkerContext'
+
+import { push as pushAppareils } from './redux/appareilsSlice'
+
 
 function Configuration(props) {
 
-    const { workers, usager, infoConnexion } = props
+    const [tabSelectionne, setTabSelectionne] = useState('nouveaux')
 
     return (
         <div>
             <h1>Configuration</h1>
             
-            <h2>Info de connexion</h2>
-
-            <p>Copier le fichier conn.json sur l'appareil avec Thonny.</p>
-
-            <ConfigurationAppareil usager={usager} infoConnexion={infoConnexion} />
-
-            <ListeAppareilsAttente workers={workers} usager={usager} />
+            <Tabs activeKey={tabSelectionne} onSelect={setTabSelectionne}>
+                <Tab eventKey="nouveaux" title="Nouveaux">
+                    <ListeAppareilsAttente disabled={tabSelectionne!=='nouveaux'} />
+                </Tab>
+                <Tab eventKey="fichier" title="Fichier">
+                    <FichierConfiguration />
+                </Tab>
+            </Tabs>
+            
         </div>
     )
 }
 
 export default Configuration
 
+
+function FichierConfiguration(props) {
+    return (
+        <div>
+            <h2>Fichier de configuration</h2>
+
+            <p>Copier le fichier conn.json sur l'appareil avec Thonny.</p>
+
+            <ConfigurationAppareil />
+        </div>        
+    )
+}
+
+
 function ConfigurationAppareil(props) {
     
-    const { usager, infoConnexion } = props
+    const infoConnexion = useInfoConnexion()
+    const usager = useUsager()
 
     const [valeur, setValeur] = useState('')
     const [ssid, setSsid] = useState('')
@@ -62,14 +92,20 @@ function ConfigurationAppareil(props) {
         <div>
             <p>Configurer WIFI</p>
             <Form>
-                <Form.Group className="mb-3" controlId="formSsid">
-                    <Form.Label>SSID</Form.Label>
-                    <Form.Control type="text" placeholder="MON_WIFI" value={ssid} onChange={ssidHandler} />
-                </Form.Group>
-                <Form.Group className="mb-3" controlId="formPassword">
-                    <Form.Label>Mot de passe</Form.Label>
-                    <Form.Control type="text" placeholder="e.g. pepiniere" value={motdepasse} onChange={motdepasseHandler} />
-                </Form.Group>
+                <Row>
+                    <Col>
+                        <Form.Group className="mb-3" controlId="formSsid">
+                            <Form.Label>SSID</Form.Label>
+                            <Form.Control type="text" placeholder="MON_WIFI" value={ssid} onChange={ssidHandler} />
+                        </Form.Group>
+                    </Col>
+                    <Col>
+                        <Form.Group className="mb-3" controlId="formPassword">
+                            <Form.Label>Mot de passe</Form.Label>
+                            <Form.Control type="text" placeholder="e.g. pepiniere" value={motdepasse} onChange={motdepasseHandler} />
+                        </Form.Group>
+                    </Col>
+                </Row>
             </Form>
 
             <p>Fichier conn.json</p>
@@ -81,35 +117,66 @@ function ConfigurationAppareil(props) {
 
 function ListeAppareilsAttente(props) {
 
-    const { workers } = props
+    const { disabled } = props
 
-    const uuid_appareil = 'rpi-pico-e6614104033e722b'
-    const challenge = [1, 2, 4, 1]
+    const workers = useWorkers()
+    const dispatch = useDispatch()
 
-    const [ showModal, setShowModal ] = useState()
-    const fermerModalHandler = useCallback(()=>setShowModal(false), [setShowModal])
+    useEffect(()=>{
+        if(disabled) return
 
-    const emettreChallenge = useCallback(()=>{
-        const commande = { uuid_appareil, challenge }
-        workers.connexion.challengeAppareil(commande)
-            .catch(err=>console.error('ListeAppareilsAttente error %O', err))
-    }, [workers, uuid_appareil, challenge])
-
-    const challengeHandler = useCallback(()=>{
-        setShowModal(true)
-        emettreChallenge()
-    }, [workers, emettreChallenge, setShowModal])
+        workers.connexion.getAppareilsEnAttente()
+            .then(reponse => {
+                console.debug("Reponse appareils en attente ", reponse)
+                dispatch(pushAppareils({liste: reponse.appareils, clear: true}))
+            })
+            .catch(err=>console.error("Erreur chargement appareils en attente : %O", err))
+    }, [dispatch, workers, disabled])
 
     return (
         <div>
             <h2>Appareils en attente</h2>
-            <Button onClick={challengeHandler}>Challenge</Button>
+            <AfficherAppareils />
+        </div>
+    )
+}
+
+function AfficherAppareils(props) {
+
+    const [ uuidAppareil, setUuidAppareil ] = useState('')
+    const fermerModalHandler = useCallback(()=>setUuidAppareil(''), [setUuidAppareil])
+
+    const appareils = useSelector(state=>state.appareils.listeAppareils)
+
+    const challengeHandler = useCallback(event=>{
+        const uuidAppareil = event.currentTarget.value
+        setUuidAppareil(uuidAppareil)
+    }, [setUuidAppareil])
+
+    if(!appareils) return ''
+
+    return (
+        <div>
+            <h2>Disponibles</h2>
+
+            {
+                appareils.map(item=>{
+                    console.debug("Afficher %O", item)
+                    const uuidAppareil = item.uuid_appareil
+                    return (
+                        <Row key={uuidAppareil}>
+                            <Col xs={3} md={2} xl={1}>
+                                <Button variant="secondary" onClick={challengeHandler} value={uuidAppareil}>Ajouter</Button>
+                            </Col>
+                            <Col>{uuidAppareil}</Col>
+                        </Row>
+                    )
+                })
+            }
+
             <ModalChallenge 
-                workers={workers}
-                show={showModal} 
-                challenge={challenge} 
-                uuid_appareil={uuid_appareil}
-                repeter={emettreChallenge} 
+                show={!!uuidAppareil} 
+                uuidAppareil={uuidAppareil}
                 fermer={fermerModalHandler} />
         </div>
     )
@@ -117,14 +184,36 @@ function ListeAppareilsAttente(props) {
 
 function ModalChallenge(props) {
 
-    const { workers, show, uuid_appareil, challenge, repeter, fermer } = props
+    const { show, uuidAppareil, fermer } = props
 
-    const challengeStr = JSON.stringify(challenge)
+    const workers = useWorkers()
 
     const [enCours, setEnCours] = useState(true)
 
+    const challenge = useMemo(()=>{
+        if(!show) return ''
+        let randomVal = getRandom(1)[0]
+        const sequence = []
+        for(let i=0; i<4; i++) {
+            const dig = (randomVal & 0x03) + 1
+            console.debug("Randomval : %O, digit : %O", randomVal, dig)
+            sequence.push(dig)
+            randomVal = randomVal >> 2
+        }
+        console.debug("RandomVal %O", sequence)
+        return sequence
+    }, [show])
+
+    const challengeStr = JSON.stringify(challenge)
+
+    const emettreChallenge = useCallback(()=>{
+        const commande = { uuid_appareil: uuidAppareil, challenge }
+        workers.connexion.challengeAppareil(commande)
+            .catch(err=>console.error('ListeAppareilsAttente error %O', err))
+    }, [workers, uuidAppareil, challenge])
+
     const signerHandler = useCallback(()=>{
-        const commande = { uuid_appareil, challenge }
+        const commande = { uuid_appareil: uuidAppareil, challenge }
         setEnCours(true)
         workers.connexion.signerAppareil(commande)
             .then(reponse => {
@@ -134,11 +223,12 @@ function ModalChallenge(props) {
             .catch(err=>console.error('ListeAppareilsAttente error %O', err))
             .finally(()=>setEnCours(false))
 
-    }, [workers, fermer, setEnCours])
+    }, [workers, uuidAppareil, fermer, setEnCours])
 
     useEffect(()=>{
         // Attente initiale apres emission du challenge
         if(show) {
+            emettreChallenge()
             setTimeout(()=>setEnCours(false), 2000)
         }
     }, [show, setEnCours])
@@ -150,7 +240,7 @@ function ModalChallenge(props) {
             </Modal.Header>
             <p>Le code suivant a ete emis.</p>
             <p>
-                Appareil : {uuid_appareil}
+                Appareil : {uuidAppareil}
             </p>
             <p>
                 Code : {challengeStr}
@@ -164,7 +254,7 @@ function ModalChallenge(props) {
             </p>
             <Modal.Footer>
                 <Button onClick={signerHandler} disabled={enCours}>Approuver</Button>
-                <Button variant="secondary" onClick={repeter} disabled={enCours}>Repeter</Button>
+                <Button variant="secondary" onClick={emettreChallenge} disabled={enCours}>Repeter</Button>
                 <Button variant="secondary" onClick={fermer}>Annuler</Button>
             </Modal.Footer>
         </Modal>

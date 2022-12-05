@@ -11,7 +11,11 @@ class ErrorBoundary extends Component {
     }
   
     componentDidCatch(error, errorInfo) {
-      this.props.erreurCb(error)
+      if(this.props.errorCb) {
+        this.props.erreurCb(error)
+      } else {
+        console.error("ErrorBoundary %O", error)
+      }
     }
   
     render() {

@@ -49,6 +49,10 @@ export function signerAppareil(socket, params) {
     return transmettreCommande(socket, params, 'signerAppareil')
 }
 
+export function getAppareilsEnAttente(socket, params) {
+    return transmettreRequete(socket, params, 'getAppareilsEnAttente')
+}
+
 async function transmettreRequete(socket, params, action, opts) {
     opts = opts || {}
     const entete = params['en-tete'] || {}

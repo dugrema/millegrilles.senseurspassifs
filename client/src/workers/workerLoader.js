@@ -1,4 +1,5 @@
 import { wrap, releaseProxy } from 'comlink'
+import { usagerDao } from '@dugrema/millegrilles.reactjs'
 
 // Exemple de loader pour web workers
 export function setupWorkers() {
@@ -7,8 +8,16 @@ export function setupWorkers() {
   const connexion = wrapWorker(new Worker(new URL('./connexion.worker', import.meta.url), {type: 'module'}))
   const chiffrage = wrapWorker(new Worker(new URL('./chiffrage.worker', import.meta.url), {type: 'module'}))
 
-  const workers = { chiffrage, connexion }
+  const workerInstances = { chiffrage, connexion }
 
+  const workers = Object.keys(workerInstances).reduce((acc, item)=>{
+    acc[item] = workerInstances[item].proxy
+    return acc
+  }, {})
+  
+  // Pseudo-worker
+  workers.usagerDao = usagerDao                   // IDB usager
+  
   const location = new URL(window.location)
   location.pathname = '/fiche.json'
 
@@ -29,7 +38,7 @@ export function setupWorkers() {
       console.error("Erreur chargement fiche systeme : %O", err)
     })
 
-  return workers
+    return { workerInstances, workers, ready: true }
 }
 
 function wrapWorker(worker) {

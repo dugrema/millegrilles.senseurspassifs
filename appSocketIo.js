@@ -18,6 +18,7 @@ export function configurerEvenements(socket) {
       {eventName: 'majSenseur', callback: (params, cb) => traiter(socket, mqdao.majSenseur, {params, cb}) },
       {eventName: 'challengeAppareil', callback: (params, cb) => traiter(socket, mqdao.challengeAppareil, {params, cb}) },
       {eventName: 'signerAppareil', callback: (params, cb) => traiter(socket, mqdao.signerAppareil, {params, cb}) },
+      {eventName: 'getAppareilsEnAttente', callback: (params, cb) => traiter(socket, mqdao.getAppareilsEnAttente, {params, cb}) },
 
       // Listeners
       {eventName: 'ecouterEvenementsSenseurs', callback: (_, cb) => {mqdao.ecouterEvenementsSenseurs(socket, cb)}},

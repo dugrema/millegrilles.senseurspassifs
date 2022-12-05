@@ -1,0 +1,211 @@
+import { createSlice, createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit'
+
+const SLICE_NAME = 'appareils'
+
+const initialState = {
+    listeAppareils: null,               // Liste triee d'appareils
+    sortKeys: {key: 'nom', ordre: 1},   // Ordre de tri
+    mergeVersion: 0,                    // Utilise pour flagger les changements
+
+    uuidAppareil: null,                // Identificateur d'appareil actif
+    userId: '',                         // UserId courant, permet de stocker plusieurs users localement
+}
+
+// Actions
+
+function setUserIdAction(state, action) {
+    state.userId = action.payload
+}
+
+function setSortKeysAction(state, action) {
+    const sortKeys = action.payload
+    state.sortKeys = sortKeys
+    if(state.liste) state.liste.sort(genererTriListe(sortKeys))
+}
+
+function setUuidAppareilAction(state, action) {
+    state.uuidAppareil = action.payload
+}
+
+function pushAction(state, action) {
+    const mergeVersion = state.mergeVersion
+    state.mergeVersion++
+
+    let {liste: payload, clear} = action.payload
+    if(clear === true) state.listeAppareils = []  // Reset liste
+
+    let liste = state.listeAppareils || []
+    if( Array.isArray(payload) ) {
+        const ajouts = payload.map(item=>{return {...item, '_mergeVersion': mergeVersion}})
+        // console.debug("pushAction ajouter ", ajouts)
+        liste = liste.concat(ajouts)
+    } else {
+        const ajout = {...payload, '_mergeVersion': mergeVersion}
+        // console.debug("pushAction ajouter ", ajout)
+        liste.push(ajout)
+    }
+
+    // Trier
+    liste.sort(genererTriListe(state.sortKeys))
+    // console.debug("pushAction liste triee : %O", liste)
+
+    state.listeAppareils = liste
+}
+
+function clearAction(state) {
+    state.listeAppareils = null
+}
+
+// payload {uuid_appareil, ...data}
+function mergeAppareilAction(state, action) {
+    const mergeVersion = state.mergeVersion
+    state.mergeVersion++
+
+    let payload = action.payload
+    if(!Array.isArray(payload)) {
+        payload = [payload]
+    }
+
+    // for (const payloadFichier of payload) {
+    //     // console.debug("mergeTuuidDataAction action: %O, cuuid courant: %O", action, state.cuuid)
+    //     let { uuid_appareil } = payloadFichier
+
+    //     // Ajout flag _mergeVersion pour rafraichissement ecran
+    //     const data = {...(payloadFichier.data || {})}
+    //     data['_mergeVersion'] = mergeVersion
+
+    //     const liste = state.listeAppareils || []
+        
+    //     let peutAppend = false
+    //     if(data.supprime === true) {
+    //         // false
+    //     } else {
+    //         peutAppend = true
+    //     }
+
+    //     // Trouver un fichier correspondant
+    //     let dataCourant = liste.filter(item=>item.uuid_appareil === uuid_appareil).pop()
+
+    //     // Copier donnees vers state
+    //     if(dataCourant) {
+    //         if(data) {
+    //             const copie = {...data}
+
+    //             // Retirer images et video, traiter separement
+    //             delete copie.images
+    //             delete copie.video
+
+    //             Object.assign(dataCourant, copie)
+    //         }
+    //         if(images) {
+    //             const imagesCourantes = dataCourant.images || {}
+    //             Object.assign(imagesCourantes, images)
+    //             dataCourant.images = imagesCourantes
+    //         }
+    //         if(video) {
+    //             const videoCourants = dataCourant.video || {}
+    //             Object.assign(videoCourants, video)
+    //             dataCourant.video = videoCourants
+    //         }
+
+    //         // Verifier si le fichier fait encore partie de la collection courante
+    //         const cuuids = dataCourant.cuuids || []
+    //         // console.debug("mergeTuuidDataAction Verifier si dataCourant est encore dans %s : %O", cuuidCourant, cuuids)
+    //         let retirer = false
+    //         if( source === SOURCE_CORBEILLE ) {
+    //             // Verifier si le document est toujours supprime
+    //             retirer = dataCourant.supprime !== true
+    //         } else {
+    //             if(dataCourant.supprime === true) {
+    //                 // Le document est supprime
+    //                 retirer = true
+    //             } else if( cuuidCourant ) {
+    //                 // Verifier si le fichier est encore candidat pour la liste courante
+    //                 retirer = ! cuuids.includes(cuuidCourant) 
+    //             } else {
+    //                 // Favoris
+    //                 retirer = dataCourant.favoris !== true
+    //             }
+    //         }
+
+    //         if(retirer) state.liste = liste.filter(item=>item.tuuid !== tuuid)
+
+    //     } else if(peutAppend === true) {
+    //         liste.push(data)
+    //         state.liste = liste
+    //     }
+    // }
+
+    // Trier
+    state.listeAppareils.sort(genererTriListe(state.sortKeys))
+
+}
+
+const appareilsSlice = createSlice({
+    name: SLICE_NAME,
+    initialState,
+    reducers: {
+        setUserId: setUserIdAction,
+        setUuidAppareil: setUuidAppareilAction,
+        push: pushAction, 
+        mergeAppareil: mergeAppareilAction,
+        clear: clearAction,
+        setSortKeys: setSortKeysAction,
+    }
+})
+
+export const { 
+    setUserId, setUuidAppareil, push, mergeAppareil, clear, setSortKeys,
+} = appareilsSlice.actions
+
+export default appareilsSlice.reducer
+
+function genererTriListe(sortKeys) {
+    
+    const key = sortKeys.key || 'nom',
+          ordre = sortKeys.ordre || 1
+
+    return (a, b) => {
+        if(a === b) return 0
+        if(!a) return 1
+        if(!b) return -1
+
+        let valA = a[key], valB = b[key]
+        if(key === 'dateFichier') {
+            valA = a.dateFichier || a.derniere_modification || a.date_creation
+            valB = b.dateFichier || b.derniere_modification || b.date_creation
+        } else if(key === 'taille') {
+            const version_couranteA = a.version_courante || {},
+                  version_couranteB = b.version_courante || {}
+            valA = version_couranteA.taille || a.taille
+            valB = version_couranteB.taille || b.taille
+        }
+
+        if(valA === valB) return 0
+        if(!valA) return 1
+        if(!valB) return -1
+
+        if(typeof(valA) === 'string') {
+            const diff = valA.localeCompare(valB)
+            if(diff) return diff * ordre
+        } else if(typeof(valA) === 'number') {
+            const diff = valA - valB
+            if(diff) return diff * ordre
+        } else {
+            throw new Error(`genererTriListe values ne peut pas etre compare ${''+valA} ? ${''+valB}`)
+        }
+
+        // Fallback, nom/tuuid du fichier
+        const { tuuid: tuuidA, nom: nomA } = a,
+              { tuuid: tuuidB, nom: nomB } = b
+
+        const labelA = nomA || tuuidA,
+              labelB = nomB || tuuidB
+        
+        const compLabel = labelA.localeCompare(labelB)
+        if(compLabel) return compLabel * ordre
+
+        // Fallback, tuuid (doit toujours etre different)
+        return tuuidA.localeCompare(tuuidB) * ordre
+    }
+}
