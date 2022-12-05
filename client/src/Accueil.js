@@ -38,7 +38,7 @@ function Accueil(props) {
     const { routingKey, message } = evenement
     console.debug("Message appareil : %O", message)
     const action = routingKey.split('.').pop()
-    if(action === 'lectureConfirmee') {
+    if(['lectureConfirmee', 'majAppareil'].includes(action)) {
       dispatch(mergeAppareil(message))
     }
   }, [dispatch])

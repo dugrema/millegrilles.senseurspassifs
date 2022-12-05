@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
@@ -8,17 +9,20 @@ import Form from 'react-bootstrap/Form';
 import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 
 import useWorkers, {useEtatConnexion, WorkerProvider, useUsager, useFormatteurPret, useInfoConnexion} from './WorkerContext'
+import { mergeAppareil } from './redux/appareilsSlice'
 
 function Appareil(props) {
 
     const { appareil, fermer } = props
 
     const workers = useWorkers()
+    const dispatch = useDispatch()
 
     const [modeEdition, setModeEdition] = useState(false)
     const modeEditionHandler = useCallback(event=>{
         setModeEdition(event.currentTarget.checked)
     }, [setModeEdition])
+    const arreterEditionHandler = useCallback(()=>setModeEdition(false), [setModeEdition])
 
     // Configuration sommaire
     const [cacherSenseurs, setCacherSenseurs] = useState([])
@@ -27,9 +31,13 @@ function Appareil(props) {
         const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif)
         console.debug("Maj configuration ", configMaj)
         workers.connexion.majAppareil(configMaj)
-            .then(reponse=>console.debug("Reponse MAJ appareil : ", reponse))
+            .then(reponse=>{
+                console.debug("Reponse MAJ appareil : ", reponse)
+                dispatch(mergeAppareil(reponse))
+                setModeEdition(false)
+            })
             .catch(err=>console.error("Erreur maj appareil : ", err))
-    }, [workers, appareil, descriptif, cacherSenseurs])
+    }, [workers, dispatch, appareil, descriptif, cacherSenseurs, setModeEdition])
 
     useEffect(()=>{
         if(!appareil || modeEdition) return  // Aucune modification externe durant edit
@@ -87,7 +95,7 @@ function Appareil(props) {
                 <Row>
                     <Col className="form-button-centrer">
                         <Button onClick={majConfigurationHandler}>Sauvegarder</Button>
-                        <Button variant="secondary" onClick={fermer}>Annuler</Button>
+                        <Button variant="secondary" onClick={arreterEditionHandler}>Annuler</Button>
                     </Col>
                 </Row>
             :''}

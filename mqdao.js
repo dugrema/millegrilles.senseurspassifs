@@ -112,7 +112,10 @@ function verifierMessage(message, domaine, action) {
 
 export async function ecouterEvenementsAppareilsUsager(socket, cb) {
     const opts = {
-        routingKeys: [`evenement.SenseursPassifs.${socket.userId}.lectureConfirmee`],
+        routingKeys: [
+            `evenement.SenseursPassifs.${socket.userId}.lectureConfirmee`,
+            `evenement.SenseursPassifs.${socket.userId}.majAppareil`,
+        ],
         exchanges: [L2Prive],
         // userId: socket.userId,
     }
@@ -121,7 +124,10 @@ export async function ecouterEvenementsAppareilsUsager(socket, cb) {
 }
 
 export async function retirerEvenementsAppareilsUsager(socket, cb) {
-    const routingKeys = [`evenement.SenseursPassifs.${socket.userId}.lectureConfirmee`]
+    const routingKeys = [
+        `evenement.SenseursPassifs.${socket.userId}.lectureConfirmee`,
+        `evenement.SenseursPassifs.${socket.userId}.majAppareil`,
+    ]
     socket.unsubscribe({
         routingKeys, 
         exchanges: [L2Prive],
@@ -160,6 +166,7 @@ export async function retirerEvenementsAppareilsUsager(socket, cb) {
 
 const ROUTING_KEYS_SENSEURS = [
     'evenement.SenseursPassifs.lectureConfirmee',
+    'evenement.SenseursPassifs.majAppareil',
 ]
   
 export function ecouterEvenementsSenseurs(socket, cb) {
