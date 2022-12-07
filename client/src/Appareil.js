@@ -253,7 +253,7 @@ export function AfficherSenseurs(props) {
 function sortSenseurs(appareil) {
 
     const configuration = appareil.configuration || {}
-    const descriptif_senseurs = configuration.descriptif_senseurs
+    const descriptif_senseurs = configuration.descriptif_senseurs || {}
 
     return (a, b) => {
         const senseurIdA = a.senseurId,
