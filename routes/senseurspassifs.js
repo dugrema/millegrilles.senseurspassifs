@@ -11,6 +11,7 @@ function initialiser(amqpdao, opts) {
 
   const route = express.Router()
   route.get('/info.json', routeInfo)
+  route.get('/initSession', initSession)
   ajouterStaticRoute(route)
 
   debug("Route /senseurspassifs de SenseursPassifs est initialisee")
@@ -21,6 +22,10 @@ function initialiser(amqpdao, opts) {
 }
 
 export default initialiser
+
+function initSession(req, res) {
+  return res.sendStatus(200)
+}
 
 function ajouterStaticRoute(route) {
   var folderStatic =
