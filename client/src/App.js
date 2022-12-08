@@ -170,12 +170,11 @@ function MenuApp(props) {
 
   const handlerSelect = useCallback(eventKey => {
       switch(eventKey) {
-        case 'instances': 
-          setSectionAfficher('Instances'); break
-        case 'configuration': 
-          setSectionAfficher('Configuration'); break
-        case 'information': 
-          setShowModalInfo(true); break
+        case 'portail': window.location = '/millegrilles'; break
+        case 'deconnecter': window.location = '/millegrilles/authentification/fermer'; break
+        case 'instances': setSectionAfficher('Instances'); break
+        case 'configuration': setSectionAfficher('Configuration'); break
+        case 'information': setShowModalInfo(true); break
         default:
           setSectionAfficher('')
       }

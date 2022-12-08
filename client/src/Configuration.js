@@ -11,7 +11,7 @@ import Tabs from 'react-bootstrap/Tabs'
 
 import { getRandom } from '@dugrema/millegrilles.utiljs/src/random'
 
-import useWorkers, {useEtatConnexion, WorkerProvider, useUsager, useFormatteurPret, useInfoConnexion} from './WorkerContext'
+import useWorkers, {useUsager, useInfoConnexion} from './WorkerContext'
 
 import { push as pushAppareils } from './redux/appareilsSlice'
 
@@ -63,8 +63,7 @@ function ConfigurationAppareil(props) {
     const [motdepasse, setMotdepasse] = useState('')
 
     useEffect(()=>{
-
-        if(!usager || !infoConnexion) return ''
+        if(!usager || !infoConnexion) return
 
         const userId = usager.extensions.userId
 
