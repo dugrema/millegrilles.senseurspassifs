@@ -90,6 +90,7 @@ function StatisquesSenseur(props) {
             <h3>Statistiques</h3>
 
             <StatistiquesTable72h liste={stats.periode72h} typeValeur={typeValeur} />
+            <StatistiquesTable31j liste={stats.periode31j} typeValeur={typeValeur} />
         </div>
     )
 }
@@ -111,6 +112,33 @@ function StatistiquesTable72h(props) {
             {liste.map(item=>(
                 <Row key={item.heure}>
                     <Col xs={6} md={4} xl={3}><FormatterDate value={item.heure} /></Col>
+                    <Col xs={2} lg={1}><FormatterValeur valeur={item.avg} typeValeur={typeValeur} /></Col>
+                    <Col xs={2} lg={1}><FormatterValeur valeur={item.max} typeValeur={typeValeur} /></Col>
+                    <Col xs={2} lg={1}><FormatterValeur valeur={item.min} typeValeur={typeValeur} /></Col>
+                </Row>
+            ))}
+        </div>
+    )
+
+}
+
+function StatistiquesTable31j(props) {
+    const {liste, typeValeur} = props
+
+    if(!liste) return ''
+
+    return (
+        <div>
+            <h3>Table statistiques 31 jours</h3>
+            <Row>
+                <Col xs={6} md={4} xl={3}>Jour</Col>
+                <Col xs={2} lg={1}>Moyenne</Col>
+                <Col xs={2} lg={1}>Maximum</Col>
+                <Col xs={2} lg={1}>Minimum</Col>
+            </Row>
+            {liste.map(item=>(
+                <Row key={item.heure}>
+                    <Col xs={6} md={4} xl={3}><FormatterDate value={item.heure} format="YYYY/MM/DD" /></Col>
                     <Col xs={2} lg={1}><FormatterValeur valeur={item.avg} typeValeur={typeValeur} /></Col>
                     <Col xs={2} lg={1}><FormatterValeur valeur={item.max} typeValeur={typeValeur} /></Col>
                     <Col xs={2} lg={1}><FormatterValeur valeur={item.min} typeValeur={typeValeur} /></Col>

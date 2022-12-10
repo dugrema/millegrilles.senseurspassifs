@@ -4,6 +4,11 @@
 @import "~bootstrap/scss/bootstrap";
 @import "@dugrema/millegrilles.reactjs/src/styles.scss";
 
+H2, H3 {
+    padding-top: 1rem;
+    padding-bottom: 0.25rem;
+}
+
 /* Page applications */
 .applications A {
     padding-top: 0.5rem;

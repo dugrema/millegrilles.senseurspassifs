@@ -100,8 +100,6 @@ function Accueil(props) {
   // Page accueil
   return (
     <div>
-      <p>Accueil</p>
-
       <h2>Appareils</h2>
       <ListeAppareils 
         liste={appareils} 
