@@ -166,7 +166,7 @@ function InformationAppareil(props) {
 
 
 export function AfficherSenseurs(props) {
-    const { appareil, editMode, cacherSenseurs, setCacherSenseurs, setDescriptifSenseurs } = props
+    const { appareil, editMode, cacherSenseurs, setCacherSenseurs, setDescriptifSenseurs, ouvrirDetailSenseur } = props
     const { senseurs } = appareil
     const configuration = appareil.configuration || {}
     const cacherSenseursNonEdit = configuration.cacher_senseurs || []
@@ -240,7 +240,16 @@ export function AfficherSenseurs(props) {
             :
                 <>
                     <Col xs={8} md={4} xl={2}>
-                        {descriptif || item.senseurId}
+                        {ouvrirDetailSenseur?
+                            <Button variant="link" 
+                                onClick={ouvrirDetailSenseur} 
+                                data-appareil={appareil.uuid_appareil} 
+                                value={item.senseurId}>
+                                {descriptif || item.senseurId}
+                            </Button>
+                            :
+                            <span>{descriptif || item.senseurId}</span>
+                        }
                     </Col>
                     <AfficherValeurFormattee senseur={item} />
                 </>

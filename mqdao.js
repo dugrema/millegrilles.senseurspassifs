@@ -61,6 +61,10 @@ export function getAppareilsEnAttente(socket, params) {
     return transmettreRequete(socket, params, 'getAppareilsEnAttente')
 }
 
+export function getStatistiquesSenseur(socket, params) {
+    return transmettreRequete(socket, params, 'getStatistiquesSenseur')
+}
+
 async function transmettreRequete(socket, params, action, opts) {
     opts = opts || {}
     const entete = params['en-tete'] || {}

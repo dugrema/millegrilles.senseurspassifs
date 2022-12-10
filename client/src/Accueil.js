@@ -12,6 +12,7 @@ import useWorkers, {useEtatPret} from './WorkerContext'
 import { push as pushAppareils, mergeAppareil } from './redux/appareilsSlice'
 
 import Appareil, {AfficherSenseurs} from './Appareil'
+const SenseurDetail = React.lazy( () => import('./SenseurDetail') )
 
 const CONST_DATE_VIEILLE = 300,
       CONST_DATE_EXPIREE = 1800
@@ -32,6 +33,19 @@ function Accueil(props) {
     return appareils.filter(item=>item.uuid_appareil===uuidAppareil).pop()
   }, [appareils, uuidAppareil])
   const fermerAppareilHandler = useCallback(()=>setUuidAppareil(''), [setUuidAppareil])
+
+  // Navigation senseur
+  const [senseurId, setSenseurId] = useState('')
+  const ouvrirSenseurHandler = useCallback(event=>{
+    console.debug("Event : ", event.currentTarget)
+    const { dataset, value } = event.currentTarget
+    setSenseurId(value)
+    setUuidAppareil(dataset.appareil)
+  }, [setUuidAppareil, setSenseurId])
+  const fermerSenseurHandler = useCallback(()=>{
+    setUuidAppareil('')
+    setSenseurId('')
+  })
 
   // Messages, maj liste appareils
   const messageAppareilHandler = useCallback(evenement=>{
@@ -72,8 +86,15 @@ function Accueil(props) {
   // Rendering
 
   // Sous-selections
+  if(senseurId && appareilSelectionne) return (  // Afficher le senseur
+    <SenseurDetail appareil={appareilSelectionne} senseurId={senseurId} fermer={fermerSenseurHandler} />
+  )
+
   if(appareilSelectionne) return (  // Afficher l'appareil
-    <Appareil appareil={appareilSelectionne} fermer={fermerAppareilHandler} />
+    <Appareil 
+      appareil={appareilSelectionne} 
+      ouvrirDetailSenseur={ouvrirSenseurHandler} 
+      fermer={fermerAppareilHandler} />
   )
 
   // Page accueil
@@ -82,7 +103,10 @@ function Accueil(props) {
       <p>Accueil</p>
 
       <h2>Appareils</h2>
-      <ListeAppareils liste={appareils} setUuidAppareil={setUuidAppareil} />
+      <ListeAppareils 
+        liste={appareils} 
+        setUuidAppareil={setUuidAppareil} 
+        ouvrirDetailSenseur={ouvrirSenseurHandler} />
     </div>
   )
 
@@ -91,7 +115,7 @@ function Accueil(props) {
 export default Accueil
 
 function ListeAppareils(props) {
-  const { liste, setUuidAppareil } = props
+  const { liste, setUuidAppareil, ouvrirDetailSenseur } = props
 
   const setUuidAppareilHandler = useCallback(event=>{
     setUuidAppareil(event.currentTarget.value)
@@ -129,7 +153,7 @@ function ListeAppareils(props) {
           </Col>
         </Row>
       
-        <AfficherSenseurs appareil={item} />
+        <AfficherSenseurs appareil={item} ouvrirDetailSenseur={ouvrirDetailSenseur} />
       
       </div>
     )

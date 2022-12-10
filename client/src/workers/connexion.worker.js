@@ -40,6 +40,18 @@ function getAppareilsUsager(requete) {
   )
 }
 
+function getStatistiquesSenseur(requete) {
+  return ConnexionClient.emitBlocking(
+    'getStatistiquesSenseur',
+    requete,
+    {
+      domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+      action: 'getStatistiquesSenseur', 
+      ajouterCertificat: true,
+    }
+  )
+}
+
 function majAppareil(params) {
   return ConnexionClient.emitBlocking(
     'majAppareil', 
@@ -102,6 +114,8 @@ function getAppareilsEnAttente(commande) {
     ajouterCertificat: true,
   })
 }
+
+
 
 // Evenements
 
@@ -186,7 +200,7 @@ expose({
     majAppareil, 
     challengeAppareil, signerAppareil, getAppareilsEnAttente,
 
-    getListeSenseursNoeud, 
+    getListeSenseursNoeud, getStatistiquesSenseur,
     getListeNoeuds, majNoeud, 
     majSenseur, 
 
