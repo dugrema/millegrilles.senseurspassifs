@@ -1,9 +1,9 @@
 {
   "name": "millegrilles.senseurspassifs.client",
-  "version": "2022.9.0",
+  "version": "2023.0.0",
   "private": true,
   "dependencies": {
-    "@dugrema/millegrilles.reactjs": "github:dugrema/millegrilles.reactjs#2022.9",
+    "@dugrema/millegrilles.reactjs": "github:dugrema/millegrilles.reactjs#2023.0",
     "buffer": "^6.0.3",
     "comlink": "^4.3.1",
     "crypto-browserify": "^3.12.0",
@@ -23,7 +23,7 @@
   },
   "peerDependencies": {
     "@reduxjs/toolkit": "^1.8",
-    "@dugrema/millegrilles.utiljs": "github:dugrema/millegrilles.utiljs#2022.9",
+    "@dugrema/millegrilles.utiljs": "github:dugrema/millegrilles.utiljs#2023.0",
     "bootstrap": "^5.1",
     "idb": "^7",
     "socket.io-client": "^4",

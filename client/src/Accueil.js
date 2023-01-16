@@ -39,7 +39,7 @@ function Accueil(props) {
   // Navigation senseur
   const [senseurId, setSenseurId] = useState('')
   const ouvrirSenseurHandler = useCallback(event=>{
-    console.debug("Event : ", event.currentTarget)
+    // console.debug("Event : ", event.currentTarget)
     const { dataset, value } = event.currentTarget
     setSenseurId(value)
     setUuidAppareil(dataset.appareil)
@@ -52,7 +52,7 @@ function Accueil(props) {
   // Messages, maj liste appareils
   const messageAppareilHandler = useCallback(evenement=>{
     const { routingKey, message } = evenement
-    console.debug("Message appareil : %O", message)
+    // console.debug("Message appareil : %O", message)
     const action = routingKey.split('.').pop()
     if(['lectureConfirmee', 'majAppareil'].includes(action)) {
       dispatch(mergeAppareil(message))
@@ -68,7 +68,7 @@ function Accueil(props) {
     // Charger appareils de l'usager
     workers.connexion.getAppareilsUsager()
       .then(reponse=>{
-        console.debug("Reponse : ", reponse)
+        // console.debug("Reponse : ", reponse)
         dispatch(pushAppareils({liste: reponse.appareils, clear: true}))
       })
       .catch(err=>console.error("Erreur reception liste appareils : ", err))
@@ -78,7 +78,7 @@ function Accueil(props) {
       .then(()=>console.debug("ecouterEvenementsAppareilsUsager OK"))
       .catch(err=>console.error("Erreur ecoute evenements appareils : ", err))
     return () => {
-      console.debug('retirerEvenementsAppareilsUsager')
+      // console.debug('retirerEvenementsAppareilsUsager')
       // Cleanup subscription
       workers.connexion.retirerEvenementsAppareilsUsager()
         .catch(err=>console.error("Erreur retrait ecoute evenements appareils : ", err))

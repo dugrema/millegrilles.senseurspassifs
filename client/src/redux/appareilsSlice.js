@@ -77,7 +77,7 @@ function mergeAppareilAction(state, action) {
     }
 
     for (const payloadAppareil of payload) {
-        console.debug("mergeAppareilAction action: %O", action)
+        // console.debug("mergeAppareilAction action: %O", action)
         let { uuid_appareil } = payloadAppareil
 
         // Ajout flag _mergeVersion pour rafraichissement ecran
