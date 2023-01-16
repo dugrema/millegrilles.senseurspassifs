@@ -122,7 +122,9 @@ function Appareil(props) {
 
             <ListeDisplays 
                 show={!modeEdition} 
-                displays={appareil.displays} 
+                appareil={appareil}
+                displays={displays} 
+                setDisplays={setDisplays} 
                 setDisplayEdit={setDisplayEdit} />
             {/* <AfficherDisplays 
                 editMode={modeEdition}
@@ -206,15 +208,17 @@ function NomAppareil(props) {
 }
 
 function ListeDisplays(props) {
-    const { show, displays, setDisplayEdit } = props
+    const { show, appareil, displays, setDisplayEdit } = props
     
-    if(!show || !displays) return ''
+    if(!show || !appareil.displays) return ''
+
+    const displayList = appareil.displays
 
     return (
         <>
             <h3>Affichages</h3>
             {
-                displays.map(item=>(
+                displayList.map(item=>(
                     <InfoDisplay 
                         key={item.name} 
                         display={item} 
@@ -267,6 +271,10 @@ function EditDisplay(props) {
         console.debug("EditDisplay PROPPIES ", props)
     }, [props])
 
+    const displayName = displayInformation.name
+    const configurationAppareil = appareil.configuration || {}
+    const nomAppareil = configurationAppareil.descriptif || configurationAppareil.uuid_appareil
+
     const formatDisplay = displayInformation.format
     let Display = null
     switch(formatDisplay) {
@@ -279,6 +287,7 @@ function EditDisplay(props) {
         <div>
             <Row>
                 <Col xs={8}>
+                    <h3>Affichage {displayName} sur {nomAppareil}</h3>
                 </Col>
                 <Col className="bouton-fermer">
                     <Button variant="secondary" onClick={fermer}>X</Button>
@@ -399,7 +408,6 @@ function AffichageDisplayTexte(props) {
 
     return (
         <div>
-            <h3>Affichage {displayName}</h3>
             <p>Format texte</p>
             <p>Dimensions : {display.width} characteres sur {display.height} lignes</p>
 
