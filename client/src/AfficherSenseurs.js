@@ -1,20 +1,19 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useCallback, useMemo } from 'react'
 
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form';
 
-import { FormatterDate } from '@dugrema/millegrilles.reactjs'
-
 
 function AfficherSenseurs(props) {
     const { appareil, editMode, cacherSenseurs, setCacherSenseurs, setDescriptifSenseurs, ouvrirDetailSenseur } = props
     const { senseurs } = appareil
-    const configuration = appareil.configuration || {}
+    const configuration = useMemo(()=>appareil.configuration || {}, [appareil])
     const cacherSenseursNonEdit = configuration.cacher_senseurs || []
-    const descriptifSenseurs = props.descriptifSenseurs || configuration.descriptif_senseurs || {}
+    const descriptifSenseurs = useMemo(()=>{
+        return props.descriptifSenseurs || configuration.descriptif_senseurs || {}
+    }, [props, configuration])
 
     const liste = useMemo(()=>{
       if(!senseurs) return
@@ -27,7 +26,7 @@ function AfficherSenseurs(props) {
       liste.sort(sortSenseurs(appareil))
   
       return liste
-    }, [senseurs])
+    }, [appareil, senseurs])
 
     const toggleCacherHandler = useCallback(event=>{
         const { checked, value } = event.currentTarget
@@ -60,54 +59,74 @@ function AfficherSenseurs(props) {
         const descriptif = descriptifSenseurs[senseurId] || ''
 
         return (
-            <Row key={senseurId}>
-                <Col xs={0} md={1}>
-                    {editMode?
-                        <Form.Check checked={selectionne} onChange={toggleCacherHandler} value={senseurId} />
-                    :''}
-                </Col>
-
-                {editMode?
-                    <>
-                        <Col xs={7} md={4}>
-                            {item.senseurId}
-                        </Col>
-                        <Col>
-                            <Form.Control 
-                                type="text" 
-                                placeholder="Chambre, salon, cuisine," 
-                                onChange={majDescriptifSenseur}
-                                name={senseurId}
-                                value={descriptif} />
-                        </Col>
-                    </>
-                :
-                    <>
-                        <Col xs={7} md={4} className='bouton-link-nopadding'>
-                            {ouvrirDetailSenseur?
-                                <Button variant="link" 
-                                    onClick={ouvrirDetailSenseur} 
-                                    data-appareil={appareil.uuid_appareil} 
-                                    value={item.senseurId}>
-                                    {descriptif || item.senseurId}
-                                </Button>
-                                :
-                                <span>{descriptif || item.senseurId}</span>
-                            }
-                        </Col>
-                        <AfficherValeurFormattee senseur={item} />
-                    </>
-                }
-            </Row>
+            <RowSenseur 
+                key={senseurId}
+                appareil={appareil}
+                item={item}
+                selectionne={selectionne}
+                editMode={editMode}
+                descriptif={descriptif}
+                ouvrirDetailSenseur={ouvrirDetailSenseur}
+                toggleCacherHandler={toggleCacherHandler}
+                majDescriptifSenseur={majDescriptifSenseur} />
         )
     })
 }
 
 export default AfficherSenseurs
 
+function RowSenseur(props) {
+
+    const { item, appareil, selectionne, editMode, descriptif, toggleCacherHandler, majDescriptifSenseur, ouvrirDetailSenseur } = props
+
+    const senseurId = item.senseurId
+
+    if(editMode) {
+        return (
+            <Row>
+                <Col xs={1}>
+                    {editMode?
+                        <Form.Check checked={selectionne} onChange={toggleCacherHandler} value={senseurId} />
+                    :''}
+                </Col>
+                <Col xs={5} md={4}>
+                    {item.senseurId}
+                </Col>
+                <Col>
+                    <Form.Control 
+                        type="text" 
+                        placeholder="Changer nom" 
+                        onChange={majDescriptifSenseur}
+                        name={senseurId}
+                        value={descriptif} />
+                </Col>
+            </Row>
+        )
+    }
+
+    return (
+        <Row>
+            <Col xs={0} md={1}></Col>
+            <Col xs={7} md={4} className='bouton-link-nopadding'>
+                {ouvrirDetailSenseur?
+                    <Button variant="link" 
+                        onClick={ouvrirDetailSenseur} 
+                        data-appareil={appareil.uuid_appareil} 
+                        value={item.senseurId}>
+                        {descriptif || item.senseurId}
+                    </Button>
+                    :
+                    <span>{descriptif || item.senseurId}</span>
+                }
+            </Col>
+            <AfficherValeurFormattee senseur={item} />
+        </Row>        
+    )
+}
+
 function AfficherValeurFormattee(props) {
     const { senseur } = props
-    const { timestamp, valeur, valeur_str, type} = senseur
+    const { valeur, valeur_str, type} = senseur
   
     if(valeur_str) return <Col xs={5} md={7} className='valeur-texte'>{valeur_str}</Col>  // Aucun formattage
   

@@ -1,5 +1,5 @@
 import { lazy, useState, useCallback, useMemo, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
@@ -8,7 +8,7 @@ import Form from 'react-bootstrap/Form';
 
 import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 
-import useWorkers, {useEtatConnexion, WorkerProvider, useUsager, useFormatteurPret, useInfoConnexion} from './WorkerContext'
+import useWorkers, {useEtatPret} from './WorkerContext'
 import { mergeAppareil } from './redux/appareilsSlice'
 
 const AfficherSenseurs = lazy( () => import('./AfficherSenseurs') )
@@ -19,18 +19,25 @@ function Appareil(props) {
 
     const workers = useWorkers()
     const dispatch = useDispatch()
+    const etatPret = useEtatPret()
 
     const [modeEdition, setModeEdition] = useState(false)
-    const modeEditionHandler = useCallback(event=>{
-        setModeEdition(event.currentTarget.checked)
-    }, [setModeEdition])
     const arreterEditionHandler = useCallback(()=>setModeEdition(false), [setModeEdition])
+
+    const boutonFermerHandler = useCallback(()=>{
+        if(modeEdition) setModeEdition(false)
+        else fermer()
+    }, [modeEdition, setModeEdition, fermer])
 
     // Configuration sommaire
     const [cacherSenseurs, setCacherSenseurs] = useState([])
     const [descriptif, setDescriptif] = useState('')
     const [descriptifSenseurs, setDescriptifSenseurs] = useState({})
     const [displays, setDisplays] = useState({})
+    const [displayEdit, setDisplayEdit] = useState('')
+
+    const boutonFermerDisplayHandler = useCallback(()=>setDisplayEdit(''), [setDisplayEdit])
+
     const majConfigurationHandler = useCallback(()=>{
         const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays)
         console.debug("Maj configuration ", configMaj)
@@ -43,6 +50,11 @@ function Appareil(props) {
             .catch(err=>console.error("Erreur maj appareil : ", err))
     }, [workers, dispatch, appareil, descriptif, cacherSenseurs, descriptifSenseurs, displays, setModeEdition])
 
+    const boutonEditerHandler = useCallback(event=>{
+        if(modeEdition) majConfigurationHandler()
+        else setModeEdition(true)
+    }, [modeEdition, setModeEdition, majConfigurationHandler])
+
     useEffect(()=>{
         if(!appareil || modeEdition) return  // Aucune modification externe durant edit
         // Recharger parametres de l'appareil
@@ -54,26 +66,34 @@ function Appareil(props) {
     }, [modeEdition, appareil, setDescriptif, setCacherSenseurs, setDescriptifSenseurs, setDisplays])
 
     const configuration = appareil.configuration || {}
-    const nomAppareil = configuration.descriptif || appareil.uuid_appareil
+
+    if(displayEdit) {
+        return (
+            <EditDisplay 
+                displayEdit={displayEdit}
+                appareil={appareil} 
+                displays={displays} 
+                setDisplays={setDisplays}
+                fermer={boutonFermerDisplayHandler}
+                />
+        )
+    }
 
     return (
         <div>
             <Row>
-                <Col xs={10} lg={11}>
-                    <h2>Appareil {nomAppareil}</h2>
+                <Col xs={8}>
+                    <Button onClick={boutonEditerHandler}>
+                        {modeEdition?'Sauvegarder':'Editer'}
+                    </Button>
                 </Col>
                 <Col className="bouton-fermer">
-                    <Button variant="secondary" onClick={fermer}>X</Button>
+                    <Button variant="secondary" onClick={boutonFermerHandler}>
+                    {modeEdition?'Annuler':'X'}
+                    </Button>
                 </Col>
             </Row>
 
-            <Row>
-                <Col>
-                    <Form.Check type="switch" label="Editer" onChange={modeEditionHandler} checked={modeEdition} />
-                </Col>
-            </Row>
-
-            <h3>Information nominative</h3>
             <InformationAppareil 
                 appareil={appareil} 
                 modeEdition={modeEdition} 
@@ -88,6 +108,8 @@ function Appareil(props) {
                 </Col>
             </Row>
 
+            <p></p>
+
             <AfficherSenseurs 
                 appareil={appareil} 
                 editMode={modeEdition} 
@@ -98,18 +120,22 @@ function Appareil(props) {
 
             <p></p>
 
-            <AfficherDisplays 
+            <ListeDisplays 
+                show={!modeEdition} 
+                displays={appareil.displays} 
+                setDisplayEdit={setDisplayEdit} />
+            {/* <AfficherDisplays 
                 editMode={modeEdition}
                 appareil={appareil} 
                 displays={displays} 
                 setDisplays={setDisplays} />
 
-            <p></p>
+            <p></p> */}
             
             {modeEdition?
                 <Row>
                     <Col className="form-button-centrer">
-                        <Button onClick={majConfigurationHandler}>Sauvegarder</Button>
+                        <Button onClick={majConfigurationHandler} disabled={!etatPret}>Sauvegarder</Button>
                         <Button variant="secondary" onClick={arreterEditionHandler}>Annuler</Button>
                     </Col>
                 </Row>
@@ -127,41 +153,152 @@ export default Appareil
 function InformationAppareil(props) {
     const { appareil, modeEdition, descriptif, setDescriptif } = props
     
-    const setDescriptifHandler = useCallback(event=>{
-        setDescriptif(event.currentTarget.value)
-    }, [setDescriptif])
-
     return (
         <div>
+            <NomAppareil 
+                modeEdition={modeEdition} 
+                descriptif={descriptif}
+                setDescriptif={setDescriptif} />
+
             <Row>
                 <Col xs={12} md={5}>Identificateur unique (uuid_appareil)</Col>
                 <Col>
                     {appareil.uuid_appareil}
                 </Col>
             </Row>
+        </div>
+    )
+}
 
-            {modeEdition?
-                <Form.Group as={Row} className="mb-3" controlId="formHorizontalEmail">
-                    <Form.Label column xs={12} md={5}>
-                        Descriptif
-                    </Form.Label>
-                    <Col>
-                        <Form.Control 
-                            type="text" 
-                            placeholder="Chambre, salon, cuisine," 
-                            onChange={setDescriptifHandler}
-                            value={descriptif} />
-                    </Col>
-                </Form.Group>
-            :
-                <Row>
-                    <Col xs={12} md={5}>Descriptif</Col>
-                    <Col>
-                        {descriptif || 'N/D'}
-                    </Col>
-                </Row>
+function NomAppareil(props) {
+    const { modeEdition, descriptif, setDescriptif } = props
+
+    const setDescriptifHandler = useCallback(event=>{
+        setDescriptif(event.currentTarget.value)
+    }, [setDescriptif])
+
+    if(modeEdition) {
+        return (
+            <Form.Group as={Row} className="mb-3" controlId="formHorizontalEmail">
+                <Form.Label column xs={12} md={5}>
+                    Descriptif
+                </Form.Label>
+                <Col>
+                    <Form.Control 
+                        type="text" 
+                        placeholder="Changer nom" 
+                        onChange={setDescriptifHandler}
+                        value={descriptif} />
+                </Col>
+            </Form.Group>
+        )
+    }
+
+    if(descriptif) {
+        return (
+            <h3>{descriptif}</h3>
+        )
+    } else {
+        return <p></p>
+    }
+
+    return ''
+}
+
+function ListeDisplays(props) {
+    const { show, displays, setDisplayEdit } = props
+    
+    if(!show || !displays) return ''
+
+    return (
+        <>
+            <h3>Affichages</h3>
+            {
+                displays.map(item=>(
+                    <InfoDisplay 
+                        key={item.name} 
+                        display={item} 
+                        setDisplayEdit={setDisplayEdit} />
+                ))
             }
+        </>
+        
+    )
+}
 
+function InfoDisplay(props) {
+    const { display, setDisplayEdit } = props
+
+    const selectHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        setDisplayEdit(value)
+    })
+
+    return (
+        <Row>
+            <Col>
+                <Button variant="link" onClick={selectHandler} value={display.name}>{display.name}</Button>
+            </Col>
+        </Row>
+    )
+}
+
+function EditDisplay(props) {
+    const { appareil, displayEdit, displays, setDisplays, fermer } = props
+
+    const etatPret = useEtatPret()
+
+    const displayInformation = useMemo(()=>{
+        return appareil.displays.filter(item=>item.name===displayEdit).pop()
+    }, [appareil])
+
+    const configuration = useMemo(()=>{
+        let display = displays[displayEdit] || {}
+        return display
+    }, [appareil, displayEdit, displays])
+
+    const majConfigurationHandler = useCallback((displayName, value)=>{
+        const displayMaj = {...displays, [displayName]: value}
+        console.debug("Maj displays : ", displayMaj)
+        // setDisplays(displayMaj)
+    }, [configuration, setDisplays, displays])
+
+    useEffect(()=>{
+        console.debug("EditDisplay PROPPIES ", props)
+    }, [props])
+
+    const formatDisplay = displayInformation.format
+    let Display = null
+    switch(formatDisplay) {
+        case 'text': Display = AffichageDisplayTexte; break
+        default:
+            Display = AffichageDisplayNonSupporte
+    }
+
+    return (
+        <div>
+            <Row>
+                <Col xs={8}>
+                </Col>
+                <Col className="bouton-fermer">
+                    <Button variant="secondary" onClick={fermer}>X</Button>
+                </Col>
+            </Row>
+
+            <Display key={displayInformation.name} 
+                editMode={true}
+                appareil={appareil} 
+                display={displayInformation} 
+                configuration={configuration}
+                majConfigurationHandler={majConfigurationHandler} 
+                fermer={fermer} />
+
+            <Row>
+                <Col className="form-button-centrer">
+                    <Button onClick={majConfigurationHandler} disabled={!etatPret}>Sauvegarder</Button>
+                    <Button variant="secondary" onClick={fermer}>Annuler</Button>
+                </Col>
+            </Row>
         </div>
     )
 }
@@ -208,7 +345,7 @@ function AfficherDisplays(props) {
 }
 
 function AffichageDisplayTexte(props) {
-    const { editMode, appareil, display, configuration, majConfigurationHandler } = props
+    const { editMode, appareil, display, configuration, majConfigurationHandler, fermer } = props
 
     const displayName = display.name
 
