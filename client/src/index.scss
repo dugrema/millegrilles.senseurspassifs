@@ -58,6 +58,27 @@ $xsmall-width: map.get($grid-breakpoints, xs);
     text-align: right;
 }
 
+.valeur-texte {
+    word-wrap: break-word;
+    word-break: break-all;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bouton-link-nopadding button {
+    word-wrap: break-word;
+    word-break: break-all;
+    text-align: left;
+    padding: 0px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.valeur-date-droite {
+    text-align: right;
+}
+
 .bouton-fermer {
     text-align: right;
 }
@@ -69,4 +90,18 @@ $xsmall-width: map.get($grid-breakpoints, xs);
 .form-button-centrer BUTTON {
     margin-left: 0.5rem;
     margin-right: 0.5rem;
+}
+
+.appareil-ligne {
+    margin-top: 0.4rem;
+    background: $second-color;
+}
+
+.appareil-ligne button {
+    word-wrap: break-word;
+    word-break: break-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    font-size: larger;
 }

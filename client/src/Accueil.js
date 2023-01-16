@@ -11,7 +11,9 @@ import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 import useWorkers, {useEtatPret} from './WorkerContext'
 import { push as pushAppareils, mergeAppareil } from './redux/appareilsSlice'
 
-import Appareil, {AfficherSenseurs} from './Appareil'
+import Appareil from './Appareil'
+
+const AfficherSenseurs = React.lazy( () => import('./AfficherSenseurs') )
 const SenseurDetail = React.lazy( () => import('./SenseurDetail') )
 
 const CONST_DATE_VIEILLE = 300,
@@ -130,7 +132,7 @@ function ListeAppareils(props) {
     const configuration = item.configuration || {}
     const nomAppareil = configuration.descriptif || item.uuid_appareil
 
-    let classNameDate = ''
+    let classNameDate = 'valeur-date-droite'
     if(!derniere_lecture || derniere_lecture < dateExpiree) {
       classNameDate += ' expire'
     } else if(!derniere_lecture || derniere_lecture < dateVieille) {
@@ -140,13 +142,13 @@ function ListeAppareils(props) {
     return (
       <div key={uuid_appareil}>
       
-        <Row>
-          <Col xs={8} md={4}>
+        <Row className='appareil-ligne'>
+          <Col xs={5} md={8} className='bouton-link-nopadding'>
             <Button variant="link" onClick={setUuidAppareilHandler} value={uuid_appareil}>
               {nomAppareil}
             </Button>
           </Col>
-          <Col xs={4} md={3} xl={2} className={classNameDate}>
+          <Col xs={7} md={4} className={classNameDate}>
             <FormatterDate value={derniere_lecture} />
           </Col>
         </Row>
