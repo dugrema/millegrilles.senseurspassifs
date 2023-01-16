@@ -56,6 +56,16 @@ function clearAction(state) {
     state.listeAppareils = null
 }
 
+function verifierExpirationAction(state, action) {
+    const expiration = (new Date().getTime() / 1000) - 300  // 5 minutes
+    state.listeAppareils.forEach(item=>{
+        if(item.derniere_lecture < expiration) {
+            // Modifier pour forcer re-rendering
+            item.expiration = expiration
+        }
+    })
+}
+
 // payload {uuid_appareil, ...data}
 function mergeAppareilAction(state, action) {
     const mergeVersion = state.mergeVersion
@@ -109,7 +119,6 @@ function mergeAppareilAction(state, action) {
 
     // Trier
     state.listeAppareils.sort(genererTriListe(state.sortKeys))
-
 }
 
 const appareilsSlice = createSlice({
@@ -122,11 +131,12 @@ const appareilsSlice = createSlice({
         mergeAppareil: mergeAppareilAction,
         clear: clearAction,
         setSortKeys: setSortKeysAction,
+        verifierExpiration: verifierExpirationAction,
     }
 })
 
 export const { 
-    setUserId, setUuidAppareil, push, mergeAppareil, clear, setSortKeys,
+    setUserId, setUuidAppareil, push, mergeAppareil, clear, setSortKeys, verifierExpiration,
 } = appareilsSlice.actions
 
 export default appareilsSlice.reducer

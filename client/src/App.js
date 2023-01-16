@@ -12,7 +12,7 @@ import ErrorBoundary from './ErrorBoundary'
 import useWorkers, {useEtatConnexion, WorkerProvider, useUsager, useFormatteurPret, useInfoConnexion} from './WorkerContext'
 import storeSetup from './redux/store'
 
-import { setUserId as setUserIdAppareils } from './redux/appareilsSlice'
+import { setUserId as setUserIdAppareils, verifierExpiration } from './redux/appareilsSlice'
 
 import { useTranslation } from 'react-i18next'
 import './i18n'
@@ -95,6 +95,12 @@ function LayoutMain(props) {
   useEffect(()=>{
     dispatch(setUserIdAppareils(userId))
   }, [userId])
+
+  // Intervalle pour entretien appareils
+  useEffect(()=>{
+    const interval = setInterval(()=>dispatch(verifierExpiration()), 20_000)
+    return () => clearInterval(interval)
+  }, [dispatch])
 
   const menu = (
     <MenuApp 
