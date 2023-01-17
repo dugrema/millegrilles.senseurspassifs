@@ -61,6 +61,7 @@ function ConfigurationAppareil(props) {
     const [valeur, setValeur] = useState('')
     const [ssid, setSsid] = useState('')
     const [motdepasse, setMotdepasse] = useState('')
+    const [copieOk, setCopieOk] = useState(false)
 
     useEffect(()=>{
         if(!usager || !infoConnexion) return
@@ -78,14 +79,21 @@ function ConfigurationAppareil(props) {
             "http_instance": instanceUrlString, 
             "http_timeout": 25,
         }
-        if(ssid) v.wifi_ssid = ssid
-        if(motdepasse) v.wifi_password = motdepasse
+        if(ssid && motdepasse) {
+            v.wifis = [{wifi_ssid: ssid, wifi_password: motdepasse}]
+        }
 
         setValeur(JSON.stringify(v, null, 2))
     }, [usager, infoConnexion, setValeur, ssid, motdepasse])
 
     const ssidHandler = useCallback(event=>{setSsid(event.currentTarget.value)}, [setSsid])
     const motdepasseHandler = useCallback(event=>{setMotdepasse(event.currentTarget.value)}, [setMotdepasse])
+
+    const copierClipboard = useCallback(()=>{
+        navigator.clipboard.writeText(valeur)
+        setCopieOk(true)
+        setTimeout(()=>setCopieOk(false), 5_000)
+    }, [valeur, setCopieOk])
 
     return (
         <div>
@@ -109,6 +117,13 @@ function ConfigurationAppareil(props) {
 
             <p>Fichier conn.json</p>
             <pre>{valeur}</pre>
+
+            <Row>
+                <Col>
+                    <Button onClick={copierClipboard}>Copier</Button>
+                    {copieOk?<p>Copie faite <i className='fa fa-check'/></p>:''}
+                </Col>
+            </Row>
         </div>
     )
 

@@ -140,6 +140,7 @@ function Appareil(props) {
             <p></p>
 
             <AfficherSenseurs 
+                editMode={modeEdition}
                 appareil={appareil} 
                 cacherSenseurs={cacherSenseurs}
                 setCacherSenseurs={setCacherSenseurs}
