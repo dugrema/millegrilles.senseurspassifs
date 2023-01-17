@@ -105,9 +105,9 @@ function RowSenseur(props) {
     }
 
     return (
-        <Row>
+        <Row className="senseur-ligne">
             <Col xs={0} md={1}></Col>
-            <Col xs={7} md={4} className='bouton-link-nopadding'>
+            <Col xs={7} md={4} xl={2} className='bouton-link-nopadding'>
                 {ouvrirDetailSenseur?
                     <Button variant="link" 
                         onClick={ouvrirDetailSenseur} 
@@ -133,21 +133,21 @@ function AfficherValeurFormattee(props) {
     if(type === 'temperature') {
       return (
         <>
-          <Col xs={4} md={6} className="valeur-numerique">{valeur.toFixed(1)}</Col>
+          <Col xs={4} md={3} xl={2} className="valeur-numerique">{valeur.toFixed(1)}</Col>
           <Col xs={1}>&deg;C</Col>
         </>
       )
     } else if(type === 'humidite') {
       return (
         <>
-          <Col xs={4} md={6} className="valeur-numerique">{valeur.toFixed(1)}</Col>
+          <Col xs={4} md={3} xl={2} className="valeur-numerique">{valeur.toFixed(1)}</Col>
           <Col xs={1}>%</Col>
         </>
         )
     } else if(type === 'pression') {
       return (
         <>
-          <Col xs={4} md={6}className="valeur-numerique">{valeur.toFixed(1)}</Col>
+          <Col xs={4} md={3} xl={2} className="valeur-numerique">{valeur.toFixed(1)}</Col>
           <Col xs={1}>kPa</Col>
         </>
       )

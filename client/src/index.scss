@@ -94,6 +94,10 @@ $xsmall-width: map.get($grid-breakpoints, xs);
 
 .appareil-ligne {
     margin-top: 0.4rem;
+    
+}
+
+.senseur-ligne {
     background: $second-color;
 }
 
