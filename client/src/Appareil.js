@@ -59,7 +59,6 @@ function Appareil(props) {
     const [descriptifSenseurs, setDescriptifSenseurs] = useState({})
     const [displays, setDisplays] = useState({})
     const [displayEdit, setDisplayEdit] = useState('')
-    const [editLigneMasque, setEditLigneMasque] = useState(false)
 
     const boutonFermerDisplayHandler = useCallback(()=>setDisplayEdit(''), [setDisplayEdit])
 
@@ -80,14 +79,6 @@ function Appareil(props) {
         if(modeEdition) majConfigurationHandler()
         else setModeEdition(true)
     }, [modeEdition, setModeEdition, majConfigurationHandler])
-
-    const ouvrirModalHandler = useCallback(event=>{
-        const value = event.currentTarget.value
-        const valueInt = Number.parseInt(value)
-        console.debug("ouvrirModalHandler %s, %s", value, valueInt)
-        if(!isNaN(valueInt)) setEditLigneMasque(valueInt)
-    }, [setEditLigneMasque])
-    const fermerModalHandler = useCallback(()=>setEditLigneMasque(false), [setEditLigneMasque])
 
     useEffect(()=>{
         if(!appareil || modeEdition || displayEdit) return  // Aucune modification externe durant edit
@@ -112,11 +103,7 @@ function Appareil(props) {
                     fermer={boutonFermerDisplayHandler}
                     sauvegarder={majConfigurationHandler}
                     listeSenseurs={listeSenseurs}
-                    ouvrirModalHandler={ouvrirModalHandler}
                     />
-                <ModalEditerMasqueLigne 
-                    show={editLigneMasque!==false} 
-                    fermer={fermerModalHandler} />
             </>
         )
     }
@@ -224,7 +211,11 @@ function NomAppareil(props) {
                         type="text" 
                         placeholder="Changer nom" 
                         onChange={setDescriptifHandler}
-                        value={descriptif} />
+                        value={descriptif} 
+                        autoComplete='false'
+                        autoCorrect='false'
+                        autoCapitalize='false'
+                        spellCheck='false' />
                 </Col>
             </Form.Group>
         )
@@ -281,7 +272,7 @@ function InfoDisplay(props) {
 }
 
 function EditDisplay(props) {
-    const { appareil, displayEdit, displays, setDisplays, fermer, sauvegarder, listeSenseurs, ouvrirModalHandler } = props
+    const { appareil, displayEdit, displays, setDisplays, fermer, sauvegarder, listeSenseurs } = props
 
     const etatPret = useEtatPret()
 
@@ -331,8 +322,7 @@ function EditDisplay(props) {
                 configuration={displayConfiguration}
                 majConfigurationHandler={majConfigurationHandler} 
                 listeSenseurs={listeSenseurs}
-                fermer={fermer} 
-                ouvrirModalHandler={ouvrirModalHandler} />
+                fermer={fermer} />
 
             <Row>
                 <Col className="form-button-centrer">
@@ -340,17 +330,20 @@ function EditDisplay(props) {
                     <Button variant="secondary" onClick={fermer}>Annuler</Button>
                 </Col>
             </Row>
+
         </div>
     )
 }
 
 function AffichageDisplayTexte(props) {
-    const { appareil, editMode, display, configuration, majConfigurationHandler, listeSenseurs, ouvrirModalHandler } = props
+    const { appareil, editMode, display, configuration, majConfigurationHandler, listeSenseurs } = props
 
     const displayName = display.name
 
     const lignes = useMemo(()=>configuration.lignes || [], [configuration])
     const dureeAffichageDate = configuration.afficher_date_duree || ''
+
+    const [editLigneMasque, setEditLigneMasque] = useState(false)
 
     const majDureeAffichageDateHandler = useCallback(event => {
         let value = event.currentTarget.value
@@ -401,6 +394,12 @@ function AffichageDisplayTexte(props) {
         majConfigurationHandler({...configuration, lignes: lignesMaj})
     }, [configuration, lignes, majConfigurationHandler])
 
+    const ouvrirModalHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        setEditLigneMasque(value)
+    }, [setEditLigneMasque])
+    const fermerModalHandler = useCallback(()=>setEditLigneMasque(false), [setEditLigneMasque])
+
     return (
         <div>
             <Row><Col>Format texte</Col></Row>
@@ -447,6 +446,13 @@ function AffichageDisplayTexte(props) {
                 </Row>
             :''}
 
+            <ModalEditerMasqueLigne 
+                    show={!!editLigneMasque} 
+                    displayId={editLigneMasque}
+                    appareil={appareil}
+                    lignes={lignes}
+                    modifierLigneHandler={modifierLigneHandler}
+                    fermer={fermerModalHandler} />
         </div>
     )
 }
@@ -499,6 +505,7 @@ function LigneEdit(props) {
     const duree = value.duree || ''
     const derniereLigne = (lignes.length - 1) <= idx
 
+    const nomDisplay = [displayName, idx].join('_')
     const nomvarDuree = [displayName, idx, 'duree'].join('_')
 
     const swapLignesUpHandler = useCallback(()=>{
@@ -536,11 +543,15 @@ function LigneEdit(props) {
                     name={[displayName, idx, 'masque'].join('_')} 
                     value={masque} 
                     placeholder="Masque d'affichage, e.g. 'Cuisine {:.1f}'"
-                    onChange={modifierLigneHandler} />
+                    onChange={modifierLigneHandler} 
+                    autoComplete='false'
+                    autoCorrect='false'
+                    autoCapitalize='false'
+                    spellCheck='false' />
             </Col>
 
             <Col xs={3} className='bouton-droite'>
-                <Button variant='secondary' onClick={ouvrirModalHandler} value={''+idx}>
+                <Button variant='secondary' onClick={ouvrirModalHandler} value={nomDisplay}>
                     <i className="fa fa-newspaper-o" />
                 </Button>                
             </Col>
@@ -557,6 +568,7 @@ function LigneEdit(props) {
                 <Form.Control 
                     id={''+idx+'duree'}
                     type="number" 
+                    inputMode='decimal'
                     name={nomvarDuree} 
                     value={duree} 
                     onChange={modifierLigneHandler} />
@@ -609,7 +621,25 @@ function SelectSenseur(props) {
 
 function ModalEditerMasqueLigne(props) {
 
-    const { show, fermer } = props
+    const { show, fermer, displayId, lignes, modifierLigneHandler } = props
+
+    const [displayName, idxLigne, ligne] = useMemo(()=>{
+        if(!displayId) return [null, null, null, null]
+
+        const [displayName, idxLigne] = displayId.split('_')
+        const ligne = lignes[idxLigne] || {}
+
+        const info = [displayName, idxLigne, ligne]
+        // console.debug("ModalEditerMasqueLigne ", info)
+
+        return info
+    }, [displayId, lignes])
+
+    const masque = ligne?ligne.masque:''
+
+    const masqueTemperature = 'Temp     {: 5.1f}C',
+          masqueHumidite = 'Humidite  {:4.1f}%',
+          masqueTexte = '{}'
 
     return (
         <Modal show={show===true} size='lg' onHide={fermer}>
@@ -617,11 +647,70 @@ function ModalEditerMasqueLigne(props) {
                 Editer masque ligne
             </Modal.Header>
 
-            Masque
+            <Row>
+                <Form.Label as={Col}>Masque d'affichage</Form.Label>
+            </Row>
+
+            <Row>
+                <Col>
+                    <Form.Control 
+                        type="text" 
+                        name={[displayName, idxLigne, 'masque'].join('_')} 
+                        value={masque} 
+                        placeholder="Masque d'affichage, e.g. 'Cuisine {:.1f}'"
+                        onChange={modifierLigneHandler} 
+                        autoComplete='false'
+                        autoCorrect='false'
+                        autoCapitalize='false'
+                        spellCheck='false' />
+                </Col>
+            </Row>
+
+            <hr />
+
+            <p>Masques exemples. Cliquer sur le bouton P pour utiliser le masque.</p>
+
+            <Row>
+                <Col xs={5} className=''>Temperature, Pression</Col>
+                <Col xs={5} className='text-monospace'>{masqueTemperature}</Col>
+                <Col xs={2}>
+                    <Button variant='light' 
+                        name={[displayName, idxLigne, 'masque'].join('_')} 
+                        value={masqueTemperature}
+                        onClick={modifierLigneHandler}>
+                            P
+                    </Button>
+                </Col>
+            </Row>
+
+            <Row>
+                <Col xs={5} className=''>Humidite</Col>
+                <Col xs={5} className='text-monospace'>{masqueHumidite}</Col>
+                <Col xs={2}>
+                    <Button variant='light' 
+                        name={[displayName, idxLigne, 'masque'].join('_')} 
+                        value={masqueHumidite}
+                        onClick={modifierLigneHandler}>
+                            P
+                    </Button>
+                </Col>
+            </Row>
+
+            <Row>
+                <Col xs={5} className=''>Texte</Col>
+                <Col xs={5} className='text-monospace'>{masqueTexte}</Col>
+                <Col xs={2}>
+                    <Button variant='light' 
+                        name={[displayName, idxLigne, 'masque'].join('_')} 
+                        value={masqueTexte}
+                        onClick={modifierLigneHandler}>
+                            P
+                    </Button>
+                </Col>
+            </Row>
 
             <Modal.Footer>
-                <Button>Ok</Button>
-                <Button onClick={fermer}>Annuler</Button>
+                <Button onClick={fermer}>Fermer</Button>
             </Modal.Footer>
         </Modal>
     )

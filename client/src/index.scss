@@ -125,3 +125,7 @@ $xsmall-width: map.get($grid-breakpoints, xs);
 .display-ligne {
     margin-bottom: 0.8rem;
 }
+
+.text-monospace {
+    font-family: 'Courier New', Courier, monospace;
+}
