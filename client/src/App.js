@@ -1,12 +1,9 @@
-import React, {Suspense, useState, useEffect, useMemo, useCallback} from 'react'
+import React, {Suspense, useState, useEffect, useMemo} from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Provider as ReduxProvider, useDispatch, useSelector } from 'react-redux'
+import { Provider as ReduxProvider, useDispatch } from 'react-redux'
 
 import Container from 'react-bootstrap/Container'
-import Nav from 'react-bootstrap/Nav'
-import Navbar from 'react-bootstrap/Navbar'
-import NavDropdown from 'react-bootstrap/NavDropdown'
 
 import ErrorBoundary from './ErrorBoundary'
 import useWorkers, {useEtatConnexion, WorkerProvider, useUsager, useFormatteurPret, useInfoConnexion} from './WorkerContext'
@@ -16,7 +13,7 @@ import { setUserId as setUserIdAppareils, verifierExpiration } from './redux/app
 
 import i18n from './i18n'
 
-import { LayoutMillegrilles, ModalErreur, Menu as MenuMillegrilles, DropDownLanguage, ModalInfo, initI18n } from '@dugrema/millegrilles.reactjs'
+import { LayoutMillegrilles, ModalErreur, initI18n } from '@dugrema/millegrilles.reactjs'
 
 // Importer JS global
 import 'react-bootstrap/dist/react-bootstrap.min.js'
@@ -26,8 +23,6 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import 'font-awesome/css/font-awesome.min.css'
 import '@dugrema/millegrilles.reactjs/dist/index.css'
 
-import manifest from './manifest.build'
-
 import './index.scss'
 import './App.css'
 
@@ -36,7 +31,6 @@ initI18n(i18n)
 
 const Menu = React.lazy( () => import('./Menu') )
 const Accueil = React.lazy( () => import('./Accueil') )
-const Instances = React.lazy( () => import('./Instances') )
 const Configuration = React.lazy( () => import('./Configuration') )
 
 // const _contexte = {}  // Contexte global pour comlink proxy callbacks
@@ -99,7 +93,7 @@ function LayoutMain(props) {
   // Setup userId dans redux
   useEffect(()=>{
     dispatch(setUserIdAppareils(userId))
-  }, [userId])
+  }, [dispatch, userId])
 
   // Intervalle pour entretien appareils
   useEffect(()=>{
@@ -146,8 +140,6 @@ function ApplicationSenseursPassifs(props) {
 
   let Page = null
   switch(sectionAfficher) {
-    case 'Instances':
-      Page = Instances; break
     case 'Configuration':
       Page = Configuration; break
     default:
