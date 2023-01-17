@@ -426,6 +426,16 @@ function AffichageDisplayTexte(props) {
                 </Col>
             </Row>
 
+            <Row>
+                <Col className='col-xl-4 d-none d-xl-block'>Senseur</Col>
+                <Col className='col-xl-2 d-none d-xl-block'>Masque</Col>
+                <Col className='col-xl-1 d-none d-xl-block'>Edit</Col>
+                <Col className='col-xl-1 d-none d-xl-block'>Retirer</Col>
+                <Col className='col-xl-1 d-none d-xl-block'></Col>
+                <Col className='col-xl-1 d-none d-xl-block'>Duree</Col>
+                <Col className='col-xl-2 d-none d-xl-block'>Deplacer</Col>
+            </Row>
+
             <AfficherLignes
                 lignes={lignes}
                 appareil={appareil}
@@ -528,7 +538,7 @@ function LigneEdit(props) {
     return (
         <Row className="display-ligne">
 
-            <Col xs={12}>
+            <Col xs={12} xl={4}>
                 <SelectSenseur 
                     name={[displayName, idx, 'variable'].join('_')}
                     value={variable} 
@@ -537,7 +547,7 @@ function LigneEdit(props) {
                     onChange={modifierLigneHandler} />
             </Col>
 
-            <Col xs={9}>
+            <Col xs={9} xl={2}>
                 <Form.Control 
                     type="text" 
                     name={[displayName, idx, 'masque'].join('_')} 
@@ -550,21 +560,21 @@ function LigneEdit(props) {
                     spellCheck='false' />
             </Col>
 
-            <Col xs={3} className='bouton-droite'>
+            <Col xs={3} xl={1} className='bouton-droite'>
                 <Button variant='secondary' onClick={ouvrirModalHandler} value={nomDisplay}>
                     <i className="fa fa-newspaper-o" />
                 </Button>                
             </Col>
 
-            <Col xs={2}>
+            <Col xs={2} xl={1}>
                 <Button value={idx} variant="secondary" onClick={retirerLigneHandler}>
                     X
                 </Button>
             </Col>
 
-            <Form.Label as={Col} htmlFor={''+idx+'duree'} xs={2}>Duree</Form.Label>
+            <Form.Label as={Col} htmlFor={''+idx+'duree'} xs={2} xl={1}>Duree</Form.Label>
 
-            <Col xs={4}>
+            <Col xs={4} xl={1}>
                 <Form.Control 
                     id={''+idx+'duree'}
                     type="number" 
@@ -574,7 +584,7 @@ function LigneEdit(props) {
                     onChange={modifierLigneHandler} />
             </Col>
             
-            <Col xs={4} className='bouton-droite'>
+            <Col xs={4} className='bouton-droite' xl={2}>
                 <Button variant="secondary" onClick={swapLignesUpHandler} disabled={idx===0}>
                     <i className="fa fa-arrow-up" />
                 </Button>
