@@ -100,23 +100,42 @@ function StatistiquesTable72h(props) {
 
     if(!liste) return ''
 
+    let jour = ''
+
+    const [_, unite] = getUnite(typeValeur)
+
     return (
         <div>
             <h3>Table statistiques 3 jours</h3>
             <Row>
-                <Col xs={6} md={4} xl={3}>Heure</Col>
-                <Col xs={2} lg={1}>Moyenne</Col>
-                <Col xs={2} lg={1}>Maximum</Col>
-                <Col xs={2} lg={1}>Minimum</Col>
+                <Col xs={4} md={4} xl={3} className='text-overflow-clip'>Heure</Col>
+                <Col xs={2} lg={1} className='text-overflow-clip'>Moyenne</Col>
+                <Col xs={2} lg={1} className='text-overflow-clip'>Maximum</Col>
+                <Col xs={2} lg={1} className='text-overflow-clip'>Minimum</Col>
             </Row>
-            {liste.map(item=>(
-                <Row key={item.heure}>
-                    <Col xs={6} md={4} xl={3}><FormatterDate value={item.heure} /></Col>
-                    <Col xs={2} lg={1}><FormatterValeur valeur={item.avg} typeValeur={typeValeur} /></Col>
-                    <Col xs={2} lg={1}><FormatterValeur valeur={item.max} typeValeur={typeValeur} /></Col>
-                    <Col xs={2} lg={1}><FormatterValeur valeur={item.min} typeValeur={typeValeur} /></Col>
-                </Row>
-            ))}
+            {liste.map(item=>{
+                let jourItem = new Date(item.heure * 1000).getDay()
+                if(jourItem === jour) {
+                    jourItem = null
+                } else {
+                    jour = jourItem
+                }
+
+                return (
+                    <div key={item.heure}>
+                        {jourItem?
+                            <Row><FormatterDate format='YYYY/MM/DD' value={item.heure} /></Row>
+                        :''}
+                        <Row>
+                            <Col xs={4} md={4} xl={3}><FormatterDate format='HH:mm:ss' value={item.heure} /></Col>
+                            <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.avg} typeValeur={typeValeur} hideType={true} /></Col>
+                            <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.max} typeValeur={typeValeur} hideType={true} /></Col>
+                            <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.min} typeValeur={typeValeur} hideType={true} /></Col>
+                            <Col xs={2} lg={1}>{unite}</Col>
+                        </Row>
+                    </div>
+                )
+            })}
         </div>
     )
 
@@ -127,21 +146,24 @@ function StatistiquesTable31j(props) {
 
     if(!liste) return ''
 
+    const [_, unite] = getUnite(typeValeur)
+
     return (
         <div>
             <h3>Table statistiques 31 jours</h3>
             <Row>
-                <Col xs={6} md={4} xl={3}>Jour</Col>
-                <Col xs={2} lg={1}>Moyenne</Col>
-                <Col xs={2} lg={1}>Maximum</Col>
-                <Col xs={2} lg={1}>Minimum</Col>
+                <Col xs={4} md={4} xl={3} className='text-overflow-clip'>Jour</Col>
+                <Col xs={2} lg={1} className='text-overflow-clip'>Moyenne</Col>
+                <Col xs={2} lg={1} className='text-overflow-clip'>Maximum</Col>
+                <Col xs={2} lg={1} className='text-overflow-clip'>Minimum</Col>
             </Row>
             {liste.map(item=>(
                 <Row key={item.heure}>
-                    <Col xs={6} md={4} xl={3}><FormatterDate value={item.heure} format="YYYY/MM/DD" /></Col>
-                    <Col xs={2} lg={1}><FormatterValeur valeur={item.avg} typeValeur={typeValeur} /></Col>
-                    <Col xs={2} lg={1}><FormatterValeur valeur={item.max} typeValeur={typeValeur} /></Col>
-                    <Col xs={2} lg={1}><FormatterValeur valeur={item.min} typeValeur={typeValeur} /></Col>
+                    <Col xs={4} md={4} xl={3}><FormatterDate value={item.heure} format="YYYY/MM/DD" /></Col>
+                    <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.avg} typeValeur={typeValeur} hideType={true} /></Col>
+                    <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.max} typeValeur={typeValeur} hideType={true} /></Col>
+                    <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.min} typeValeur={typeValeur} hideType={true} /></Col>
+                    <Col xs={2} lg={1}>{unite}</Col>
                 </Row>
             ))}
         </div>
@@ -150,14 +172,26 @@ function StatistiquesTable31j(props) {
 }
 
 function FormatterValeur(props) {
-    const {valeur, typeValeur} = props
+    const {valeur, typeValeur, hideType} = props
     if(isNaN(valeur)) return ''
 
-    switch(typeValeur) {
-        case 'temperature': return valeur.toFixed(1) + ' C'
-        case 'humidite': return valeur.toFixed(1) + ' %'
-        case 'pression': return valeur.toFixed(1) + ' kPa'
-        default:
-            return ''+valeur
+    let [decimals, unite] = getUnite(typeValeur)
+    if(hideType) unite = ''
+
+    if(!isNaN(decimals)) {
+        return <span>{valeur.toFixed(decimals)} {unite}</span>
+    } else {
+        return valeur + unite
     }
+}
+
+function getUnite(typeValeur) {
+    let decimals = null, unite = ''
+    switch(typeValeur) {
+        case 'temperature': decimals = 1; unite = <span>&deg;C</span>; break
+        case 'humidite': decimals = 1; unite = '%'; break
+        case 'pression': decimals = 1; unite = 'kPa'; break
+        default:
+    }
+    return [decimals, unite]
 }

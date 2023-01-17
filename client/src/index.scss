@@ -115,6 +115,13 @@ $xsmall-width: map.get($grid-breakpoints, xs);
     font-size: larger;
 }
 
+.text-overflow-clip {
+    word-wrap: normal;
+    word-break: keep-all;
+    overflow: hidden;
+    text-overflow: clip;
+}
+
 .text-ellipsis {
     word-wrap: normal;
     word-break: keep-all;
