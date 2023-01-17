@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback, useMemo} from 'react'
-import { Provider as ReduxProvider, useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { proxy } from 'comlink'
 
 import Row from 'react-bootstrap/Row'
@@ -47,7 +47,7 @@ function Accueil(props) {
   const fermerSenseurHandler = useCallback(()=>{
     setUuidAppareil('')
     setSenseurId('')
-  })
+  }, [setUuidAppareil, setSenseurId])
 
   // Messages, maj liste appareils
   const messageAppareilHandler = useCallback(evenement=>{

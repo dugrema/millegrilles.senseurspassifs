@@ -1,5 +1,5 @@
 import { lazy, useState, useCallback, useMemo, useEffect } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
@@ -20,6 +20,29 @@ function Appareil(props) {
     const workers = useWorkers()
     const dispatch = useDispatch()
     const etatPret = useEtatPret()
+
+    // Generer liste de senseurs pour le select
+    const appareils = useSelector(state=>state.appareils.listeAppareils)
+    const listeSenseurs = useMemo(()=>{
+        const liste = []
+        for(const appareil of appareils) {
+            const configuration = appareil.configuration || {}
+            const nomAppareil = configuration.descriptif || appareil.uuid_appareil
+            const descriptifSenseurs = configuration.descriptif_senseurs || {}
+            if(appareil.senseurs) {
+                for(const nomSenseur of Object.keys(appareil.senseurs)) {
+                    const labelSenseur = descriptifSenseurs[nomSenseur] || nomSenseur
+                    const name = nomAppareil + ' ' + labelSenseur
+                    const value = appareil.uuid_appareil + ":" + nomSenseur
+                    liste.push({name, value})
+                }
+            }
+        }
+
+        liste.sort(sortDisplays)
+        // console.debug("Liste senseurs : ", liste)
+        return liste
+    }, [appareils])
 
     const [modeEdition, setModeEdition] = useState(false)
     const arreterEditionHandler = useCallback(()=>setModeEdition(false), [setModeEdition])
@@ -77,6 +100,7 @@ function Appareil(props) {
                 setDisplays={setDisplays}
                 fermer={boutonFermerDisplayHandler}
                 sauvegarder={majConfigurationHandler}
+                listeSenseurs={listeSenseurs}
                 />
         )
     }
@@ -128,13 +152,6 @@ function Appareil(props) {
                 displays={displays} 
                 setDisplays={setDisplays} 
                 setDisplayEdit={setDisplayEdit} />
-            {/* <AfficherDisplays 
-                editMode={modeEdition}
-                appareil={appareil} 
-                displays={displays} 
-                setDisplays={setDisplays} />
-
-            <p></p> */}
             
             {modeEdition?
                 <Row>
@@ -206,7 +223,6 @@ function NomAppareil(props) {
         return <p></p>
     }
 
-    return ''
 }
 
 function ListeDisplays(props) {
@@ -238,7 +254,7 @@ function InfoDisplay(props) {
     const selectHandler = useCallback(event=>{
         const value = event.currentTarget.value
         setDisplayEdit(value)
-    })
+    }, [setDisplayEdit])
 
     return (
         <Row>
@@ -250,7 +266,7 @@ function InfoDisplay(props) {
 }
 
 function EditDisplay(props) {
-    const { appareil, displayEdit, displays, setDisplays, fermer, sauvegarder } = props
+    const { appareil, displayEdit, displays, setDisplays, fermer, sauvegarder, listeSenseurs } = props
 
     const etatPret = useEtatPret()
 
@@ -295,9 +311,11 @@ function EditDisplay(props) {
 
             <Display key={displayInformation.name} 
                 editMode={true}
+                appareil={appareil}
                 display={displayInformation} 
                 configuration={displayConfiguration}
                 majConfigurationHandler={majConfigurationHandler} 
+                listeSenseurs={listeSenseurs}
                 fermer={fermer} />
 
             <Row>
@@ -310,53 +328,12 @@ function EditDisplay(props) {
     )
 }
 
-
-// function AfficherDisplays(props) {
-//     const { editMode, appareil, displays: configurationDisplays, setDisplays } = props
-
-//     const majConfigurationHandler = useCallback((displayName, value)=>{
-//         const displayMaj = {...configurationDisplays, [displayName]: value}
-//         setDisplays(displayMaj)
-//     }, [configurationDisplays, setDisplays])
-
-//     const displays = useMemo(()=>{
-//         let displays = appareil.displays || []
-//         displays = [...displays]
-//         displays.sort(sortDisplays)
-//         return displays
-//     }, [appareil])
-
-//     return displays.map(item=>{
-
-//         const { name } = item
-
-//         const displayConfiguration = configurationDisplays[name] || {}
-
-//         const formatDisplay = item.format
-//         let Display = null
-//         switch(formatDisplay) {
-//             case 'text': Display = AffichageDisplayTexte; break
-//             default:
-//                 Display = AffichageDisplayNonSupporte
-//         }
-
-//         return (
-//             <Display key={item.name} 
-//                 editMode={editMode}
-//                 appareil={appareil} 
-//                 display={item} 
-//                 configuration={displayConfiguration}
-//                 majConfigurationHandler={majConfigurationHandler} />
-//         )
-//     })
-// }
-
 function AffichageDisplayTexte(props) {
-    const { editMode, display, configuration, majConfigurationHandler } = props
+    const { appareil, editMode, display, configuration, majConfigurationHandler, listeSenseurs } = props
 
     const displayName = display.name
 
-    const lignes = configuration.lignes || []
+    const lignes = useMemo(()=>configuration.lignes || [], [configuration])
     const dureeAffichageDate = configuration.afficher_date_duree || ''
 
     const majDureeAffichageDateHandler = useCallback(event => {
@@ -380,7 +357,6 @@ function AffichageDisplayTexte(props) {
 
     const modifierLigneHandler = useCallback(event=>{
         let {name, value} = event.currentTarget
-        // console.debug("modifierLigneHandler %s = %s", name, value)
         const [affichage, ligneStr, nomVar] = name.split('_')
 
         if(['duree'].includes(nomVar)) {
@@ -406,14 +382,15 @@ function AffichageDisplayTexte(props) {
             <p>Dimensions : {display.width} characteres sur {display.height} lignes</p>
 
             <Row>
-                <Col>Duree affichage date</Col>
-                <Col>
+                <Col xs={7} md={6} lg={5} xl={4}>Duree affichage date</Col>
+                <Col xs={3} md={2} lg={1}>
                     {editMode?
                         <Form.Control type="text" value={dureeAffichageDate} onChange={majDureeAffichageDateHandler} />
                     :
                         <p>{dureeAffichageDate}</p>
                     }
                 </Col>
+                <Col xs={2} lg={1}>secondes</Col>
             </Row>
 
             <h4>Lignes</h4>
@@ -437,68 +414,83 @@ function AffichageDisplayTexte(props) {
             {lignes.length===0?<p>Aucun affichage configure.</p>:''}
 
             {lignes.map((item, idx)=>{
-
-                const masque = item.masque || ''
-                const variable = item.variable || ''
-                const duree = item.duree || 5
-
                 return (
-                    <Row key={idx}>
-                        <Col xs={12} md={8} xl={6}>
-                            <Row>
-                                <Col xs={2} md={2}>
-                                    {editMode?
-                                        <Button value={idx} variant="secondary" onClick={retirerLigneHandler}>
-                                            X
-                                        </Button>
-                                    :''}
-                                    {idx+1}
-                                </Col>
-                                <Col xs={10} md={8}>
-                                    {editMode?
-                                        <Form.Control 
-                                            type="text" 
-                                            name={[displayName, idx, 'masque'].join('_')} 
-                                            value={masque} 
-                                            placeholder="Masque d'affichage, e.g. 'Cuisine {:.1f}'"
-                                            onChange={modifierLigneHandler} />
-                                    :
-                                        <p>{masque}</p>
-                                    }
-                                </Col>
-                                <Col xs={4} md={2}>
-                                    {editMode?
-                                        <Form.Control 
-                                            type="text" 
-                                            name={[displayName, idx, 'duree'].join('_')} 
-                                            value={duree} 
-                                            onChange={modifierLigneHandler} />
-                                    :
-                                        <p>{duree}</p>
-                                    }
-                                </Col>
-                                <Col xs={0} md={2}></Col>
-                                <Col xs={8} md={10}>
-                                    {editMode?
-                                        <Form.Control 
-                                            type="text" 
-                                            name={[displayName, idx, 'variable'].join('_')} 
-                                            value={variable} 
-                                            placeholder="variable ou senseur, e.g. appareil:senseur"
-                                            onChange={modifierLigneHandler} />
-                                    :
-                                        <p>{variable}</p>
-                                    }
-                                </Col>
-                            </Row>
-                        </Col>
-                        <Col>
-                            <p>Affichage dummy...</p>
-                        </Col>
-                    </Row>
+                    <LigneEdit key={idx} 
+                        idx={idx} 
+                        value={item} 
+                        appareil={appareil}
+                        retirerLigneHandler={retirerLigneHandler}
+                        displayName={displayName}
+                        modifierLigneHandler={modifierLigneHandler}
+                        listeSenseurs={listeSenseurs} />
                 )
             })}
         </div>
+    )
+}
+
+function LigneEdit(props) {
+    const { idx, value, appareil, retirerLigneHandler, displayName, modifierLigneHandler, listeSenseurs } = props
+
+    const masque = value.masque || ''
+    const variable = value.variable || ''
+    const duree = value.duree || ''
+
+    const nomvarDuree = [displayName, idx, 'duree'].join('_')
+
+    useEffect(()=>{
+        if(!duree) {
+            // Set default duree
+            modifierLigneHandler({currentTarget:{name: nomvarDuree, value: '5'}})
+        }
+    }, [duree, modifierLigneHandler, nomvarDuree])
+
+    return (
+        <Row>
+            <Col xs={12} md={8} xl={6}>
+                <Row>
+                    <Col xs={2} md={2}>
+                        <Button value={idx} variant="secondary" onClick={retirerLigneHandler}>
+                            X
+                        </Button>
+                        {idx+1}
+                    </Col>
+                    <Col xs={10} md={8}>
+                        <Form.Control 
+                            type="text" 
+                            name={[displayName, idx, 'masque'].join('_')} 
+                            value={masque} 
+                            placeholder="Masque d'affichage, e.g. 'Cuisine {:.1f}'"
+                            onChange={modifierLigneHandler} />
+                    </Col>
+                    <Col xs={4} md={2}>
+                        <Form.Control 
+                            type="text" 
+                            name={nomvarDuree} 
+                            value={duree} 
+                            onChange={modifierLigneHandler} />
+                    </Col>
+                    <Col xs={0} md={2}></Col>
+                    <Col xs={8} md={10}>
+                        <SelectSenseur 
+                            name={[displayName, idx, 'variable'].join('_')}
+                            value={variable} 
+                            uuid_appareil={appareil.uuid_appareil}
+                            liste={listeSenseurs} 
+                            onChange={modifierLigneHandler} />
+                        {/* <Form.Control 
+                            type="text" 
+                            name={[displayName, idx, 'variable'].join('_')} 
+                            value={variable} 
+                            placeholder="variable ou senseur, e.g. appareil:senseur"
+                            onChange={modifierLigneHandler} /> */}
+                    </Col>
+                </Row>
+            </Col>
+            <Col>
+                <p>Affichage dummy...</p>
+            </Col>
+        </Row>
     )
 }
 
@@ -510,6 +502,28 @@ function AffichageDisplayNonSupporte(props) {
             <p>Cet affichage n'est pas supporte (format = {display.format})</p>
         </div>
     )
+}
+
+function SelectSenseur(props) {
+    const { uuid_appareil, liste, name, value, onChange } = props
+
+    // console.debug("SelectSenseur value %s", value)
+
+    return (
+        <Form.Select onChange={onChange} name={name} value={value}>
+            <option value=''>Aucun senseur selectionne</option>
+            {liste.map(item=>{
+                let itemValue = item.value
+                if(itemValue.startsWith(uuid_appareil)) {
+                    itemValue = itemValue.split(':').pop()  // Retirer nom appareil (courant)
+                }
+                return (
+                    <option key={item.value} value={itemValue}>{item.name}</option>
+                )
+            })}
+        </Form.Select>
+    )
+
 }
 
 function formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays) {
