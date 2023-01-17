@@ -46,9 +46,10 @@ function Appareil(props) {
                 console.debug("Reponse MAJ appareil : ", reponse)
                 dispatch(mergeAppareil(reponse))
                 setModeEdition(false)
+                setDisplayEdit('')
             })
             .catch(err=>console.error("Erreur maj appareil : ", err))
-    }, [workers, dispatch, appareil, descriptif, cacherSenseurs, descriptifSenseurs, displays, setModeEdition])
+    }, [workers, dispatch, appareil, descriptif, cacherSenseurs, descriptifSenseurs, displays, setModeEdition, setDisplayEdit])
 
     const boutonEditerHandler = useCallback(event=>{
         if(modeEdition) majConfigurationHandler()
@@ -56,14 +57,14 @@ function Appareil(props) {
     }, [modeEdition, setModeEdition, majConfigurationHandler])
 
     useEffect(()=>{
-        if(!appareil || modeEdition) return  // Aucune modification externe durant edit
+        if(!appareil || modeEdition || displayEdit) return  // Aucune modification externe durant edit
         // Recharger parametres de l'appareil
         const configuration = appareil.configuration || {}
         setDescriptif(configuration.descriptif || '')
         setCacherSenseurs(configuration.cacher_senseurs || [])
         setDescriptifSenseurs(configuration.descriptif_senseurs || {})
         setDisplays(configuration.displays || {})
-    }, [modeEdition, appareil, setDescriptif, setCacherSenseurs, setDescriptifSenseurs, setDisplays])
+    }, [modeEdition, displayEdit, appareil, setDescriptif, setCacherSenseurs, setDescriptifSenseurs, setDisplays])
 
     const configuration = appareil.configuration || {}
 
@@ -71,10 +72,11 @@ function Appareil(props) {
         return (
             <EditDisplay 
                 displayEdit={displayEdit}
-                appareil={appareil} 
-                displays={displays} 
+                appareil={appareil}
+                displays={displays}
                 setDisplays={setDisplays}
                 fermer={boutonFermerDisplayHandler}
+                sauvegarder={majConfigurationHandler}
                 />
         )
     }
@@ -248,32 +250,29 @@ function InfoDisplay(props) {
 }
 
 function EditDisplay(props) {
-    const { appareil, displayEdit, displays, setDisplays, fermer } = props
+    const { appareil, displayEdit, displays, setDisplays, fermer, sauvegarder } = props
 
     const etatPret = useEtatPret()
 
-    const displayInformation = useMemo(()=>{
-        return appareil.displays.filter(item=>item.name===displayEdit).pop()
-    }, [appareil])
+    const [configurationAppareil, displayInformation] = useMemo(()=>{
+        const configuration = appareil.configuration || {}
+        const displays = appareil.displays || []
+        const displayInformation = displays.filter(item=>item.name === displayEdit).pop()
+        return [configuration, displayInformation]
+    }, [appareil, displayEdit])
 
-    const configuration = useMemo(()=>{
-        let display = displays[displayEdit] || {}
-        return display
-    }, [appareil, displayEdit, displays])
-
-    const majConfigurationHandler = useCallback((displayName, value)=>{
-        const displayMaj = {...displays, [displayName]: value}
-        console.debug("Maj displays : ", displayMaj)
-        // setDisplays(displayMaj)
-    }, [configuration, setDisplays, displays])
-
-    useEffect(()=>{
-        console.debug("EditDisplay PROPPIES ", props)
-    }, [props])
+    const displayConfiguration = useMemo(()=>{
+        return displays[displayEdit] || {}
+    }, [displayEdit, displays])
 
     const displayName = displayInformation.name
-    const configurationAppareil = appareil.configuration || {}
     const nomAppareil = configurationAppareil.descriptif || configurationAppareil.uuid_appareil
+
+    const majConfigurationHandler = useCallback(value=>{
+        const displayMaj = {...displays, [displayEdit]: value}
+        // console.debug("Display maj : ", displayMaj)
+        setDisplays(displayMaj)
+    }, [displayEdit, setDisplays, displays])
 
     const formatDisplay = displayInformation.format
     let Display = null
@@ -296,15 +295,14 @@ function EditDisplay(props) {
 
             <Display key={displayInformation.name} 
                 editMode={true}
-                appareil={appareil} 
                 display={displayInformation} 
-                configuration={configuration}
+                configuration={displayConfiguration}
                 majConfigurationHandler={majConfigurationHandler} 
                 fermer={fermer} />
 
             <Row>
                 <Col className="form-button-centrer">
-                    <Button onClick={majConfigurationHandler} disabled={!etatPret}>Sauvegarder</Button>
+                    <Button onClick={sauvegarder} disabled={!etatPret}>Sauvegarder</Button>
                     <Button variant="secondary" onClick={fermer}>Annuler</Button>
                 </Col>
             </Row>
@@ -313,76 +311,72 @@ function EditDisplay(props) {
 }
 
 
-function AfficherDisplays(props) {
-    const { editMode, appareil, displays: configurationDisplays, setDisplays } = props
+// function AfficherDisplays(props) {
+//     const { editMode, appareil, displays: configurationDisplays, setDisplays } = props
 
-    const majConfigurationHandler = useCallback((displayName, value)=>{
-        const displayMaj = {...configurationDisplays, [displayName]: value}
-        setDisplays(displayMaj)
-    }, [configurationDisplays, setDisplays])
+//     const majConfigurationHandler = useCallback((displayName, value)=>{
+//         const displayMaj = {...configurationDisplays, [displayName]: value}
+//         setDisplays(displayMaj)
+//     }, [configurationDisplays, setDisplays])
 
-    const displays = useMemo(()=>{
-        let displays = appareil.displays || []
-        displays = [...displays]
-        displays.sort(sortDisplays)
-        return displays
-    }, [appareil])
+//     const displays = useMemo(()=>{
+//         let displays = appareil.displays || []
+//         displays = [...displays]
+//         displays.sort(sortDisplays)
+//         return displays
+//     }, [appareil])
 
-    return displays.map(item=>{
+//     return displays.map(item=>{
 
-        const { name } = item
+//         const { name } = item
 
-        const displayConfiguration = configurationDisplays[name] || {}
+//         const displayConfiguration = configurationDisplays[name] || {}
 
-        const formatDisplay = item.format
-        let Display = null
-        switch(formatDisplay) {
-            case 'text': Display = AffichageDisplayTexte; break
-            default:
-                Display = AffichageDisplayNonSupporte
-        }
+//         const formatDisplay = item.format
+//         let Display = null
+//         switch(formatDisplay) {
+//             case 'text': Display = AffichageDisplayTexte; break
+//             default:
+//                 Display = AffichageDisplayNonSupporte
+//         }
 
-        return (
-            <Display key={item.name} 
-                editMode={editMode}
-                appareil={appareil} 
-                display={item} 
-                configuration={displayConfiguration}
-                majConfigurationHandler={majConfigurationHandler} />
-        )
-    })
-}
+//         return (
+//             <Display key={item.name} 
+//                 editMode={editMode}
+//                 appareil={appareil} 
+//                 display={item} 
+//                 configuration={displayConfiguration}
+//                 majConfigurationHandler={majConfigurationHandler} />
+//         )
+//     })
+// }
 
 function AffichageDisplayTexte(props) {
-    const { editMode, appareil, display, configuration, majConfigurationHandler, fermer } = props
+    const { editMode, display, configuration, majConfigurationHandler } = props
 
     const displayName = display.name
 
     const lignes = configuration.lignes || []
     const dureeAffichageDate = configuration.afficher_date_duree || ''
 
-    const majConfigurationDisplayHandler = useCallback(value => {
-        majConfigurationHandler(displayName, value)
-    }, [majConfigurationHandler])
-
     const majDureeAffichageDateHandler = useCallback(event => {
         let value = event.currentTarget.value
         if(value) value = Number.parseInt(value)
         else value = null
-        majConfigurationDisplayHandler({...configuration, afficher_date_duree: value})
-    }, [configuration, majConfigurationDisplayHandler])
+        majConfigurationHandler({...configuration, afficher_date_duree: value})
+    }, [configuration, majConfigurationHandler])
 
     const ajouterLigneHandler = useCallback(()=>{
         let lignesMaj = [...lignes, {}]
-        majConfigurationDisplayHandler({...configuration, lignes: lignesMaj})
-    }, [configuration, lignes, majConfigurationDisplayHandler])
+        majConfigurationHandler({...configuration, lignes: lignesMaj})
+    }, [configuration, lignes, majConfigurationHandler])
 
     const retirerLigneHandler = useCallback(event=>{
         const { value } = event.currentTarget
         const ligne = Number.parseInt(value)
         let lignesMaj = lignes.filter((_, idx)=>idx!==ligne)
-        majConfigurationDisplayHandler({...configuration, lignes: lignesMaj})
-    }, [configuration, lignes, majConfigurationDisplayHandler])
+        majConfigurationHandler({...configuration, lignes: lignesMaj})
+    }, [configuration, lignes, majConfigurationHandler])
 
     const modifierLigneHandler = useCallback(event=>{
         let {name, value} = event.currentTarget
@@ -403,8 +397,8 @@ function AffichageDisplayTexte(props) {
         valeurLigne[nomVar] = value
         lignesMaj[ligne] = valeurLigne
 
-        majConfigurationDisplayHandler({...configuration, lignes: lignesMaj})
-    }, [configuration, lignes, majConfigurationDisplayHandler])
+        majConfigurationHandler({...configuration, lignes: lignesMaj})
+    }, [configuration, lignes, majConfigurationHandler])
 
     return (
         <div>
