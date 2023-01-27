@@ -5,7 +5,8 @@ import * as ConnexionClient from '@dugrema/millegrilles.reactjs/src/connexionCli
 
 // setHacheurs(hacheurs)
 
-const CONST_DOMAINE_SENSEURSPASSIFS = 'SenseursPassifs'
+const CONST_DOMAINE_SENSEURSPASSIFS = 'SenseursPassifs',
+      CONST_SENSEURSPASSIFS_RELAI = 'senseurspassifs_relai'
 
 function getListeNoeuds() {
   return ConnexionClient.emitBlocking('getListeNoeuds', {}, {domaine: CONST_DOMAINE_SENSEURSPASSIFS, action: 'listeNoeuds', ajouterCertificat: true})
@@ -115,6 +116,15 @@ function getAppareilsEnAttente(commande) {
   })
 }
 
+function commandeAppareil(instance_id, commande) {
+  commande = commande || {}
+  return ConnexionClient.emitBlocking('commandeAppareil', commande, {
+    domaine: CONST_SENSEURSPASSIFS_RELAI, 
+    partition: instance_id,
+    action: 'commandeAppareil', 
+    ajouterCertificat: true,
+  })
+}
 
 
 // Evenements
@@ -202,7 +212,7 @@ expose({
 
     getListeSenseursNoeud, getStatistiquesSenseur,
     getListeNoeuds, majNoeud, 
-    majSenseur, 
+    majSenseur, commandeAppareil,
 
     // Event listeners proteges
     ecouterEvenementsAppareilsUsager, retirerEvenementsAppareilsUsager,

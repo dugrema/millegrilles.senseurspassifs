@@ -33,6 +33,10 @@ export function majAppareil(socket, params) {
     return transmettreCommande(socket, params, 'majAppareil')
 }
 
+export function commandeAppareil(socket, params) {
+    return transmettreCommande(socket, params, 'commandeAppareil')
+}
+
 // export function getListeNoeuds(socket, params) {
 //     return transmettreRequete(socket, params, 'listeNoeuds')
 // }

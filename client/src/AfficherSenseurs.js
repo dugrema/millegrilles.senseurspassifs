@@ -5,6 +5,7 @@ import Col from 'react-bootstrap/Col'
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form';
 
+import useWorkers from './WorkerContext'
 
 function AfficherSenseurs(props) {
     const { appareil, editMode, cacherSenseurs, setCacherSenseurs, setDescriptifSenseurs, ouvrirDetailSenseur } = props
@@ -119,15 +120,35 @@ function RowSenseur(props) {
                     <span>{descriptif || item.senseurId}</span>
                 }
             </Col>
-            <AfficherValeurFormattee senseur={item} />
+            <AfficherValeurFormattee appareil={appareil} senseur={item} />
         </Row>        
     )
 }
 
 function AfficherValeurFormattee(props) {
-    const { senseur } = props
-    const { valeur, valeur_str, type} = senseur
+    // console.debug("AfficherValeurFormattee PROPPIES", props)
+    const { appareil, senseur } = props
+    const { instance_id, uuid_appareil } = appareil
+    const { senseurId, valeur, valeur_str, type} = senseur
   
+    const workers = useWorkers()
+
+    const toggleSwitchHandler = useCallback(()=>{
+        const { connexion } = workers
+        const toggleValeur = valeur?0:1
+        const commande = { 
+            instance_id, uuid_appareil, senseur_id: senseurId, 
+            valeur: toggleValeur,
+            commande_action: 'setSwitchValue'
+        }
+        console.debug("Emettre commande switch ", commande)
+        connexion.commandeAppareil(instance_id, commande)
+            .then(reponse=>{
+                console.debug("Commande emise ", reponse)
+            })
+            .catch(err=>console.error("AfficherValeurFormattee.toggleSwitchHandler Erreur ", err))
+    }, [workers, instance_id, uuid_appareil, senseurId, valeur])
+
     if(valeur_str) return <Col xs={5} md={7} className='valeur-texte'>{valeur_str}</Col>  // Aucun formattage
   
     if(type === 'temperature') {
@@ -151,7 +172,16 @@ function AfficherValeurFormattee(props) {
           <Col xs={1}>kPa</Col>
         </>
       )
-    }
+    } else if(type === 'switch') {
+        return (
+          <>
+            <Col xs={3} md={2} xl={2} className="valeur-numerique"></Col>
+            <Col xs={2} md={2} xl={1}>
+                <Form.Check id={'check'+senseurId} type='switch' checked={valeur===1} onClick={toggleSwitchHandler} />
+            </Col>
+          </>
+        )
+      }
   
     // Format non reconnu
     return valeur
