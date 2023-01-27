@@ -4,6 +4,6 @@ NAME=millegrilles_web_senseurspassifs
 ARCH_SUPPORTEES=( x86_64 aarch64 )
 URL_SERVEUR_DEV=mathieu@mg-dev1.maple.maceroc.com
 BRANCH=`git rev-parse --abbrev-ref HEAD`
-BUILD=2
+BUILD=3
 
 VERSION=$BRANCH.$BUILD
