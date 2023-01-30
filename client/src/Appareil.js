@@ -11,6 +11,7 @@ import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 
 import useWorkers, {useEtatPret} from './WorkerContext'
 import { mergeAppareil } from './redux/appareilsSlice'
+import { ListeProgrammes, EditProgramme } from './Programmes'
 
 const AfficherSenseurs = lazy( () => import('./AfficherSenseurs') )
 
@@ -35,7 +36,8 @@ function Appareil(props) {
                     const labelSenseur = descriptifSenseurs[nomSenseur] || nomSenseur
                     const name = nomAppareil + ' ' + labelSenseur
                     const value = appareil.uuid_appareil + ":" + nomSenseur
-                    liste.push({name, value})
+                    const typeSenseur = appareil.senseurs[nomSenseur].type
+                    liste.push({name, value, type: typeSenseur})
                 }
             }
         }
@@ -59,11 +61,14 @@ function Appareil(props) {
     const [descriptifSenseurs, setDescriptifSenseurs] = useState({})
     const [displays, setDisplays] = useState({})
     const [displayEdit, setDisplayEdit] = useState('')
+    const [programmes, setProgrammes] = useState({})
+    const [programmeEdit, setProgrammeEdit] = useState('')
 
     const boutonFermerDisplayHandler = useCallback(()=>setDisplayEdit(''), [setDisplayEdit])
+    const boutonFermerProgrammesHandler = useCallback(()=>setProgrammeEdit(''), [setProgrammeEdit])
 
     const majConfigurationHandler = useCallback(()=>{
-        const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays)
+        const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays, programmes)
         console.debug("Maj configuration ", configMaj)
         workers.connexion.majAppareil(configMaj)
             .then(reponse=>{
@@ -71,9 +76,10 @@ function Appareil(props) {
                 dispatch(mergeAppareil(reponse))
                 setModeEdition(false)
                 setDisplayEdit('')
+                setProgrammeEdit('')
             })
             .catch(err=>console.error("Erreur maj appareil : ", err))
-    }, [workers, dispatch, appareil, descriptif, cacherSenseurs, descriptifSenseurs, displays, setModeEdition, setDisplayEdit])
+    }, [workers, dispatch, appareil, descriptif, cacherSenseurs, descriptifSenseurs, displays, programmes, setModeEdition, setDisplayEdit, setProgrammeEdit])
 
     const boutonEditerHandler = useCallback(event=>{
         if(modeEdition) majConfigurationHandler()
@@ -88,9 +94,8 @@ function Appareil(props) {
         setCacherSenseurs(configuration.cacher_senseurs || [])
         setDescriptifSenseurs(configuration.descriptif_senseurs || {})
         setDisplays(configuration.displays || {})
+        setProgrammes(configuration.programmes || {})
     }, [modeEdition, displayEdit, appareil, setDescriptif, setCacherSenseurs, setDescriptifSenseurs, setDisplays])
-
-    const configuration = appareil.configuration || {}
 
     if(displayEdit) {
         return (
@@ -101,6 +106,22 @@ function Appareil(props) {
                     displays={displays}
                     setDisplays={setDisplays}
                     fermer={boutonFermerDisplayHandler}
+                    sauvegarder={majConfigurationHandler}
+                    listeSenseurs={listeSenseurs}
+                    />
+            </>
+        )
+    }
+
+    if(programmeEdit) {
+        return (
+            <>
+                <EditProgramme 
+                    programmeEdit={programmeEdit}
+                    appareil={appareil}
+                    programmes={programmes}
+                    setProgrammes={setProgrammes}
+                    fermer={boutonFermerProgrammesHandler}
                     sauvegarder={majConfigurationHandler}
                     listeSenseurs={listeSenseurs}
                     />
@@ -156,6 +177,13 @@ function Appareil(props) {
                 setDisplays={setDisplays} 
                 setDisplayEdit={setDisplayEdit} />
             
+            <ListeProgrammes 
+                show={!modeEdition} 
+                appareil={appareil}
+                programmes={programmes}
+                setProgrammes={setProgrammes}
+                setProgrammeEdit={setProgrammeEdit} />
+
             {modeEdition?
                 <Row>
                     <Col className="form-button-centrer">

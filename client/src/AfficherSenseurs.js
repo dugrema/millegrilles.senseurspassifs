@@ -177,7 +177,7 @@ function AfficherValeurFormattee(props) {
           <>
             <Col xs={3} md={2} xl={2} className="valeur-numerique"></Col>
             <Col xs={2} md={2} xl={1}>
-                <Form.Check id={'check'+senseurId} type='switch' checked={valeur===1} onClick={toggleSwitchHandler} />
+                <Form.Check id={'check'+senseurId} type='switch' checked={valeur===1} onChange={toggleSwitchHandler} />
             </Col>
           </>
         )
