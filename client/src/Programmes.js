@@ -20,20 +20,26 @@ export function ListeProgrammes(props) {
 
     if(!show) return ''
 
+    const programmes = useMemo(()=>{
+        const configuration = appareil.configuration || {}
+        const programmes = configuration.programmes || {}
+        return Object.values(programmes)
+    }, [appareil])
+
     return (
         <>
             <h3>Programmes et notifications</h3>
             <p>
                 <Button variant="secondary" onClick={ajouterHandler}>Ajouter</Button>
             </p>
-            {/* {
-                displayList.map(item=>(
-                    <InfoDisplay 
-                        key={item.name} 
-                        display={item} 
-                        setDisplayEdit={setDisplayEdit} />
+            {
+                programmes.map(item=>(
+                    <InfoProgramme 
+                        key={item.programme_id} 
+                        value={item} 
+                        setEdit={setProgrammeEdit} />
                 ))
-            } */}
+            }
         </>
         
     )
@@ -46,10 +52,11 @@ export function EditProgramme(props) {
 
     const [configurationAppareil, programmeInformation] = useMemo(()=>{
         const configuration = appareil.configuration || {}
-        const programmes = appareil.programmes || []
+        const programmes = configuration.programmes || {}
         let programmeInformation = {}
         if(programmeEdit !== true) {
-            programmeInformation = programmes.filter(item=>item.programme_id === programmeEdit).pop()
+            programmeInformation = programmes[programmeEdit]
+            console.debug("Charger programme %s : %O (programmes %O)", programmeEdit, programmeInformation, programmes)
         }
         return [configuration, programmeInformation]
     }, [appareil, programmeEdit])
@@ -64,7 +71,7 @@ export function EditProgramme(props) {
     const [descriptif, setDescriptif] = useState(programmeInformation.descriptif?programmeInformation.descriptif:programmeId)
     const setDescriptifHandler = useCallback(event=>setDescriptif(event.currentTarget.value), [setDescriptif])
 
-    const [classeProgramme, setClasseProgramme] = useState('')
+    const [classeProgramme, setClasseProgramme] = useState(programmeInformation.class||'')
 
     const [argsProgramme, setArgsProgramme] = useState(programmeInformation.args||{})
 
@@ -540,6 +547,20 @@ function EditerHeures(props) {
             </Row>
         )
     })
+}
+
+function InfoProgramme(props) {
+    const { value, setEdit } = props
+
+    const editHandler = useCallback(()=>setEdit(value.programme_id), [value, setEdit])
+
+    return (
+        <Row>
+            <Col>{value.descriptif || value.programme_id}</Col>
+            <Col>{value.class}</Col>
+            <Col><Button onClick={editHandler}>Editer</Button></Col>
+        </Row>
+    )
 }
 
 function validateNumber(val, opts) {

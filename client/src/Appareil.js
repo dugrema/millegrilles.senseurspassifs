@@ -83,7 +83,22 @@ function Appareil(props) {
 
     const sauvegarderProgrammeHandler = useCallback(programme=>{
         console.debug("Sauvegarder programme ", programme)
-    }, [majConfigurationHandler])
+        const programmesMaj = {...programmes, [programme.programme_id]: programme}
+        setProgrammes(programmesMaj)
+
+        const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays, programmesMaj)
+        console.debug("Maj configuration ", configMaj)
+        workers.connexion.majAppareil(configMaj)
+            .then(reponse=>{
+                console.debug("Reponse MAJ appareil : ", reponse)
+                dispatch(mergeAppareil(reponse))
+                setModeEdition(false)
+                setDisplayEdit('')
+                setProgrammeEdit('')
+            })
+            .catch(err=>console.error("Erreur maj appareil : ", err))
+
+    }, [workers, dispatch, appareil, descriptif, cacherSenseurs, descriptifSenseurs, displays, programmes, setModeEdition, setDisplayEdit, setProgrammeEdit, setProgrammes])
 
     const boutonEditerHandler = useCallback(event=>{
         if(modeEdition) majConfigurationHandler()
@@ -759,7 +774,7 @@ function ModalEditerMasqueLigne(props) {
     )
 }
 
-function formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays) {
+function formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays, programmes) {
     const configuration = {}
     
     if(appareil.configuration) Object.assign(configuration, appareil.configuration)
@@ -767,6 +782,10 @@ function formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptif
     configuration.descriptif = descriptif
     configuration.descriptif_senseurs = descriptifSenseurs
     configuration.displays = displays
+
+    if(programmes) {
+        configuration.programmes = programmes
+    }
 
     return {uuid_appareil: appareil.uuid_appareil, configuration}
 }
