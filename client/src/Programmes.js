@@ -343,11 +343,61 @@ function EditerProgrammeHumidificateur(props) {
 }
 
 function EditerProgrammeTimer(props) {
-    const { programmeId, args, setArgs } = props
+    const { appareil, programmeId, args, setArgs, listeSenseurs } = props
+
+    const ajouterHeureHandler = useCallback(()=>{
+        const horaire = args.horaire || []
+        const horaireMaj = [...horaire, {etat: 0, heure: 8, minute: 0}]
+        setArgs({...args, horaire: horaireMaj})
+    }, [args, setArgs])
+
+    const retirerHeureHandler = useCallback( e => {
+        const ligneNo = Number.parseInt(e.currentTarget.value)
+        const horaireMaj = args.horaire.filter((_, idx)=>idx!==ligneNo)
+        setArgs({...args, horaire: horaireMaj})
+    }, [args, setArgs])
+
+    const onChangeHandler = useCallback( e => {
+        const { name, checked, value } = e.currentTarget
+        const [ champ, idx ] = name.split('_')
+        
+        // Copier horaire
+        const horaireMaj = [...args.horaire]
+
+        // Copier ligne avec nouvelle valeur
+        if(champ === 'etat') horaireMaj[idx] = {...horaireMaj[idx], [champ]: (checked===true)?1:0}
+        else horaireMaj[idx] = {...horaireMaj[idx], [champ]: value}
+
+        setArgs({...args, horaire: horaireMaj})
+
+    }, [args, setArgs])
+
+    const horaire = args.horaire || []
 
     return (
         <div>
-            <p>Todo</p>
+
+            <Form.Group as={Row} className="mb-3" controlId={"switch-" + programmeId}>
+                <Form.Label column xs={12} md={5}>Switch</Form.Label>
+                <Col xs={12} md={7}>
+                    <ListeDevicesOptions 
+                        appareil={appareil} 
+                        devices={listeSenseurs} 
+                        typeDevice='switch' 
+                        local={true} 
+                        value={'todo'} />
+                </Col>
+            </Form.Group>
+
+            <h3>Horaire</h3>
+
+            <EditerHoraire 
+                horaire={horaire}
+                ajouter={ajouterHeureHandler}
+                retirer={retirerHeureHandler}
+                onChange={onChangeHandler}
+                />
+
         </div>
     )
 }
@@ -356,7 +406,6 @@ function ListeDevicesOptions(props) {
     const { appareil, devices, value, typeDevice, local } = props
 
     const liste = useMemo(()=>{
-        console.debug("Appareil %O, Devices : %O", appareil, devices)
         const uuid_appareil = appareil.uuid_appareil
 
         let listeFiltree = devices.filter(item=>item.type === typeDevice)
@@ -383,4 +432,59 @@ function ListeDevicesOptions(props) {
             {liste}
         </Form.Select>
     )
+}
+
+function EditerHoraire(props) {
+
+    const { horaire, ajouter, retirer, onChange } = props
+
+    return (
+        <div>
+            <Button onClick={ajouter}>Ajouter heure</Button>
+            {horaire.length>0?
+                <Row>
+                    <Col xs={2} sm={1}></Col>
+                    <Col xs={2} sm={1}>ON/OFF</Col>
+                    <Col xs={2} sm={1}>Heure</Col>
+                    <Col xs={2} sm={1}>Minutes</Col>
+                    <Col xs={2} sm={1}>Jour</Col>
+                </Row>
+            :''}
+            <EditerHeures horaire={horaire} retirer={retirer} onChange={onChange} />
+        </div>
+    )
+}
+
+function EditerHeures(props) {
+    const { horaire, retirer, onChange } = props
+
+    if(horaire.length === 0) return ''
+
+    return horaire.map((item, idx)=>{
+        return (
+            <Row key={idx}>
+                <Col xs={2} sm={1}>
+                    <Button variant="danger" onClick={retirer} value={''+idx}>X</Button>
+                </Col>
+                <Col xs={2} sm={1}>
+                    <Form.Check id={'etat_'+idx} type="switch" name={'etat_'+idx} checked={item.etat === 1} onChange={onChange} />
+                </Col>
+                <Col xs={2} sm={1}>
+                    <Form.Control 
+                        type='text' 
+                        name={'heure_'+idx} 
+                        value={item.heure} 
+                        onChange={onChange} />
+                </Col>
+                <Col xs={2} sm={1}>
+                    <Form.Control 
+                        type='text' 
+                        name={'minute_'+idx} 
+                        value={item.minute} 
+                        onChange={onChange} />
+                </Col>
+                <Col xs={2} sm={1}>{item.jour_semaine}</Col>
+            </Row>
+        )
+    })
 }
