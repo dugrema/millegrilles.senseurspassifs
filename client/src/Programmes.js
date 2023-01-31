@@ -72,7 +72,8 @@ export function EditProgramme(props) {
         const value = event.currentTarget.value
         console.debug('changeClasseHandler Nouvelle classe : %s', value)
         setClasseProgramme(value)
-    }, [setClasseProgramme])
+        setArgsProgramme({})
+    }, [setClasseProgramme, setArgsProgramme])
 
     const sauvegarderHandler = useCallback(()=>{
         const config = {
@@ -233,33 +234,60 @@ function EditerProgrammeHumidificateur(props) {
 
     const { appareil, programmeId, args, setArgs, listeSenseurs } = props
 
-    const humiditeChangeHandler = useCallback(event=>{
-        const humidite = event.currentTarget.value
-        setArgs({...args, humidite})
-    }, [args, setArgs])
-    const precisionChangeHandler = useCallback(event=>{
-        const precision = event.currentTarget.value
-        setArgs({...args, precision})
-    }, [args, setArgs])
-    const dureeOnMinChangeHandler = useCallback(event=>{
-        const valeur = event.currentTarget.value
-        setArgs({...args, duree_on_min: valeur})
-    }, [args, setArgs])
-    const dureeOffMinChangeHandler = useCallback(event=>{
-        const valeur = event.currentTarget.value
-        setArgs({...args, duree_off_min: valeur})
+    const senseurChangeHandler = useCallback(e=>{
+        const value = e.currentTarget.value
+        const senseurs = []
+        if(value) senseurs.push(value)
+        setArgs({...args, senseurs_humidite: senseurs})
     }, [args, setArgs])
 
-    const humiditeValeur = args.humidite || ''
-    const precisionValeur = args.precision || ''
-    const dureeOnMinValeur = args.duree_on_min || ''
-    const dureeOffMinValeur = args.duree_off_min || ''
+    const switchChangeHandler = useCallback(e=>{
+        const value = e.currentTarget.value
+        const switches = []
+        if(value) switches.push(value)
+        setArgs({...args, switches_humidificateurs: switches})
+    }, [args, setArgs])
+
+    const humiditeChangeHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {decimal: true, min: 0, max: 100})
+        if(val || !isNaN(val) || val === '') setArgs({...args, humidite: val})
+    }, [args, setArgs])
+
+    const precisionChangeHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {decimal: true, min: 0, max: 100})
+        if(val || !isNaN(val) || val === '') setArgs({...args, precision: val})
+    }, [args, setArgs])
+
+    const dureeOnMinChangeHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {min: 0})
+        if(val || !isNaN(val) || val === '') setArgs({...args, duree_on_min: val})
+    }, [args, setArgs])
+
+    const dureeOffMinChangeHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {min: 0})
+        if(val || !isNaN(val) || val === '') setArgs({...args, duree_off_min: val})
+    }, [args, setArgs])
 
     useEffect(()=>{
         if(Object.values(args).length > 0) return  // Deja initialise
         // Injecte valeurs par defaut
         setArgs({humidite: 50.0, precision: 2.0, duree_on_min: 120, duree_off_min: 60})
     }, [args, setArgs])
+
+    let senseurHumidite = ''
+    if(args.senseurs_humidite && args.senseurs_humidite.length > 0) senseurHumidite = args.senseurs_humidite[0]
+
+    let switchHumidificateur = ''
+    if(args.switches_humidificateurs && args.switches_humidificateurs.length > 0) switchHumidificateur = args.switches_humidificateurs[0]
+
+    const humiditeValeur = !isNaN(args.humidite)?args.humidite:''
+    const precisionValeur = !isNaN(args.precision)?args.precision:''
+    const dureeOnMinValeur = !isNaN(args.duree_on_min)?args.duree_on_min:''
+    const dureeOffMinValeur = !isNaN(args.duree_off_min)?args.duree_off_min:''
 
     return (
         <div>
@@ -271,7 +299,8 @@ function EditerProgrammeHumidificateur(props) {
                         appareil={appareil} 
                         devices={listeSenseurs} 
                         typeDevice='humidite' 
-                        value={'todo'} />
+                        value={senseurHumidite}
+                        onChange={senseurChangeHandler} />
                 </Col>
             </Form.Group>
 
@@ -283,7 +312,8 @@ function EditerProgrammeHumidificateur(props) {
                         devices={listeSenseurs} 
                         typeDevice='switch' 
                         local={true} 
-                        value={'todo'} />
+                        value={switchHumidificateur}
+                        onChange={switchChangeHandler} />
                 </Col>
             </Form.Group>
 
@@ -291,10 +321,10 @@ function EditerProgrammeHumidificateur(props) {
                 <Form.Label column xs={8} md={4}>Humidite (%)</Form.Label>
                 <Col xs={4} md={2}>
                     <Form.Control 
-                        type='number'
+                        type='text'
+                        inputMode='decimal'
                         value={humiditeValeur} 
-                        onChange={humiditeChangeHandler}
-                        autoComplete='false' autoCorrect='false' autoCapitalize='false' spellCheck='false' />
+                        onChange={humiditeChangeHandler} />
                 </Col>
             </Form.Group>
 
@@ -302,7 +332,8 @@ function EditerProgrammeHumidificateur(props) {
                 <Form.Label column xs={8} md={4}>Precision (+/- %)</Form.Label>
                 <Col xs={4} md={2}>
                     <Form.Control 
-                        type='number'
+                        type='text'
+                        inputMode='decimal'
                         value={precisionValeur} 
                         onChange={precisionChangeHandler}
                         autoComplete='false' autoCorrect='false' autoCapitalize='false' spellCheck='false' />
@@ -313,7 +344,8 @@ function EditerProgrammeHumidificateur(props) {
                 <Form.Label column xs={8} md={4}>Duree ON minimum (secondes)</Form.Label>
                 <Col xs={4} md={2}>
                     <Form.Control 
-                        type='number'
+                        type='text'
+                        inputMode='numeric'
                         value={dureeOnMinValeur} 
                         onChange={dureeOnMinChangeHandler}
                         autoComplete='false' autoCorrect='false' autoCapitalize='false' spellCheck='false' />
@@ -324,7 +356,8 @@ function EditerProgrammeHumidificateur(props) {
                 <Form.Label column xs={8} md={4}>Duree OFF minimum (secondes)</Form.Label>
                 <Col xs={4} md={2}>
                     <Form.Control 
-                        type='number'
+                        type='text'
+                        inputMode='numeric'
                         value={dureeOffMinValeur} 
                         onChange={dureeOffMinChangeHandler}
                         autoComplete='false' autoCorrect='false' autoCapitalize='false' spellCheck='false' />
@@ -369,22 +402,21 @@ function EditerProgrammeTimer(props) {
         let valueAjustee = value
         switch(champ) {
             case 'etat':
-                horaireMaj[idx] = {...horaireMaj[idx], [champ]: (checked===true)?1:0}
+                valueAjustee = (checked===true)?1:0
                 break
             case 'heure':
+                valueAjustee = validateNumber(value, {min: 0, max: 23})
+                break
             case 'minute':
-                if(value === '') valueAjustee = ''
-                else {
-                    valueAjustee = Number.parseInt(value)
-                    if(isNaN(valueAjustee) || valueAjustee < 0 || valueAjustee > 59) break
-                }
-                horaireMaj[idx] = {...horaireMaj[idx], [champ]: valueAjustee}
+                valueAjustee = validateNumber(value, {min: 0, max: 59})
                 break
             default:
-                horaireMaj[idx] = {...horaireMaj[idx], [champ]: value}
         }
 
-        setArgs({...args, horaire: horaireMaj})
+        if(valueAjustee !== null) {
+            horaireMaj[idx] = {...horaireMaj[idx], [champ]: valueAjustee}
+            setArgs({...args, horaire: horaireMaj})
+        }
 
     }, [args, setArgs])
 
@@ -491,6 +523,7 @@ function EditerHeures(props) {
                 <Col xs={2} sm={1}>
                     <Form.Control 
                         type='text' 
+                        inputMode='numeric'
                         name={'heure_'+idx} 
                         value={item.heure} 
                         onChange={onChange} />
@@ -498,6 +531,7 @@ function EditerHeures(props) {
                 <Col xs={2} sm={1}>
                     <Form.Control 
                         type='text' 
+                        inputMode='numeric'
                         name={'minute_'+idx} 
                         value={item.minute} 
                         onChange={onChange} />
@@ -506,4 +540,31 @@ function EditerHeures(props) {
             </Row>
         )
     })
+}
+
+function validateNumber(val, opts) {
+    opts = opts || {}
+    const decimal = opts.decimal === true,
+          negative = opts.negative === true,
+          min = opts.min,
+          max = opts.max
+    if(val !== '') {
+        if(decimal) {
+            if(val[val.length-1] === '.') return val
+        }
+        if(negative && val.length===1) {
+            if(val[0] === '-') return val
+        }
+        
+        val = Number.parseFloat(val)
+
+        if(isNaN(val)) val = ''
+        else {
+            // Valider min et max
+            if(!isNaN(min) && val < min) val = null
+            if(!isNaN(max) && val > max) val = null
+        }
+    }
+
+    return val
 }
