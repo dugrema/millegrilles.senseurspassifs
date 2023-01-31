@@ -1,5 +1,6 @@
 import { lazy, useState, useCallback, useMemo, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { v1 as uuidv1 } from 'uuid'
 
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
@@ -39,7 +40,7 @@ export function ListeProgrammes(props) {
 }
 
 export function EditProgramme(props) {
-    const { appareil, programmeEdit, programmes, setProgrammes, fermer, sauvegarder, listeSenseurs } = props
+    const { appareil, programmeEdit, fermer, sauvegarder, listeSenseurs } = props
 
     const etatPret = useEtatPret()
 
@@ -53,13 +54,10 @@ export function EditProgramme(props) {
         return [configuration, programmeInformation]
     }, [appareil, programmeEdit])
 
-    // const displayConfiguration = useMemo(()=>{
-    //     return displays[displayEdit] || {}
-    // }, [displayEdit, displays])
     const programmeId = useMemo(()=>{
         if(programmeInformation.programme_id) return programmeInformation.programme_id
         // Generer nouvel identificateur
-        return 'todo-uuid-programme'
+        return ''+uuidv1()
     }, [programmeInformation])
     const nomAppareil = configurationAppareil.descriptif || configurationAppareil.uuid_appareil
 
@@ -76,19 +74,15 @@ export function EditProgramme(props) {
         setClasseProgramme(value)
     }, [setClasseProgramme])
 
-    // const majConfigurationHandler = useCallback(value=>{
-    //     const displayMaj = {...displays, [displayEdit]: value}
-    //     // console.debug("Display maj : ", displayMaj)
-    //     setDisplays(displayMaj)
-    // }, [displayEdit, setDisplays, displays])
-
-    // const formatDisplay = displayInformation.format
-    // let Display = null
-    // switch(formatDisplay) {
-    //     case 'text': Display = AffichageDisplayTexte; break
-    //     default:
-    //         Display = AffichageDisplayNonSupporte
-    // }
+    const sauvegarderHandler = useCallback(()=>{
+        const config = {
+            programme_id: programmeId,
+            descriptif,
+            class: classeProgramme,
+            args: argsProgramme
+        }
+        sauvegarder(config)
+    }, [programmeId, descriptif, classeProgramme, argsProgramme, sauvegarder])
 
     return (
         <div>
@@ -138,7 +132,7 @@ export function EditProgramme(props) {
 
             <Row>
                 <Col className="form-button-centrer">
-                    <Button onClick={sauvegarder} disabled={!etatPret}>Sauvegarder</Button>
+                    <Button onClick={sauvegarderHandler} disabled={!etatPret}>Sauvegarder</Button>
                     <Button variant="secondary" onClick={fermer}>Annuler</Button>
                 </Col>
             </Row>
@@ -345,6 +339,13 @@ function EditerProgrammeHumidificateur(props) {
 function EditerProgrammeTimer(props) {
     const { appareil, programmeId, args, setArgs, listeSenseurs } = props
 
+    const switchChangeHandler = useCallback(e=>{
+        const value = e.currentTarget.value
+        const switches = []
+        if(value) switches.push(value)
+        setArgs({...args, switches})
+    }, [args, setArgs])
+
     const ajouterHeureHandler = useCallback(()=>{
         const horaire = args.horaire || []
         const horaireMaj = [...horaire, {etat: 0, heure: 8, minute: 0}]
@@ -365,14 +366,31 @@ function EditerProgrammeTimer(props) {
         const horaireMaj = [...args.horaire]
 
         // Copier ligne avec nouvelle valeur
-        if(champ === 'etat') horaireMaj[idx] = {...horaireMaj[idx], [champ]: (checked===true)?1:0}
-        else horaireMaj[idx] = {...horaireMaj[idx], [champ]: value}
+        let valueAjustee = value
+        switch(champ) {
+            case 'etat':
+                horaireMaj[idx] = {...horaireMaj[idx], [champ]: (checked===true)?1:0}
+                break
+            case 'heure':
+            case 'minute':
+                if(value === '') valueAjustee = ''
+                else {
+                    valueAjustee = Number.parseInt(value)
+                    if(isNaN(valueAjustee) || valueAjustee < 0 || valueAjustee > 59) break
+                }
+                horaireMaj[idx] = {...horaireMaj[idx], [champ]: valueAjustee}
+                break
+            default:
+                horaireMaj[idx] = {...horaireMaj[idx], [champ]: value}
+        }
 
         setArgs({...args, horaire: horaireMaj})
 
     }, [args, setArgs])
 
     const horaire = args.horaire || []
+    let switchTimer = ''
+    if(args.switches && args.switches.length > 0) switchTimer = args.switches[0]
 
     return (
         <div>
@@ -385,7 +403,8 @@ function EditerProgrammeTimer(props) {
                         devices={listeSenseurs} 
                         typeDevice='switch' 
                         local={true} 
-                        value={'todo'} />
+                        value={switchTimer} 
+                        onChange={switchChangeHandler} />
                 </Col>
             </Form.Group>
 
@@ -403,7 +422,7 @@ function EditerProgrammeTimer(props) {
 }
 
 function ListeDevicesOptions(props) {
-    const { appareil, devices, value, typeDevice, local } = props
+    const { appareil, devices, value, typeDevice, local, onChange } = props
 
     const liste = useMemo(()=>{
         const uuid_appareil = appareil.uuid_appareil
@@ -427,7 +446,7 @@ function ListeDevicesOptions(props) {
     }, [appareil, devices, value])
 
     return (
-        <Form.Select>
+        <Form.Select value={value} onChange={onChange}>
             <option>Choisissez une valeur</option>
             {liste}
         </Form.Select>

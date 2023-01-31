@@ -81,6 +81,10 @@ function Appareil(props) {
             .catch(err=>console.error("Erreur maj appareil : ", err))
     }, [workers, dispatch, appareil, descriptif, cacherSenseurs, descriptifSenseurs, displays, programmes, setModeEdition, setDisplayEdit, setProgrammeEdit])
 
+    const sauvegarderProgrammeHandler = useCallback(programme=>{
+        console.debug("Sauvegarder programme ", programme)
+    }, [majConfigurationHandler])
+
     const boutonEditerHandler = useCallback(event=>{
         if(modeEdition) majConfigurationHandler()
         else setModeEdition(true)
@@ -122,7 +126,7 @@ function Appareil(props) {
                     programmes={programmes}
                     setProgrammes={setProgrammes}
                     fermer={boutonFermerProgrammesHandler}
-                    sauvegarder={majConfigurationHandler}
+                    sauvegarder={sauvegarderProgrammeHandler}
                     listeSenseurs={listeSenseurs}
                     />
             </>
