@@ -14,17 +14,17 @@ import useWorkers, {useEtatPret} from './WorkerContext'
 import { mergeAppareil } from './redux/appareilsSlice'
 
 export function ListeProgrammes(props) {
-    const { show, appareil, setProgrammeEdit } = props
+    const { show, appareil, setProgrammeEdit, supprimer } = props
     
     const ajouterHandler = useCallback(()=>setProgrammeEdit(true), [setProgrammeEdit])
-
-    if(!show) return ''
 
     const programmes = useMemo(()=>{
         const configuration = appareil.configuration || {}
         const programmes = configuration.programmes || {}
         return Object.values(programmes)
     }, [appareil])
+
+    if(!show) return ''
 
     return (
         <>
@@ -37,7 +37,8 @@ export function ListeProgrammes(props) {
                     <InfoProgramme 
                         key={item.programme_id} 
                         value={item} 
-                        setEdit={setProgrammeEdit} />
+                        setEdit={setProgrammeEdit} 
+                        supprimer={supprimer} />
                 ))
             }
         </>
@@ -66,7 +67,11 @@ export function EditProgramme(props) {
         // Generer nouvel identificateur
         return ''+uuidv1()
     }, [programmeInformation])
+
     const nomAppareil = configurationAppareil.descriptif || configurationAppareil.uuid_appareil
+
+    const [actif, setActif] = useState(programmeInformation.actif?true:false)
+    const actifChangeHandler = useCallback(event => setActif(event.currentTarget.checked), [setActif])
 
     const [descriptif, setDescriptif] = useState(programmeInformation.descriptif?programmeInformation.descriptif:programmeId)
     const setDescriptifHandler = useCallback(event=>setDescriptif(event.currentTarget.value), [setDescriptif])
@@ -74,6 +79,12 @@ export function EditProgramme(props) {
     const [classeProgramme, setClasseProgramme] = useState(programmeInformation.class||'')
 
     const [argsProgramme, setArgsProgramme] = useState(programmeInformation.args||{})
+
+    useEffect(()=>{
+        if(programmeInformation.programme_id) return
+        // Set valeurs initiales
+        setActif(true)
+    }, [programmeInformation, setActif])
 
     const changeClasseHandler = useCallback(event => {
         const value = event.currentTarget.value
@@ -87,10 +98,11 @@ export function EditProgramme(props) {
             programme_id: programmeId,
             descriptif,
             class: classeProgramme,
+            actif,
             args: argsProgramme
         }
         sauvegarder(config)
-    }, [programmeId, descriptif, classeProgramme, argsProgramme, sauvegarder])
+    }, [programmeId, descriptif, classeProgramme, actif, argsProgramme, sauvegarder])
 
     return (
         <div>
@@ -126,6 +138,15 @@ export function EditProgramme(props) {
                 </Form.Label>
                 <Col>
                     <ProgrammesSelect nouveau={programmeEdit===true} onChange={changeClasseHandler} />
+                </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId="formHorizontalDescriptif">
+                <Form.Label column xs={12} md={5}>
+                    Actif
+                </Form.Label>
+                <Col>
+                    <Form.Check id='actif' type="switch" checked={actif} onChange={actifChangeHandler} />
                 </Col>
             </Form.Group>
 
@@ -550,15 +571,22 @@ function EditerHeures(props) {
 }
 
 function InfoProgramme(props) {
-    const { value, setEdit } = props
+    const { value, setEdit, supprimer } = props
 
     const editHandler = useCallback(()=>setEdit(value.programme_id), [value, setEdit])
 
+    const nomClasse = value.class.split('.').pop()
+
     return (
         <Row>
-            <Col>{value.descriptif || value.programme_id}</Col>
-            <Col>{value.class}</Col>
-            <Col><Button onClick={editHandler}>Editer</Button></Col>
+            <Col xs={2} md={1}>
+                <Button variant='secondary' onClick={editHandler}>Editer</Button>
+            </Col>
+            <Col xs={10} md={4}>{nomClasse}</Col>
+            <Col xs={10} md={6}>{value.descriptif || value.programme_id}</Col>
+            <Col xs={2} md={1}>
+                <Button variant='danger' onClick={supprimer} value={value.programme_id}>X</Button>
+            </Col>
         </Row>
     )
 }

@@ -83,7 +83,12 @@ function Appareil(props) {
 
     const sauvegarderProgrammeHandler = useCallback(programme=>{
         console.debug("Sauvegarder programme ", programme)
-        const programmesMaj = {...programmes, [programme.programme_id]: programme}
+        const programmesMaj = {...programmes}
+        if(programme.supprimer === true) {
+            delete programmesMaj[programme.programme_id]
+        } else {
+            programmesMaj[programme.programme_id] = programme
+        }
         setProgrammes(programmesMaj)
 
         const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays, programmesMaj)
@@ -104,6 +109,11 @@ function Appareil(props) {
         if(modeEdition) majConfigurationHandler()
         else setModeEdition(true)
     }, [modeEdition, setModeEdition, majConfigurationHandler])
+
+    const supprimerProgrammeHandler = useCallback( e => {
+        const programme_id = e.currentTarget.value
+        sauvegarderProgrammeHandler({programme_id, supprimer: true})
+    }, [sauvegarderProgrammeHandler])
 
     useEffect(()=>{
         if(!appareil || modeEdition || displayEdit) return  // Aucune modification externe durant edit
@@ -201,7 +211,8 @@ function Appareil(props) {
                 appareil={appareil}
                 programmes={programmes}
                 setProgrammes={setProgrammes}
-                setProgrammeEdit={setProgrammeEdit} />
+                setProgrammeEdit={setProgrammeEdit} 
+                supprimer={supprimerProgrammeHandler} />
 
             {modeEdition?
                 <Row>
