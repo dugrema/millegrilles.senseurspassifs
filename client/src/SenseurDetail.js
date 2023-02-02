@@ -168,7 +168,12 @@ function StatistiquesTable72h(props) {
         <div>
             <h3>Table statistiques 3 jours</h3>
             <Row>
-                <Col xs={4} md={4} xl={3} className='text-overflow-clip'>Heure</Col>
+                <Col xs={4} md={2} className='text-overflow-clip'>
+                    Date
+                </Col>
+                <Col md={2} className='d-none d-md-block'>
+                    Heure
+                </Col>
                 <Col xs={2} lg={1} className='text-overflow-clip'>Moyenne</Col>
                 <Col xs={2} lg={1} className='text-overflow-clip'>Maximum</Col>
                 <Col xs={2} lg={1} className='text-overflow-clip'>Minimum</Col>
@@ -222,10 +227,19 @@ function ListeHeures(props) {
         return (
             <div key={item.heure}>
                 {jourItem?
-                    <Row><FormatterDate format='YYYY/MM/DD' value={item.heure} /></Row>
+                    <Row>
+                        <Col className='d-md-none'>
+                            <FormatterDate format='YYYY/MM/DD' value={item.heure} />
+                        </Col>
+                    </Row>
                 :''}
                 <Row>
-                    <Col xs={4} md={4} xl={3}><FormatterDate format='HH:mm:ss' value={item.heure} /></Col>
+                    <Col className='d-none d-md-block' md={2}>
+                        {jourItem?
+                            <FormatterDate format='YYYY/MM/DD' value={item.heure} />
+                        :''}
+                    </Col>
+                    <Col xs={4} md={2}><FormatterDate format='HH:mm:ss' value={item.heure} /></Col>
                     <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.avg} typeValeur={typeValeur} hideType={true} /></Col>
                     <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.max} typeValeur={typeValeur} hideType={true} /></Col>
                     <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.min} typeValeur={typeValeur} hideType={true} /></Col>
@@ -310,7 +324,7 @@ function StatistiquesTableCustom(props) {
             {grouping?(
                 <div>
                     <Row>
-                        <Col>Date debut</Col>
+                        <Col xs={12} sm={4}>Date debut</Col>
                         <Col>
                             <Datetime 
                                 value={dateDebut} 
@@ -321,7 +335,7 @@ function StatistiquesTableCustom(props) {
                         </Col>
                     </Row>
                     <Row>
-                        <Col>Date fin</Col>
+                        <Col xs={12} sm={4}>Date fin</Col>
                         <Col>
                             <Datetime 
                                 value={dateFin} 
@@ -333,7 +347,7 @@ function StatistiquesTableCustom(props) {
                     </Row>
 
                     <Row>
-                        <Col xs={4} md={4} xl={3} className='text-overflow-clip'>Heure</Col>
+                        <Col xs={4} md={4} xl={3} className='text-overflow-clip'>Date</Col>
                         <Col xs={2} lg={1} className='text-overflow-clip'>Moyenne</Col>
                         <Col xs={2} lg={1} className='text-overflow-clip'>Maximum</Col>
                         <Col xs={2} lg={1} className='text-overflow-clip'>Minimum</Col>
