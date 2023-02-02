@@ -636,7 +636,6 @@ function LigneEdit(props) {
             <Col xs={4} xl={1}>
                 <Form.Control 
                     id={''+idx+'duree'}
-                    type="number" 
                     inputMode='decimal'
                     name={nomvarDuree} 
                     value={duree} 

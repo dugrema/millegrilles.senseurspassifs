@@ -87,13 +87,13 @@ function RowSenseur(props) {
             <Row>
                 <Col xs={1}>
                     {editMode?
-                        <Form.Check checked={selectionne} onChange={toggleCacherHandler} value={senseurId} />
+                        <Form.Check id={'check_'+senseurId} checked={selectionne} onChange={toggleCacherHandler} value={senseurId} />
                     :''}
                 </Col>
-                <Col xs={5} md={4}>
-                    {item.senseurId}
+                <Col xs={11} sm={5} md={4}>
+                    <Form.Label htmlFor={'check_'+senseurId}>{item.senseurId}</Form.Label>
                 </Col>
-                <Col>
+                <Col xs={12} sm={6}>
                     <Form.Control 
                         type="text" 
                         placeholder="Changer nom" 

@@ -143,12 +143,12 @@ function ListeAppareils(props) {
       <div key={uuid_appareil}>
       
         <Row className='appareil-ligne'>
-          <Col xs={5} md={8} className='bouton-link-nopadding'>
+          <Col xs={12} sm={7} md={8} className='bouton-link-nopadding'>
             <Button variant="link" onClick={setUuidAppareilHandler} value={uuid_appareil}>
               {nomAppareil}
             </Button>
           </Col>
-          <Col xs={7} md={4} className={classNameDate}>
+          <Col xs={12} sm={5} md={4} className={classNameDate}>
             <FormatterDate value={derniere_lecture} />
           </Col>
         </Row>
