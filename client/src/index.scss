@@ -136,3 +136,21 @@ $xsmall-width: map.get($grid-breakpoints, xs);
 .text-monospace {
     font-family: 'Courier New', Courier, monospace;
 }
+
+.wrap-rapport {
+    min-height: 15rem;
+}
+
+/* react-datetime overrides */
+.rdtPicker,
+.rdtPicker td.rdtNew {
+    background: $second-color;
+}
+.rdtPicker td.rdtDay:hover,
+.rdtPicker td.rdtHour:hover,
+.rdtPicker td.rdtMinute:hover,
+.rdtPicker td.rdtSecond:hover,
+.rdtPicker .rdtTimeToggle:hover,
+.rdtPicker thead tr:first-of-type th:hover {
+    background: $third-color;
+}

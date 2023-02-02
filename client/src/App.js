@@ -21,6 +21,7 @@ import 'react-bootstrap/dist/react-bootstrap.min.js'
 // Importer cascade CSS global
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'font-awesome/css/font-awesome.min.css'
+import "react-datetime/css/react-datetime.css"
 import '@dugrema/millegrilles.reactjs/dist/index.css'
 
 import './index.scss'

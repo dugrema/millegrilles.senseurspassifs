@@ -1,17 +1,12 @@
-import { lazy, useState, useCallback, useMemo, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { v1 as uuidv1 } from 'uuid'
 
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
-import Modal from 'react-bootstrap/Modal'
 
-import { FormatterDate } from '@dugrema/millegrilles.reactjs'
-
-import useWorkers, {useEtatPret} from './WorkerContext'
-import { mergeAppareil } from './redux/appareilsSlice'
+import {useEtatPret} from './WorkerContext'
 
 export function ListeProgrammes(props) {
     const { show, appareil, setProgrammeEdit, supprimer } = props
