@@ -1,6 +1,6 @@
 {
   "name": "millegrilles.senseurspassifs",
-  "version": "2023.0.4",
+  "version": "2023.0.5",
   "description": "MilleGrilles SenseursPassifs api",
   "main": "index.js",
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "millegrilles.senseurspassifs.client",
-  "version": "2023.0.4",
+  "version": "2023.0.5",
   "private": true,
   "dependencies": {
     "@dugrema/millegrilles.reactjs": "github:dugrema/millegrilles.reactjs#2023.0",
