@@ -41,6 +41,27 @@ export function ListeProgrammes(props) {
     )
 }
 
+function InfoProgramme(props) {
+    const { value, setEdit, supprimer } = props
+
+    const editHandler = useCallback(()=>setEdit(value.programme_id), [value, setEdit])
+
+    const nomClasse = value.class.split('.').pop()
+
+    return (
+        <Row>
+            <Col xs={3} sm={2} lg={1}>
+                <Button variant='secondary' onClick={editHandler}>Editer</Button>
+            </Col>
+            <Col md={3} className='d-none d-md-block'>{nomClasse}</Col>
+            <Col xs={7} sm={8} md={6}>{value.descriptif || value.programme_id}</Col>
+            <Col xs={2} sm={2} md={1}>
+                <Button variant='danger' onClick={supprimer} value={value.programme_id}>X</Button>
+            </Col>
+        </Row>
+    )
+}
+
 export function EditProgramme(props) {
     const { appareil, programmeEdit, fermer, sauvegarder, listeSenseurs } = props
 
@@ -153,6 +174,8 @@ export function EditProgramme(props) {
                 setArgs={setArgsProgramme}
                 listeSenseurs={listeSenseurs}
                 />
+
+            <p></p>
 
             <Row>
                 <Col className="form-button-centrer">
@@ -514,14 +537,13 @@ function EditerHoraire(props) {
 
     return (
         <div>
-            <Button onClick={ajouter}>Ajouter heure</Button>
+            <Button variant='secondary' onClick={ajouter}>Ajouter heure</Button>
             {horaire.length>0?
                 <Row>
                     <Col xs={2} sm={1}></Col>
-                    <Col xs={2} sm={1}>ON/OFF</Col>
-                    <Col xs={2} sm={1}>Heure</Col>
-                    <Col xs={2} sm={1}>Minutes</Col>
-                    <Col xs={2} sm={1}>Jour</Col>
+                    <Col xs={3} sm={2} lg={1}>ON/OFF</Col>
+                    <Col xs={3} sm={2} lg={1}>Heure</Col>
+                    <Col xs={3} sm={2} lg={1}>Minutes</Col>
                 </Row>
             :''}
             <EditerHeures horaire={horaire} retirer={retirer} onChange={onChange} />
@@ -540,10 +562,10 @@ function EditerHeures(props) {
                 <Col xs={2} sm={1}>
                     <Button variant="danger" onClick={retirer} value={''+idx}>X</Button>
                 </Col>
-                <Col xs={2} sm={1}>
+                <Col xs={3} sm={2} lg={1}>
                     <Form.Check id={'etat_'+idx} type="switch" name={'etat_'+idx} checked={item.etat === 1} onChange={onChange} />
                 </Col>
-                <Col xs={2} sm={1}>
+                <Col xs={3} sm={2} lg={1}>
                     <Form.Control 
                         type='text' 
                         inputMode='numeric'
@@ -551,7 +573,7 @@ function EditerHeures(props) {
                         value={item.heure} 
                         onChange={onChange} />
                 </Col>
-                <Col xs={2} sm={1}>
+                <Col xs={3} sm={2} lg={1}>
                     <Form.Control 
                         type='text' 
                         inputMode='numeric'
@@ -559,31 +581,9 @@ function EditerHeures(props) {
                         value={item.minute} 
                         onChange={onChange} />
                 </Col>
-                <Col xs={2} sm={1}>{item.jour_semaine}</Col>
             </Row>
         )
     })
-}
-
-function InfoProgramme(props) {
-    const { value, setEdit, supprimer } = props
-
-    const editHandler = useCallback(()=>setEdit(value.programme_id), [value, setEdit])
-
-    const nomClasse = value.class.split('.').pop()
-
-    return (
-        <Row>
-            <Col xs={2} md={1}>
-                <Button variant='secondary' onClick={editHandler}>Editer</Button>
-            </Col>
-            <Col xs={10} md={4}>{nomClasse}</Col>
-            <Col xs={10} md={6}>{value.descriptif || value.programme_id}</Col>
-            <Col xs={2} md={1}>
-                <Button variant='danger' onClick={supprimer} value={value.programme_id}>X</Button>
-            </Col>
-        </Row>
-    )
 }
 
 function validateNumber(val, opts) {
