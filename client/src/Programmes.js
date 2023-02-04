@@ -429,7 +429,7 @@ function EditerProgrammeTemperature(props) {
 
     const temperatureChangeHandler = useCallback(event=>{
         const value = event.currentTarget.value
-        let val = validateNumber(value, {decimal: true, min: 0, max: 100})
+        let val = validateNumber(value, {decimal: true, min: -80, max: 80})
         if(val || !isNaN(val) || val === '') setArgs({...args, temperature: val})
     }, [args, setArgs])
 
@@ -722,15 +722,18 @@ function EditerHeures(props) {
 function validateNumber(val, opts) {
     opts = opts || {}
     const decimal = opts.decimal === true,
-          negative = opts.negative === true,
           min = opts.min,
-          max = opts.max
+          max = opts.max,
+          negative = (opts.negative === true || min < 0.0)
+
     if(val !== '') {
         if(decimal) {
             if(val[val.length-1] === '.') return val
         }
         if(negative && val.length===1) {
-            if(val[0] === '-') return val
+            if(val[0] === '-') {
+                return val
+            }
         }
         
         val = Number.parseFloat(val)
