@@ -54,7 +54,11 @@ function InfoProgramme(props) {
                 <Button variant='secondary' onClick={editHandler}>Editer</Button>
             </Col>
             <Col md={3} className='d-none d-md-block'>{nomClasse}</Col>
-            <Col xs={7} sm={8} md={6}>{value.descriptif || value.programme_id}</Col>
+            <Col xs={7} sm={8} md={6}>
+                {value.descriptif || value.programme_id}
+                {' '}
+                {value.actif===true?'(ON)':'(OFF)'}
+            </Col>
             <Col xs={2} sm={2} md={1}>
                 <Button variant='danger' onClick={supprimer} value={value.programme_id}>X</Button>
             </Col>
@@ -153,7 +157,7 @@ export function EditProgramme(props) {
                     Type
                 </Form.Label>
                 <Col>
-                    <ProgrammesSelect nouveau={programmeEdit===true} onChange={changeClasseHandler} />
+                    <ProgrammesSelect nouveau={programmeEdit===true} classeProgramme={classeProgramme} onChange={changeClasseHandler} />
                 </Col>
             </Form.Group>
 
@@ -190,10 +194,10 @@ export function EditProgramme(props) {
 
 function ProgrammesSelect(props) {
 
-    const { typeProgramme, nouveau, onChange } = props
+    const { classeProgramme, nouveau, onChange } = props
 
     if(nouveau !== true) {
-        return <OptionsProgrammes readonly={true} value={typeProgramme} />
+        return <OptionsProgrammes readonly={true} value={classeProgramme} />
     }
 
     return (
@@ -211,8 +215,11 @@ function OptionsProgrammes(props) {
     const programmes = getProgrammesDisponibles()
 
     if(readonly) {
-        const programme = programmes.filter(item=>item.nomClasse===value).pop()
-        return <span>{programme.nomProgramme}</span>
+
+        const programmesFiltres = programmes.filter(item=>item.class===value)
+        console.debug("Programmes nomClasse = %s, programmes %O", value, programmesFiltres)
+        const programme = programmesFiltres.pop()
+        return <span>{programme.nom}</span>
     }
 
     return programmes.map(item=>{
@@ -224,26 +231,10 @@ function OptionsProgrammes(props) {
 
 function getProgrammesDisponibles() {
     return [
-        {
-            nom: 'Humidificateur', 
-            'class': 'programmes.environnement.Humidificateur',
-            args: [
-                {'parametre': 'senseurs_humidite', device: true, 'type': 'humidite', mandatory: true},
-                {'parametre': 'switches_humidificateurs', device: true, 'type': 'switch', mandatory: true},
-                {'parametre': 'humidite', type: 'float', 'default': 50.0, range: [0, 100], mandatory: true},
-                {'parametre': 'precision', type: 'float', 'default': 2.0, range: [0, 100], mandatory: true},
-                {'parametre': 'duree_on_min', type: 'int', 'default': 30},
-                {'parametre': 'duree_off_min', type: 'int', 'default': 30},
-            ]
-        },
-        {
-            nom: 'Timer', 
-            'class': 'programmes.timers.TimerHebdomadaire',
-            args: [
-                {'parametre': 'switches', device: true, 'type': 'switch', mandatory: true},
-                {'parametre': 'horaire', type: 'list', itemType: 'timeofweek', mandatory: true},
-            ]
-        },
+        { nom: 'Humidificateur', 'class': 'programmes.environnement.Humidificateur' },
+        { nom: 'Timer', 'class': 'programmes.timers.TimerHebdomadaire' },
+        { nom: 'Chauffage', 'class': 'programmes.environnement.Chauffage' },
+        { nom: 'Climatisation/Refrigeration', 'class': 'programmes.environnement.Climatisation' },
     ]
 }
 
@@ -257,6 +248,9 @@ function ConfigurerProgramme(props) {
     switch(classeProgramme) {
         case 'programmes.environnement.Humidificateur': ClasseEditeur = EditerProgrammeHumidificateur; break
         case 'programmes.timers.TimerHebdomadaire': ClasseEditeur = EditerProgrammeTimer; break
+        case 'programmes.environnement.Chauffage':
+        case 'programmes.environnement.Climatisation':
+            ClasseEditeur = EditerProgrammeTemperature; break
         default: ClasseEditeur = EditerProgrammeNonSupporte
     }
 
@@ -376,6 +370,145 @@ function EditerProgrammeHumidificateur(props) {
 
             <Form.Group as={Row} className="mb-3" controlId={"precision-" + programmeId}>
                 <Form.Label column xs={8} md={4}>Precision (+/- %)</Form.Label>
+                <Col xs={4} md={2}>
+                    <Form.Control 
+                        type='text'
+                        inputMode='decimal'
+                        value={precisionValeur} 
+                        onChange={precisionChangeHandler}
+                        autoComplete='false' autoCorrect='false' autoCapitalize='false' spellCheck='false' />
+                </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId={"dureeonmin-" + programmeId}>
+                <Form.Label column xs={8} md={4}>Duree ON minimum (secondes)</Form.Label>
+                <Col xs={4} md={2}>
+                    <Form.Control 
+                        type='text'
+                        inputMode='numeric'
+                        value={dureeOnMinValeur} 
+                        onChange={dureeOnMinChangeHandler}
+                        autoComplete='false' autoCorrect='false' autoCapitalize='false' spellCheck='false' />
+                </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId={"dureeoffmin-" + programmeId}>
+                <Form.Label column xs={8} md={4}>Duree OFF minimum (secondes)</Form.Label>
+                <Col xs={4} md={2}>
+                    <Form.Control 
+                        type='text'
+                        inputMode='numeric'
+                        value={dureeOffMinValeur} 
+                        onChange={dureeOffMinChangeHandler}
+                        autoComplete='false' autoCorrect='false' autoCapitalize='false' spellCheck='false' />
+                </Col>
+            </Form.Group>
+
+        </div>
+    )
+
+}
+
+function EditerProgrammeTemperature(props) {
+
+    const { appareil, programmeId, args, setArgs, listeSenseurs } = props
+
+    const senseurChangeHandler = useCallback(e=>{
+        const value = e.currentTarget.value
+        const senseurs = []
+        if(value) senseurs.push(value)
+        setArgs({...args, senseurs: senseurs})
+    }, [args, setArgs])
+
+    const switchChangeHandler = useCallback(e=>{
+        const value = e.currentTarget.value
+        const switches = []
+        if(value) switches.push(value)
+        setArgs({...args, switches: switches})
+    }, [args, setArgs])
+
+    const temperatureChangeHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {decimal: true, min: 0, max: 100})
+        if(val || !isNaN(val) || val === '') setArgs({...args, temperature: val})
+    }, [args, setArgs])
+
+    const precisionChangeHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {decimal: true, min: 0, max: 100})
+        if(val || !isNaN(val) || val === '') setArgs({...args, precision: val})
+    }, [args, setArgs])
+
+    const dureeOnMinChangeHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {min: 0})
+        if(val || !isNaN(val) || val === '') setArgs({...args, duree_on_min: val})
+    }, [args, setArgs])
+
+    const dureeOffMinChangeHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {min: 0})
+        if(val || !isNaN(val) || val === '') setArgs({...args, duree_off_min: val})
+    }, [args, setArgs])
+
+    useEffect(()=>{
+        if(Object.values(args).length > 0) return  // Deja initialise
+        // Injecte valeurs par defaut
+        setArgs({temperature: 20.0, precision: 1.0, duree_on_min: 120, duree_off_min: 60})
+    }, [args, setArgs])
+
+    let senseur = ''
+    if(args.senseurs && args.senseurs.length > 0) senseur = args.senseurs[0]
+
+    let switchTemp = ''
+    if(args.switches && args.switches.length > 0) switchTemp = args.switches[0]
+
+    const temperatureValeur = !isNaN(args.temperature)?args.temperature:''
+    const precisionValeur = !isNaN(args.precision)?args.precision:''
+    const dureeOnMinValeur = !isNaN(args.duree_on_min)?args.duree_on_min:''
+    const dureeOffMinValeur = !isNaN(args.duree_off_min)?args.duree_off_min:''
+
+    return (
+        <div>
+
+            <Form.Group as={Row} className="mb-3" controlId={"senseur-" + programmeId}>
+                <Form.Label column xs={12} md={5}>Senseur de temperature</Form.Label>
+                <Col xs={12} md={7}>
+                    <ListeDevicesOptions 
+                        appareil={appareil} 
+                        devices={listeSenseurs} 
+                        typeDevice='temperature' 
+                        value={senseur}
+                        onChange={senseurChangeHandler} />
+                </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId={"switch-" + programmeId}>
+                <Form.Label column xs={12} md={5}>Switch</Form.Label>
+                <Col xs={12} md={7}>
+                    <ListeDevicesOptions 
+                        appareil={appareil} 
+                        devices={listeSenseurs} 
+                        typeDevice='switch' 
+                        local={true} 
+                        value={switchTemp}
+                        onChange={switchChangeHandler} />
+                </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId={"temperature-" + programmeId}>
+                <Form.Label column xs={8} md={4}>Temperature (C)</Form.Label>
+                <Col xs={4} md={2}>
+                    <Form.Control 
+                        type='text'
+                        inputMode='decimal'
+                        value={temperatureValeur} 
+                        onChange={temperatureChangeHandler} />
+                </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId={"precision-" + programmeId}>
+                <Form.Label column xs={8} md={4}>Precision (+/- C)</Form.Label>
                 <Col xs={4} md={2}>
                     <Form.Control 
                         type='text'
