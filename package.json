@@ -1,6 +1,6 @@
 {
   "name": "millegrilles.senseurspassifs",
-  "version": "2023.0.5",
+  "version": "2023.1.0",
   "description": "MilleGrilles SenseursPassifs api",
   "main": "index.js",
   "type": "module",
@@ -12,8 +12,8 @@
   "author": "Mathieu Dugre",
   "license": "ISC",
   "dependencies": {
-    "@dugrema/millegrilles.nodejs": "https://github.com/dugrema/millegrilles.nodejs.git#2023.0",
-    "@dugrema/millegrilles.utiljs": "https://github.com/dugrema/millegrilles.utiljs.git#2023.0",
+    "@dugrema/millegrilles.nodejs": "https://github.com/dugrema/millegrilles.nodejs.git#2023.1",
+    "@dugrema/millegrilles.utiljs": "https://github.com/dugrema/millegrilles.utiljs.git#2023.1",
     "debug": "~4.3.4",
     "express": "~4.18.2",
     "express-session": "^1.17.3",
