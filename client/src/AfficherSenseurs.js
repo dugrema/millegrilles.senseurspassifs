@@ -151,24 +151,26 @@ function AfficherValeurFormattee(props) {
 
     if(valeur_str) return <Col xs={5} md={7} className='valeur-texte'>{valeur_str}</Col>  // Aucun formattage
   
+    const valeurNumerique = isNaN(valeur)?'':valeur
+
     if(type === 'temperature') {
       return (
         <>
-          <Col xs={4} md={3} xl={2} className="valeur-numerique">{valeur.toFixed(1)}</Col>
+          <Col xs={4} md={3} xl={2} className="valeur-numerique">{formatteurValeurFixed(valeur, 1)}</Col>
           <Col xs={1}>&deg;C</Col>
         </>
       )
     } else if(type === 'humidite') {
       return (
         <>
-          <Col xs={4} md={3} xl={2} className="valeur-numerique">{valeur.toFixed(1)}</Col>
+          <Col xs={4} md={3} xl={2} className="valeur-numerique">{formatteurValeurFixed(valeur, 1)}</Col>
           <Col xs={1}>%</Col>
         </>
         )
     } else if(type === 'pression') {
       return (
         <>
-          <Col xs={4} md={3} xl={2} className="valeur-numerique">{valeur.toFixed(1)}</Col>
+          <Col xs={4} md={3} xl={2} className="valeur-numerique">{formatteurValeurFixed(valeur, 1)}</Col>
           <Col xs={1}>kPa</Col>
         </>
       )
@@ -185,6 +187,12 @@ function AfficherValeurFormattee(props) {
   
     // Format non reconnu
     return valeur
+}
+
+function formatteurValeurFixed(valeur, digits) {
+    if(isNaN(valeur)) return ''
+    if(!digits || digits < 0) return valeur.toFixed(0)
+    return valeur.toFixed(digits)
 }
 
 function sortSenseurs(appareil) {
