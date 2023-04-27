@@ -1,15 +1,14 @@
 import { expose } from 'comlink'
 import * as ConnexionClient from '@dugrema/millegrilles.reactjs/src/connexionClient'
-// import { hacheurs } from '@dugrema/millegrilles.reactjs'
-// import { setHacheurs } from '@dugrema/millegrilles.utiljs'
-
-// setHacheurs(hacheurs)
+import { MESSAGE_KINDS } from '@dugrema/millegrilles.utiljs/src/constantes'
 
 const CONST_DOMAINE_SENSEURSPASSIFS = 'SenseursPassifs',
       CONST_SENSEURSPASSIFS_RELAI = 'senseurspassifs_relai'
 
 function getListeNoeuds() {
-  return ConnexionClient.emitBlocking('getListeNoeuds', {}, {domaine: CONST_DOMAINE_SENSEURSPASSIFS, action: 'listeNoeuds', ajouterCertificat: true})
+  return ConnexionClient.emitBlocking('getListeNoeuds', {}, {
+    kind: MESSAGE_KINDS.KIND_REQUETE, 
+    domaine: CONST_DOMAINE_SENSEURSPASSIFS, action: 'listeNoeuds', ajouterCertificat: true})
 }
 
 function getListeSenseursNoeud(instance_id, opts) {
@@ -20,6 +19,7 @@ function getListeSenseursNoeud(instance_id, opts) {
     'getListeSenseursNoeud', 
     {instance_id}, 
     {
+      kind: MESSAGE_KINDS.KIND_REQUETE, 
       domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
       action: 'listeSenseursPourNoeud', 
       ajouterCertificat: true,
@@ -34,6 +34,7 @@ function getAppareilsUsager(requete) {
     'getAppareilsUsager',
     requete,
     {
+      kind: MESSAGE_KINDS.KIND_REQUETE, 
       domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
       action: 'getAppareilsUsager', 
       ajouterCertificat: true,
@@ -46,6 +47,7 @@ function getStatistiquesSenseur(requete) {
     'getStatistiquesSenseur',
     requete,
     {
+      kind: MESSAGE_KINDS.KIND_REQUETE, 
       domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
       action: 'getStatistiquesSenseur', 
       ajouterCertificat: true,
@@ -58,6 +60,7 @@ function majAppareil(params) {
     'majAppareil', 
     params, 
     {
+      kind: MESSAGE_KINDS.KIND_COMMANDE, 
       domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
       action: 'majAppareil', 
       ajouterCertificat: true,
@@ -70,6 +73,7 @@ function majNoeud(partition, params) {
     'majNoeud', 
     params, 
     {
+      kind: MESSAGE_KINDS.KIND_COMMANDE, 
       domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
       action: 'majNoeud', 
       ajouterCertificat: true,
@@ -83,6 +87,7 @@ function majSenseur(partition, params) {
     'majSenseur', 
     params, 
     {
+      kind: MESSAGE_KINDS.KIND_COMMANDE, 
       domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
       action: 'majSenseur', 
       ajouterCertificat: true,
@@ -93,6 +98,7 @@ function majSenseur(partition, params) {
 
 function challengeAppareil(commande) {
   return ConnexionClient.emitBlocking('challengeAppareil', commande, {
+    kind: MESSAGE_KINDS.KIND_COMMANDE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
     action: 'challengeAppareil', 
     ajouterCertificat: true,
@@ -101,6 +107,7 @@ function challengeAppareil(commande) {
 
 function signerAppareil(commande) {
   return ConnexionClient.emitBlocking('signerAppareil', commande, {
+    kind: MESSAGE_KINDS.KIND_COMMANDE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
     action: 'signerAppareil', 
     ajouterCertificat: true,
@@ -110,6 +117,7 @@ function signerAppareil(commande) {
 function getAppareilsEnAttente(commande) {
   commande = commande || {}
   return ConnexionClient.emitBlocking('getAppareilsEnAttente', commande, {
+    kind: MESSAGE_KINDS.KIND_REQUETE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
     action: 'getAppareilsEnAttente', 
     ajouterCertificat: true,
@@ -119,6 +127,7 @@ function getAppareilsEnAttente(commande) {
 function commandeAppareil(instance_id, commande) {
   commande = commande || {}
   return ConnexionClient.emitBlocking('commandeAppareil', commande, {
+    kind: MESSAGE_KINDS.KIND_COMMANDE, 
     domaine: CONST_SENSEURSPASSIFS_RELAI, 
     partition: instance_id,
     action: 'commandeAppareil', 

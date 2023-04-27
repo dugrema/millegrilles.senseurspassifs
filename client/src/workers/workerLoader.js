@@ -17,28 +17,55 @@ export function setupWorkers() {
   
   // Pseudo-worker
   workers.usagerDao = usagerDao                   // IDB usager
-  
+
+  const ready = wireWorkers(workers)
+
+  // const location = new URL(window.location)
+  // location.pathname = '/fiche.json'
+
+  // import('axios')
+  //   .then(axiosImport=>{
+  //       const axios = axiosImport.default
+  //       console.debug("Axios : ", axios)
+  //       return axios.get(location.href)
+  //     })
+  //   .then(reponse=>{
+  //     const fiche = reponse.data || {}
+  //     const ca = fiche.ca
+  //     if(ca) {
+  //       return connexion.proxy.initialiserCertificateStore(ca, {isPEM: true, DEBUG: false})
+  //     }
+  //   })
+  //   .catch(err=>{
+  //     console.error("Erreur chargement fiche systeme : %O", err)
+  //   })
+
+  return { workerInstances, workers, ready }
+}
+
+async function wireWorkers(workers) {
+  const { connexion, chiffrage } = workers
+
   const location = new URL(window.location)
   location.pathname = '/fiche.json'
+  // console.debug("Charger fiche ", location.href)
 
-  import('axios')
-    .then(axiosImport=>{
-        const axios = axiosImport.default
-        console.debug("Axios : ", axios)
-        return axios.get(location.href)
-      })
-    .then(reponse=>{
-      const fiche = reponse.data || {}
-      const ca = fiche.ca
-      if(ca) {
-        return connexion.proxy.initialiserCertificateStore(ca, {isPEM: true, DEBUG: false})
-      }
-    })
-    .catch(err=>{
-      console.error("Erreur chargement fiche systeme : %O", err)
-    })
-
-    return { workerInstances, workers, ready: true }
+  const axiosImport = await import('axios')
+  const axios = axiosImport.default
+  const reponse = await axios.get(location.href)
+  console.debug("Reponse fiche ", reponse)
+  const data = reponse.data || {}
+  const fiche = JSON.parse(data.contenu)
+  const ca = fiche.ca
+  if(ca) {
+      // console.debug("initialiserCertificateStore (connexion, chiffrage)")
+      await Promise.all([
+          connexion.initialiserCertificateStore(ca, {isPEM: true, DEBUG: false}),
+          chiffrage.initialiserCertificateStore(ca, {isPEM: true, DEBUG: false})
+      ])
+  } else {
+      throw new Error("Erreur initialisation - fiche/CA non disponible")
+  }
 }
 
 function wrapWorker(worker) {

@@ -17,6 +17,15 @@ export async function connecter(workers, setUsagerState, setEtatConnexion, setEt
     const setEtatConnexionCb = proxy(setEtatConnexion)
     const setEtatFormatteurMessageCb = proxy(setEtatFormatteurMessage)
     await connexion.setCallbacks(setEtatConnexionCb, setUsagerCb, setEtatFormatteurMessageCb)
+
+    try {
+        const axiosImport = await import('axios')
+        const axios = axiosImport.default
+        await axios.get('/senseurspassifs/initSession')
+    } catch(err) {
+        console.error("Erreur init session : %O", err)
+    }
+
     return connexion.connecter(location.href, {DEBUG: false})
 }
 
