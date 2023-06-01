@@ -180,3 +180,7 @@ $xsmall-width: map.get($grid-breakpoints, xs);
 .tendance.hausse > .fa.fa-level-up {
     display: inline;
 }
+
+.senseur-ligne.cache {
+    color: $first-color;
+}

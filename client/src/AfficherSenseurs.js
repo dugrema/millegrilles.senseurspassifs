@@ -8,7 +8,7 @@ import Form from 'react-bootstrap/Form';
 import useWorkers from './WorkerContext'
 
 function AfficherSenseurs(props) {
-    const { appareil, editMode, cacherSenseurs, setCacherSenseurs, setDescriptifSenseurs, ouvrirDetailSenseur } = props
+    const { appareil, editMode, cacherSenseurs, setCacherSenseurs, setDescriptifSenseurs, ouvrirDetailSenseur, afficherTous } = props
     const { senseurs } = appareil
     const configuration = useMemo(()=>appareil.configuration || {}, [appareil])
     const cacherSenseursNonEdit = configuration.cacher_senseurs || []
@@ -55,7 +55,7 @@ function AfficherSenseurs(props) {
             selectionne = ! cacherSenseursNonEdit.includes(senseurId)
         }
 
-        if(!editMode && !selectionne) return ''  // Cacher le senseur
+        if(!afficherTous && !editMode && !selectionne) return ''  // Cacher le senseur
         
         const descriptif = descriptifSenseurs[senseurId] || ''
 
@@ -105,8 +105,10 @@ function RowSenseur(props) {
         )
     }
 
+    const className = selectionne?'senseur-ligne selectionne':'senseur-ligne cache'
+
     return (
-        <Row className="senseur-ligne">
+        <Row className={className}>
             <Col xs={0} md={1}></Col>
             <Col xs={7} md={4} xl={2} className='bouton-link-nopadding'>
                 {ouvrirDetailSenseur?
