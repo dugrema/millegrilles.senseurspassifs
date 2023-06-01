@@ -366,7 +366,7 @@ function StatistiquesTableCustom(props) {
 
 function FormatterValeur(props) {
     const {valeur, typeValeur, hideType} = props
-    if(isNaN(valeur)) return ''
+    if(!valeur || isNaN(valeur)) return ''
 
     let [decimals, unite] = getUnite(typeValeur)
     if(hideType) unite = ''
