@@ -151,7 +151,13 @@ function AfficherValeurFormattee(props) {
 
     if(valeur_str) return <Col xs={5} md={7} className='valeur-texte'>{valeur_str}</Col>  // Aucun formattage
   
-    const valeurNumerique = isNaN(valeur)?'':valeur
+    const valeurNumerique = (!valeur || isNaN(valeur))?'':valeur
+
+    let classSens = ''
+    if(valeurNumerique) {
+        if(valeurNumerique > 50) classSens += ' hausse'
+        else if(valeurNumerique < -50) classSens += ' baisse'
+    } 
 
     if(type === 'temperature') {
       return (
@@ -170,10 +176,21 @@ function AfficherValeurFormattee(props) {
     } else if(type === 'pression') {
       return (
         <>
-          <Col xs={4} md={3} xl={2} className="valeur-numerique">{formatteurValeurFixed(valeur, 1)}</Col>
-          <Col xs={1}>kPa</Col>
+          <Col xs={4} md={3} xl={2} className="valeur-numerique">{valeurNumerique}</Col>
+          <Col xs={1}>hPa</Col>
         </>
       )
+    } else if(type === 'pression_tendance') {
+        return (
+          <>
+            <Col xs={4} md={3} xl={2} className={'valeur-numerique tendance ' + classSens}>
+                <i className="fa fa-level-up" />
+                <i className="fa fa-level-down" />
+                {valeurNumerique}
+            </Col>
+            <Col xs={1}>Pa</Col>
+          </>
+        )
     } else if(type === 'switch') {
         return (
           <>
