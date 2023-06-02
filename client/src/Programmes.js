@@ -135,6 +135,11 @@ export function EditProgramme(props) {
                 </Col>
             </Row>
 
+            <Row>
+                <Col xs={12} md={5}>Programme id</Col>
+                <Col>{programmeId}</Col>
+            </Row>
+
             <Form.Group as={Row} className="mb-3" controlId="formHorizontalDescriptif">
                 <Form.Label column xs={12} md={5}>
                     Descriptif
