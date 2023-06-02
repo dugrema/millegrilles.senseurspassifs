@@ -77,7 +77,7 @@ export function EditProgramme(props) {
         let programmeInformation = {}
         if(programmeEdit !== true) {
             programmeInformation = programmes[programmeEdit]
-            console.debug("Charger programme %s : %O (programmes %O)", programmeEdit, programmeInformation, programmes)
+            // console.debug("Charger programme %s : %O (programmes %O)", programmeEdit, programmeInformation, programmes)
         }
         return [configuration, programmeInformation]
     }, [appareil, programmeEdit])
@@ -108,7 +108,7 @@ export function EditProgramme(props) {
 
     const changeClasseHandler = useCallback(event => {
         const value = event.currentTarget.value
-        console.debug('changeClasseHandler Nouvelle classe : %s', value)
+        // console.debug('changeClasseHandler Nouvelle classe : %s', value)
         setClasseProgramme(value)
         setArgsProgramme({})
     }, [setClasseProgramme, setArgsProgramme])
@@ -217,7 +217,7 @@ function OptionsProgrammes(props) {
     if(readonly) {
 
         const programmesFiltres = programmes.filter(item=>item.class===value)
-        console.debug("Programmes nomClasse = %s, programmes %O", value, programmesFiltres)
+        // console.debug("Programmes nomClasse = %s, programmes %O", value, programmesFiltres)
         const programme = programmesFiltres.pop()
         return <span>{programme.nom}</span>
     }
@@ -236,6 +236,8 @@ function getProgrammesDisponibles() {
         { nom: 'Chauffage', 'class': 'programmes.environnement.Chauffage' },
         { nom: 'Climatisation/Refrigeration', 'class': 'programmes.environnement.Climatisation' },
         { nom: 'Notification Temperature', 'class': 'programmes.notifications.NotificationTemperature' },
+        { nom: 'Notification Humidite', 'class': 'programmes.notifications.NotificationHumidite' },
+        { nom: 'Notification Pression Tendance', 'class': 'programmes.notifications.NotificationPressionTendance' },
     ]
 }
 
@@ -247,6 +249,7 @@ function ConfigurerProgramme(props) {
 
     let ClasseEditeur = null,
         uniteElem = '',
+        typeDevice = '',
         valeurMin = 0,
         valeurMax = 100
     switch(classeProgramme) {
@@ -256,14 +259,15 @@ function ConfigurerProgramme(props) {
         case 'programmes.environnement.Climatisation':
             ClasseEditeur = EditerProgrammeTemperature; break
         case 'programmes.notifications.NotificationTemperature':
-            if(!uniteElem) uniteElem = <span>&deg;C</span>
+            if(!uniteElem) { typeDevice = 'temperature'; uniteElem = <span>&deg;C</span> }
         case 'programmes.notifications.NotificationHumidite':
-            if(!uniteElem) uniteElem = <span>%</span>
-        case 'programmes.notifications.NotificationTendance':
+            if(!uniteElem) { typeDevice = 'humidite'; uniteElem = <span>%</span> }
+        case 'programmes.notifications.NotificationPressionTendance':
             if(!uniteElem) {
-                uniteElem = <span>kPa</span>
+                typeDevice = 'pression_tendance'
+                uniteElem = <span>Pa</span>
                 valeurMin = 0
-                valeurMax = 1060
+                valeurMax = 106000
             }
             ClasseEditeur = EditerNotificationValeur; break
         default: ClasseEditeur = EditerProgrammeNonSupporte
@@ -279,6 +283,7 @@ function ConfigurerProgramme(props) {
             uniteElem={uniteElem}
             valeurMin={valeurMin}
             valeurMax={valeurMax}
+            typeDevice={typeDevice}
             />
     )
 }
@@ -567,7 +572,7 @@ function EditerProgrammeTemperature(props) {
 }
 
 function EditerNotificationValeur(props) {
-    const { appareil, programmeId, args, setArgs, listeSenseurs } = props
+    const { appareil, programmeId, args, setArgs, listeSenseurs, typeDevice } = props
     const valeurMin = props.valeurMin || -100
     const valeurMax = props.valeurMax || 100
     const uniteElem = props.uniteElem || ''
@@ -636,12 +641,12 @@ function EditerNotificationValeur(props) {
         <div>
 
             <Form.Group as={Row} className="mb-3" controlId={"senseur-" + programmeId}>
-                <Form.Label column xs={12} md={5}>Notification</Form.Label>
+                <Form.Label column xs={12} md={5}>Senseur</Form.Label>
                 <Col xs={12} md={7}>
                     <ListeDevicesOptions 
                         appareil={appareil} 
                         devices={listeSenseurs} 
-                        typeDevice='temperature' 
+                        typeDevice={typeDevice}
                         value={senseur}
                         onChange={senseurChangeHandler} />
                 </Col>
@@ -683,13 +688,19 @@ function EditerNotificationValeur(props) {
             </Form.Group>
 
             <Form.Group as={Row} className="mb-3" controlId={"reverse-" + programmeId}>
-                <Form.Label column xs={12} md={5}>Inverser</Form.Label>
-                <Col xs={12} md={7}>
-                    <Form.Check id='reverse' type="switch" checked={reverse} onChange={reverseChangeHandler} />                    
+                <Form.Label column xs={12} md={5}>Declenchement</Form.Label>
+                <Col xs={1} md={1}>
+                    -
+                </Col>
+                <Col xs={2} md={1}>
+                    <Form.Check id='reverse' type="switch" checked={reverse} onChange={reverseChangeHandler} />
+                </Col>
+                <Col xs={1} md={1}>
+                    +
                 </Col>
                 <Form.Text>
-                    ON : Notification active si lecture du senseur est inferieure a la valeur.<br/>
-                    OFF : Notification active si lecture du senseur est inferieure a la valeur. 
+                    OFF (-) : Notification active si lecture du senseur est inferieure a la valeur.<br/>
+                    ON (+)  : Notification active si lecture du senseur est superieure a la valeur.
                 </Form.Text>
             </Form.Group>
 
