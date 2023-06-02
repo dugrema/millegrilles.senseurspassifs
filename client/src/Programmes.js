@@ -271,7 +271,7 @@ function ConfigurerProgramme(props) {
             if(!uniteElem) {
                 typeDevice = 'pression_tendance'
                 uniteElem = <span>Pa</span>
-                valeurMin = 0
+                valeurMin = -106000
                 valeurMax = 106000
             }
             ClasseEditeur = EditerNotificationValeur; break
