@@ -235,6 +235,7 @@ function getProgrammesDisponibles() {
         { nom: 'Timer', 'class': 'programmes.timers.TimerHebdomadaire' },
         { nom: 'Chauffage', 'class': 'programmes.environnement.Chauffage' },
         { nom: 'Climatisation/Refrigeration', 'class': 'programmes.environnement.Climatisation' },
+        { nom: 'Notification Temperature', 'class': 'programmes.notifications.NotificationTemperature' },
     ]
 }
 
@@ -250,6 +251,7 @@ function ConfigurerProgramme(props) {
         case 'programmes.timers.TimerHebdomadaire': ClasseEditeur = EditerProgrammeTimer; break
         case 'programmes.environnement.Chauffage':
         case 'programmes.environnement.Climatisation':
+        case 'programmes.notifications.NotificationTemperature':
             ClasseEditeur = EditerProgrammeTemperature; break
         default: ClasseEditeur = EditerProgrammeNonSupporte
     }
