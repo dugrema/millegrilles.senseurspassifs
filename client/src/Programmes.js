@@ -245,14 +245,27 @@ function ConfigurerProgramme(props) {
 
     if(!classeProgramme) return ''
 
-    let ClasseEditeur = null
+    let ClasseEditeur = null,
+        uniteElem = '',
+        valeurMin = 0,
+        valeurMax = 100
     switch(classeProgramme) {
         case 'programmes.environnement.Humidificateur': ClasseEditeur = EditerProgrammeHumidificateur; break
         case 'programmes.timers.TimerHebdomadaire': ClasseEditeur = EditerProgrammeTimer; break
         case 'programmes.environnement.Chauffage':
         case 'programmes.environnement.Climatisation':
-        case 'programmes.notifications.NotificationTemperature':
             ClasseEditeur = EditerProgrammeTemperature; break
+        case 'programmes.notifications.NotificationTemperature':
+            if(!uniteElem) uniteElem = <span>&deg;C</span>
+        case 'programmes.notifications.NotificationHumidite':
+            if(!uniteElem) uniteElem = <span>%</span>
+        case 'programmes.notifications.NotificationTendance':
+            if(!uniteElem) {
+                uniteElem = <span>kPa</span>
+                valeurMin = 0
+                valeurMax = 1060
+            }
+            ClasseEditeur = EditerNotificationValeur; break
         default: ClasseEditeur = EditerProgrammeNonSupporte
     }
 
@@ -263,6 +276,9 @@ function ConfigurerProgramme(props) {
             args={args}
             setArgs={setArgs}
             listeSenseurs={listeSenseurs}
+            uniteElem={uniteElem}
+            valeurMin={valeurMin}
+            valeurMax={valeurMax}
             />
     )
 }
@@ -548,6 +564,161 @@ function EditerProgrammeTemperature(props) {
         </div>
     )
 
+}
+
+function EditerNotificationValeur(props) {
+    const { appareil, programmeId, args, setArgs, listeSenseurs } = props
+    const valeurMin = props.valeurMin || -100
+    const valeurMax = props.valeurMax || 100
+    const uniteElem = props.uniteElem || ''
+
+    const senseurChangeHandler = useCallback(e=>{
+        const value = e.currentTarget.value
+        const senseurs = []
+        if(value) senseurs.push(value)
+        setArgs({...args, senseurs: senseurs})
+    }, [args, setArgs])
+
+    const messageChangeHandler = useCallback(e=>{
+        const value = e.currentTarget.value
+        setArgs({...args, message: value})
+    }, [args, setArgs])
+
+    const senseurValeurChangeHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {decimal: true, min: valeurMin, max: valeurMax})
+        if(val || !isNaN(val) || val === '') setArgs({...args, valeur: val})
+    }, [args, setArgs])
+
+    const precisionChangeHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {decimal: true, min: 0, max: 100})
+        if(val || !isNaN(val) || val === '') setArgs({...args, precision: val})
+    }, [args, setArgs])
+
+    const reverseChangeHandler = useCallback(event => {
+        const checked = event.currentTarget.checked
+        setArgs({...args, reverse: checked})
+    }, [args, setArgs])
+
+    const intervalleEmissionHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {min: 0})
+        if(val || !isNaN(val) || val === '') setArgs({...args, intervalle_emission: val})
+    }, [args, setArgs])
+
+    const intervalleReemissionHandler = useCallback(event=>{
+        const value = event.currentTarget.value
+        let val = validateNumber(value, {min: 0})
+        if(val || !isNaN(val) || val === '') setArgs({...args, intervalle_reemission: val})
+    }, [args, setArgs])
+
+    useEffect(()=>{
+        if(Object.values(args).length > 0) return  // Deja initialise
+        // Injecte valeurs par defaut
+        setArgs({valeur: 0.0, precision: 1.0, intervalle_emission: 120, intervalle_reemission: 3600})
+    }, [args, setArgs])
+
+    let senseur = ''
+    if(args.senseurs && args.senseurs.length > 0) senseur = args.senseurs[0]
+
+    let switchTemp = ''
+    if(args.switches && args.switches.length > 0) switchTemp = args.switches[0]
+
+    const message = args.message || ''
+    const reverse = args.reverse || false
+    const senseurValeur = !isNaN(args.valeur)?args.valeur:''
+    const precisionValeur = !isNaN(args.precision)?args.precision:''
+    const intervalleEmission = !isNaN(args.intervalle_emission)?args.intervalle_emission:''
+    const intervalleReemission = !isNaN(args.intervalle_reemission)?args.intervalle_reemission:''
+
+    return (
+        <div>
+
+            <Form.Group as={Row} className="mb-3" controlId={"senseur-" + programmeId}>
+                <Form.Label column xs={12} md={5}>Notification</Form.Label>
+                <Col xs={12} md={7}>
+                    <ListeDevicesOptions 
+                        appareil={appareil} 
+                        devices={listeSenseurs} 
+                        typeDevice='temperature' 
+                        value={senseur}
+                        onChange={senseurChangeHandler} />
+                </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId={"message-" + programmeId}>
+                <Form.Label column xs={12} md={5}>Message</Form.Label>
+                <Col xs={12} md={7}>
+                    <Form.Control 
+                        type='text'
+                        value={message} 
+                        onChange={messageChangeHandler}
+                        autoComplete='false' autoCorrect='false' autoCapitalize='false' spellCheck='false' />
+                </Col>
+                <Form.Text>Utiliser {"{valeur}"} pour inclure la valeur courante du senseur dans le message.</Form.Text>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId={"valeur-" + programmeId}>
+                <Form.Label column xs={8} md={4}>Valeur ({uniteElem})</Form.Label>
+                <Col xs={4} md={2}>
+                    <Form.Control 
+                        type='text'
+                        inputMode='decimal'
+                        value={senseurValeur} 
+                        onChange={senseurValeurChangeHandler} />
+                </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId={"precision-" + programmeId}>
+                <Form.Label column xs={8} md={4}>Precision (+/- {uniteElem})</Form.Label>
+                <Col xs={4} md={2}>
+                    <Form.Control 
+                        type='text'
+                        inputMode='decimal'
+                        value={precisionValeur} 
+                        onChange={precisionChangeHandler}
+                        autoComplete='false' autoCorrect='false' autoCapitalize='false' spellCheck='false' />
+                </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId={"reverse-" + programmeId}>
+                <Form.Label column xs={12} md={5}>Inverser</Form.Label>
+                <Col xs={12} md={7}>
+                    <Form.Check id='reverse' type="switch" checked={reverse} onChange={reverseChangeHandler} />                    
+                </Col>
+                <Form.Text>
+                    ON : Notification active si lecture du senseur est inferieure a la valeur.<br/>
+                    OFF : Notification active si lecture du senseur est inferieure a la valeur. 
+                </Form.Text>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId={"dureeonmin-" + programmeId}>
+                <Form.Label column xs={8} md={4}>Intervalle minimal entre notifications (secondes)</Form.Label>
+                <Col xs={4} md={2}>
+                    <Form.Control 
+                        type='text'
+                        inputMode='numeric'
+                        value={intervalleEmission} 
+                        onChange={intervalleEmissionHandler}
+                        autoComplete='false' autoCorrect='false' autoCapitalize='false' spellCheck='false' />
+                </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId={"dureeoffmin-" + programmeId}>
+                <Form.Label column xs={8} md={4}>Intervalle de rappel de notification (secondes)</Form.Label>
+                <Col xs={4} md={2}>
+                    <Form.Control 
+                        type='text'
+                        inputMode='numeric'
+                        value={intervalleReemission} 
+                        onChange={intervalleReemissionHandler}
+                        autoComplete='false' autoCorrect='false' autoCapitalize='false' spellCheck='false' />
+                </Col>
+            </Form.Group>
+
+        </div>
+    )
 }
 
 function EditerProgrammeTimer(props) {
