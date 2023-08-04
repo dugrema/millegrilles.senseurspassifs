@@ -9,7 +9,7 @@ import useWorkers from './WorkerContext'
 
 function AfficherSenseurs(props) {
     const { appareil, editMode, cacherSenseurs, setCacherSenseurs, setDescriptifSenseurs, ouvrirDetailSenseur } = props
-    const { senseurs } = appareil
+    const { senseurs, lectures_disponibles } = appareil
     const configuration = useMemo(()=>appareil.configuration || {}, [appareil])
     const cacherSenseursNonEdit = configuration.cacher_senseurs || []
     const descriptifSenseurs = useMemo(()=>{
@@ -17,17 +17,28 @@ function AfficherSenseurs(props) {
     }, [props, configuration])
 
     const liste = useMemo(()=>{
-      if(!senseurs) return
-  
+      if(!senseurs && !lectures_disponibles) return
+
+    //   console.debug("Preparer liste senseurs pour appareil %O (senseurs : %O, lectures_disponibles: %O)", 
+    //     appareil, senseurs, lectures_disponibles)
+
+      const lecturesDisponibles = new Set(lectures_disponibles)
       const liste = []
-      for (const senseurId of Object.keys(senseurs)) {
-        const contenu = senseurs[senseurId]
-        liste.push({...contenu, senseurId})
+      if(senseurs) {
+        for (const senseurId of Object.keys(senseurs)) {
+            const contenu = senseurs[senseurId]
+            liste.push({...contenu, senseurId})
+            lecturesDisponibles.delete(senseurId)
+        }
+      }
+      for (const senseurId of lecturesDisponibles) {
+        liste.push({senseurId})
       }
       liste.sort(sortSenseurs(appareil))
+      // console.debug("Liste senseurs triee : %O", liste)
   
       return liste
-    }, [appareil, senseurs])
+    }, [appareil, senseurs, lectures_disponibles])
 
     const toggleCacherHandler = useCallback(event=>{
         const { checked, value } = event.currentTarget
@@ -43,7 +54,7 @@ function AfficherSenseurs(props) {
         setDescriptifSenseurs({...descriptifSenseurs, [name]: value})
     }, [descriptifSenseurs, setDescriptifSenseurs])
 
-    if(!senseurs) return ''
+    if(!liste || liste.length === 0) return ''
   
     return liste.map(item=>{
         const senseurId = item.senseurId
@@ -127,7 +138,8 @@ function RowSenseur(props) {
 
 function AfficherValeurFormattee(props) {
     // console.debug("AfficherValeurFormattee PROPPIES", props)
-    const { appareil, senseur } = props
+    const { appareil } = props
+    const senseur = props.senseur || {}
     const { instance_id, uuid_appareil } = appareil
     const { senseurId, valeur, valeur_str, type} = senseur
   

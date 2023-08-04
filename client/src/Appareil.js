@@ -31,12 +31,14 @@ function Appareil(props) {
             const configuration = appareil.configuration || {}
             const nomAppareil = configuration.descriptif || appareil.uuid_appareil
             const descriptifSenseurs = configuration.descriptif_senseurs || {}
-            if(appareil.senseurs) {
-                for(const nomSenseur of Object.keys(appareil.senseurs)) {
+            const senseurs = appareil.senseurs
+            if(senseurs) {
+                // console.debug("Preparer liste senseurs pour appareil %O (senseurs : %O)", appareil, senseurs)
+                for(const nomSenseur of Object.keys(senseurs)) {
                     const labelSenseur = descriptifSenseurs[nomSenseur] || nomSenseur
                     const name = nomAppareil + ' ' + labelSenseur
                     const value = appareil.uuid_appareil + ":" + nomSenseur
-                    const typeSenseur = appareil.senseurs[nomSenseur].type
+                    const typeSenseur = senseurs[nomSenseur].type
                     liste.push({name, value, type: typeSenseur})
                 }
             }
