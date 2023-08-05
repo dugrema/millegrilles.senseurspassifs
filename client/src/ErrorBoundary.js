@@ -1,4 +1,7 @@
 import { Component } from 'react'
+import Alert from 'react-bootstrap/Alert'
+import Button from 'react-bootstrap/Button'
+import Container from 'react-bootstrap/Container'
 
 class ErrorBoundary extends Component {
     constructor(props) {
@@ -20,7 +23,20 @@ class ErrorBoundary extends Component {
   
     render() {
       if (this.state.hasError) {
-        return <h1>Something went wrong.</h1>;
+        return (
+          <Container>
+            <br />
+
+            <Alert variant="danger">
+              <Alert.Heading>Erreur</Alert.Heading>
+              <p>Une erreur est survenue. La page ne peut pas etre affichee.</p>
+            </Alert>
+
+            <br />
+
+            <Button onClick={reload}>Revenir</Button>
+          </Container>
+        )
       }
   
       return this.props.children; 
@@ -28,3 +44,7 @@ class ErrorBoundary extends Component {
 }
 
 export default ErrorBoundary
+
+function reload() {
+  location.reload()
+}
