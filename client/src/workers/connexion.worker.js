@@ -135,80 +135,35 @@ function commandeAppareil(instance_id, commande) {
   })
 }
 
+function supprimerAppareil(uuid_appareil) {
+  const commande = { uuid_appareil }
+  return ConnexionClient.emitBlocking('supprimerAppareil', commande, {
+    kind: MESSAGE_KINDS.KIND_COMMANDE, 
+    domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+    action: 'supprimerAppareil', 
+    ajouterCertificat: true,
+  })
+}
+
+function restaurerAppareil(uuid_appareil) {
+  const commande = { uuid_appareil }
+  return ConnexionClient.emitBlocking('restaurerAppareil', commande, {
+    kind: MESSAGE_KINDS.KIND_COMMANDE, 
+    domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+    action: 'restaurerAppareil', 
+    ajouterCertificat: true,
+  })
+}
 
 // Evenements
 
 async function ecouterEvenementsAppareilsUsager(cb) {
-  // console.debug("ecouterEvenementsAppareilsUsager cb")
-  // ConnexionClient.socketOn('evenement.SenseursPassifs.lectureConfirmee', cb)
-  // const resultat = await ConnexionClient.emitBlocking('ecouterEvenementsAppareilsUsager', {}, {noformat: true})
-  // if(!resultat) {
-  //   throw new Error("Erreur ecouterEvenementsAppareilsUsager")
-  // }
   return ConnexionClient.subscribe('ecouterEvenementsAppareilsUsager', cb, {}) 
 }
 
 async function retirerEvenementsAppareilsUsager(cb) {
-  // ConnexionClient.socketOff('evenement.SenseursPassifs.lectureConfirmee')
-  // const resultat = await ConnexionClient.emitBlocking('retirerEvenementsAppareilsUsager', {}, {noformat: true})
-  // if(!resultat) {
-  //   throw new Error("Erreur retirerEvenementsAppareilsUsager")
-  // }
   return ConnexionClient.unsubscribe('retirerEvenementsAppareilsUsager', cb, {}) 
 }
-
-// async function ecouterEvenementsSenseurs(cb) {
-//   ConnexionClient.socketOn('evenement.SenseursPassifs.lectureConfirmee', cb)
-//   const resultat = await ConnexionClient.emitBlocking('ecouterEvenementsSenseurs', {}, {noformat: true})
-//   if(!resultat) {
-//     throw new Error("Erreur ecouterEvenementsSenseurs")
-//   }
-// }
-
-// async function retirerEvenementsSenseurs() {
-//   ConnexionClient.socketOff('evenement.SenseursPassifs.lectureConfirmee')
-//   const resultat = await ConnexionClient.emitBlocking('retirerEvenementsSenseurs', {}, {noformat: true})
-//   if(!resultat) {
-//     throw new Error("Erreur retirerEvenementsSenseurs")
-//   }
-// }
-
-// function ecouterEvenementsSenseurs(cb) { 
-//   const params = {}
-//   return ConnexionClient.subscribe('ecouterEvenementsSenseurs', cb, params)
-// }
-
-// function retirerEvenementsSenseurs(cb) { 
-//   const params = {}
-//   return ConnexionClient.unsubscribe('retirerEvenementsSenseurs', cb, params) 
-// }
-
-
-// async function ecouterEvenementsNoeuds(cb) {
-//   ConnexionClient.socketOn('evenement.SenseursPassifs.majNoeudConfirmee', cb)
-//   const resultat = await ConnexionClient.emitBlocking('ecouterEvenementsNoeuds', {}, {noformat: true})
-//   if(!resultat) {
-//     throw new Error("Erreur ecouterEvenementsNoeuds")
-//   }
-// }
-
-// async function retirerEvenementsNoeuds() {
-//   ConnexionClient.socketOff('evenement.SenseursPassifs.majNoeudConfirmee')
-//   const resultat = await ConnexionClient.emitBlocking('retirerEvenementsNoeuds', {}, {noformat: true})
-//   if(!resultat) {
-//     throw new Error("Erreur retirerEvenementsNoeuds")
-//   }
-// }
-
-// function ecouterEvenementsNoeuds(cb) { 
-//   const params = {}
-//   return ConnexionClient.subscribe('ecouterEvenementsNoeuds', cb, params)
-// }
-
-// function retirerEvenementsNoeuds(cb) { 
-//   const params = {}
-//   return ConnexionClient.unsubscribe('retirerEvenementsNoeuds', cb, params) 
-// }
 
 // Exposer methodes du Worker
 expose({
@@ -222,10 +177,9 @@ expose({
     getListeSenseursNoeud, getStatistiquesSenseur,
     getListeNoeuds, majNoeud, 
     majSenseur, commandeAppareil,
+    supprimerAppareil, restaurerAppareil,
 
     // Event listeners proteges
     ecouterEvenementsAppareilsUsager, retirerEvenementsAppareilsUsager,
-    // ecouterEvenementsSenseurs, retirerEvenementsSenseurs,
-    // ecouterEvenementsNoeuds, retirerEvenementsNoeuds,
 
 })

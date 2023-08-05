@@ -229,3 +229,12 @@ i.protege {
 .senseur-valeur {
   text-align: right;
 }
+
+.appareils-supprimes {
+  padding-top: 2rem;
+}
+
+.horizontal-padding {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}

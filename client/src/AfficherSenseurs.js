@@ -182,8 +182,8 @@ function AfficherValeurFormattee(props) {
     } else if(type === 'pression') {
       return (
         <>
-          <Col xs={4} md={3} xl={2} className="valeur-numerique">{formatteurValeurFixed(valeur, 1)}</Col>
-          <Col xs={1}>kPa</Col>
+          <Col xs={4} md={3} xl={2} className="valeur-numerique">{formatteurValeurFixed(valeur, 0)}</Col>
+          <Col xs={1}>hPa</Col>
         </>
       )
     } else if(type === 'switch') {

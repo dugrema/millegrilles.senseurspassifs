@@ -73,6 +73,14 @@ export function getStatistiquesSenseur(socket, params) {
     return transmettreRequete(socket, params, 'getStatistiquesSenseur')
 }
 
+export function supprimerAppareil(socket, params) {
+    return transmettreCommande(socket, params, 'supprimerAppareil')
+}
+
+export function restaurerAppareil(socket, params) {
+    return transmettreCommande(socket, params, 'restaurerAppareil')
+}
+
 async function transmettreRequete(socket, params, action, opts) {
     opts = opts || {}
     // const entete = params['en-tete'] || {}

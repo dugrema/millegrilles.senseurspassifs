@@ -167,6 +167,7 @@ function Appareil(props) {
                     <Button onClick={boutonEditerHandler}>
                         {modeEdition?'Sauvegarder':'Editer'}
                     </Button>
+                    <BoutonSupprimer appareil={appareil} />
                 </Col>
                 <Col className="bouton-fermer">
                     <Button variant="secondary" onClick={boutonFermerHandler}>
@@ -393,6 +394,35 @@ function EditDisplay(props) {
             </Row>
 
         </div>
+    )
+}
+
+function BoutonSupprimer(props) {
+    const { appareil } = props
+
+    const worker = useWorkers()
+    const supprimerCb = useCallback(e=>{
+        if(!appareil) return
+        const uuid_appareil = appareil.uuid_appareil
+        if(appareil.supprime) {
+            console.debug("Restaurer %s", uuid_appareil)
+            worker.connexion.restaurerAppareil(uuid_appareil)
+                .catch(err=>console.error("Erreur restaurer appareil ", err))
+        } else {
+            console.debug("Supprimer %s", uuid_appareil)
+            worker.connexion.supprimerAppareil(uuid_appareil)
+                .catch(err=>console.error("Erreur supprimer appareil ", err))
+        }
+    }, [worker, appareil])
+
+    if(appareil.supprime) {
+        return (
+            <Button variant='secondary' className='horizontal-padding' onClick={supprimerCb}>Restaurer</Button>
+        )
+    }
+
+    return (
+        <Button variant='secondary' className='horizontal-padding' onClick={supprimerCb}>Supprimer</Button>
     )
 }
 

@@ -46,5 +46,5 @@ class ErrorBoundary extends Component {
 export default ErrorBoundary
 
 function reload() {
-  location.reload()
+  window.location.reload()
 }

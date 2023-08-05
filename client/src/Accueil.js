@@ -52,7 +52,7 @@ function Accueil(props) {
   // Messages, maj liste appareils
   const messageAppareilHandler = useCallback(evenement=>{
     const { routingKey, message } = evenement
-    // console.debug("Message appareil : %O", message)
+    console.debug("Message appareil : %O", message)
     const action = routingKey.split('.').pop()
     if(['lectureConfirmee', 'majAppareil'].includes(action)) {
       dispatch(mergeAppareil(message))
@@ -107,6 +107,11 @@ function Accueil(props) {
         liste={appareils} 
         setUuidAppareil={setUuidAppareil} 
         ouvrirDetailSenseur={ouvrirSenseurHandler} />
+
+      <AppareilsSupprimes 
+        liste={appareils} 
+        setUuidAppareil={setUuidAppareil} 
+        ouvrirDetailSenseur={ouvrirSenseurHandler} />
     </div>
   )
 
@@ -115,19 +120,27 @@ function Accueil(props) {
 export default Accueil
 
 function ListeAppareils(props) {
-  const { liste, setUuidAppareil, ouvrirDetailSenseur } = props
+  const { liste, setUuidAppareil, ouvrirDetailSenseur, supprimes } = props
 
   const setUuidAppareilHandler = useCallback(event=>{
     setUuidAppareil(event.currentTarget.value)
   }, [setUuidAppareil])
 
-  if(!liste) return <p>Aucuns appareils</p>
-
   const dateCourante = new Date().getTime() / 1000,
         dateVieille = dateCourante - CONST_DATE_VIEILLE,
         dateExpiree = dateCourante - CONST_DATE_EXPIREE
 
-  return liste.map(item=>{
+  const listeFiltree = useMemo(()=>{
+    if(!liste) return
+    return liste.filter(item=>{
+      if(supprimes) return item.supprime  // Conserver appareils supprimes
+      return ! item.supprime  // Retirer appareils supprimes
+    })
+  }, [liste, supprimes])
+
+  if(!listeFiltree || listeFiltree.length === 0) return <p>Aucuns appareils</p>
+
+  return listeFiltree.map(item=>{
     const { uuid_appareil, derniere_lecture } = item
     const configuration = item.configuration || {}
     const nomAppareil = configuration.descriptif || item.uuid_appareil
@@ -158,4 +171,42 @@ function ListeAppareils(props) {
       </div>
     )
   })
+}
+
+function AppareilsSupprimes(props) {
+  const { liste, setUuidAppareil, ouvrirDetailSenseur } = props
+
+  const [show, setShow] = useState(false)
+
+  const listeFiltree = useMemo(()=>{
+    if(!liste) return
+    return liste.filter(item=>item.supprime)
+  }, [liste])
+
+  if(!listeFiltree || listeFiltree.length === 0) return ''  // Rien a afficher
+
+  if(!show) return (
+    <div className="appareils-supprimes">
+      <Row>
+        <Col xs={4} sm={3} lg={2}>
+          <Button variant="secondary" onClick={()=>setShow(true)}>Afficher</Button>
+        </Col>
+        <Col>{listeFiltree.length} appareils supprimes</Col>
+      </Row>
+    </div>
+  )
+
+  return (
+    <div className="appareils-supprimes">
+      <h2>Appareils supprimes</h2>
+
+      <Button variant="secondary" onClick={()=>setShow(false)}>Cacher</Button>
+
+      <ListeAppareils 
+        liste={listeFiltree} 
+        setUuidAppareil={setUuidAppareil} 
+        ouvrirDetailSenseur={ouvrirDetailSenseur}
+        supprimes={true} />
+    </div>
+  )
 }

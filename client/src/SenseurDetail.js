@@ -383,7 +383,7 @@ function getUnite(typeValeur) {
     switch(typeValeur) {
         case 'temperature': decimals = 1; unite = <span>&deg;C</span>; break
         case 'humidite': decimals = 1; unite = '%'; break
-        case 'pression': decimals = 1; unite = 'kPa'; break
+        case 'pression': decimals = 1; unite = 'hPa'; break
         default:
     }
     return [decimals, unite]
