@@ -8,7 +8,7 @@ import Form from 'react-bootstrap/Form';
 import useWorkers from './WorkerContext'
 
 function AfficherSenseurs(props) {
-    const { appareil, editMode, cacherSenseurs, setCacherSenseurs, setDescriptifSenseurs, ouvrirDetailSenseur } = props
+    const { appareil, editMode, cacherSenseurs, setCacherSenseurs, setDescriptifSenseurs, ouvrirDetailSenseur, afficherTous } = props
     const { senseurs, lectures_disponibles } = appareil
     const configuration = useMemo(()=>appareil.configuration || {}, [appareil])
     const cacherSenseursNonEdit = configuration.cacher_senseurs || []
@@ -66,7 +66,7 @@ function AfficherSenseurs(props) {
             selectionne = ! cacherSenseursNonEdit.includes(senseurId)
         }
 
-        if(!editMode && !selectionne) return ''  // Cacher le senseur
+        if(!afficherTous && !editMode && !selectionne) return ''  // Cacher le senseur
         
         const descriptif = descriptifSenseurs[senseurId] || ''
 
@@ -123,8 +123,10 @@ function RowSenseur(props) {
         )
     }
 
+    const className = selectionne?'senseur-ligne selectionne':'senseur-ligne cache'
+
     return (
-        <Row className="senseur-ligne">
+        <Row className={className}>
             <Col xs={0} md={1}></Col>
             <Col xs={7} md={4} xl={2} className='bouton-link-nopadding'>
                 {ouvrirDetailSenseur?
@@ -175,6 +177,14 @@ function AfficherValeurFormattee(props) {
 
     if(valeur_str) return <Col xs={5} md={7} className='valeur-texte'>{valeur_str}</Col>  // Aucun formattage
   
+    const valeurNumerique = (!valeur || isNaN(valeur))?'':valeur
+
+    let classSens = ''
+    if(valeurNumerique) {
+        if(valeurNumerique > 50) classSens += ' hausse'
+        else if(valeurNumerique < -50) classSens += ' baisse'
+    } 
+
     if(type === 'temperature') {
       return (
         <>
@@ -196,6 +206,17 @@ function AfficherValeurFormattee(props) {
           <Col xs={1}>hPa</Col>
         </>
       )
+    } else if(type === 'pression_tendance') {
+        return (
+          <>
+            <Col xs={4} md={3} xl={2} className={'valeur-numerique tendance ' + classSens}>
+                <i className="fa fa-level-up" />
+                <i className="fa fa-level-down" />
+                {valeurNumerique}
+            </Col>
+            <Col xs={1}>Pa</Col>
+          </>
+        )
     } else if(type === 'switch') {
         return (
           <>

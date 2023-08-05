@@ -198,7 +198,8 @@ function Appareil(props) {
                 cacherSenseurs={cacherSenseurs}
                 setCacherSenseurs={setCacherSenseurs}
                 descriptifSenseurs={descriptifSenseurs}
-                setDescriptifSenseurs={setDescriptifSenseurs} />
+                setDescriptifSenseurs={setDescriptifSenseurs}
+                afficherTous={true} />
 
             <p></p>
 

@@ -154,3 +154,33 @@ $xsmall-width: map.get($grid-breakpoints, xs);
 .rdtPicker thead tr:first-of-type th:hover {
     background: $third-color;
 }
+
+.hausse {
+    color: green;
+}
+
+.baisse {
+    color: red;
+}
+
+.tendance {
+    overflow-wrap: normal;
+    word-break: keep-all;
+}
+
+.tendance > .fa {
+    display: none;
+    padding-right: 0.6rem;
+}
+
+.tendance.baisse > .fa.fa-level-down {
+    display: inline;
+}
+
+.tendance.hausse > .fa.fa-level-up {
+    display: inline;
+}
+
+.senseur-ligne.cache {
+    color: $first-color;
+}

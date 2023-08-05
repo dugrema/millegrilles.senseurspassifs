@@ -366,7 +366,7 @@ function StatistiquesTableCustom(props) {
 
 function FormatterValeur(props) {
     const {valeur, typeValeur, hideType} = props
-    if(isNaN(valeur)) return ''
+    if(!valeur || isNaN(valeur)) return ''
 
     let [decimals, unite] = getUnite(typeValeur)
     if(hideType) unite = ''
@@ -383,7 +383,7 @@ function getUnite(typeValeur) {
     switch(typeValeur) {
         case 'temperature': decimals = 1; unite = <span>&deg;C</span>; break
         case 'humidite': decimals = 1; unite = '%'; break
-        case 'pression': decimals = 1; unite = 'hPa'; break
+        case 'pression': decimals = 0; unite = 'hPa'; break
         default:
     }
     return [decimals, unite]
