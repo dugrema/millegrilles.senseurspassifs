@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useState, useMemo } from 'react'
 
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
@@ -93,6 +93,13 @@ function RowSenseur(props) {
 
     const senseurId = item.senseurId
 
+    const [toggling, setToggling] = useState(false)  // Utilise comme debounce, changement d'etat pour une switch
+
+    const startTogglingCb = useCallback(()=>{
+        setToggling(true)
+        setTimeout(()=>setToggling(false), 3_000)
+    }, [setToggling])
+
     if(editMode) {
         return (
             <Row>
@@ -131,14 +138,18 @@ function RowSenseur(props) {
                     <span>{descriptif || item.senseurId}</span>
                 }
             </Col>
-            <AfficherValeurFormattee appareil={appareil} senseur={item} />
+            <AfficherValeurFormattee 
+                appareil={appareil} 
+                senseur={item} 
+                toggling={toggling} 
+                startTogglingCb={startTogglingCb} />
         </Row>        
     )
 }
 
 function AfficherValeurFormattee(props) {
     // console.debug("AfficherValeurFormattee PROPPIES", props)
-    const { appareil } = props
+    const { appareil, toggling, startTogglingCb } = props
     const senseur = props.senseur || {}
     const { instance_id, uuid_appareil } = appareil
     const { senseurId, valeur, valeur_str, type} = senseur
@@ -154,17 +165,16 @@ function AfficherValeurFormattee(props) {
             commande_action: 'setSwitchValue'
         }
         console.debug("Emettre commande switch ", commande)
+        startTogglingCb()
         connexion.commandeAppareil(instance_id, commande)
             .then(reponse=>{
                 console.debug("Commande emise ", reponse)
             })
             .catch(err=>console.error("AfficherValeurFormattee.toggleSwitchHandler Erreur ", err))
-    }, [workers, instance_id, uuid_appareil, senseurId, valeur])
+    }, [workers, instance_id, uuid_appareil, senseurId, valeur, startTogglingCb])
 
     if(valeur_str) return <Col xs={5} md={7} className='valeur-texte'>{valeur_str}</Col>  // Aucun formattage
   
-    const valeurNumerique = isNaN(valeur)?'':valeur
-
     if(type === 'temperature') {
       return (
         <>
@@ -191,7 +201,7 @@ function AfficherValeurFormattee(props) {
           <>
             <Col xs={3} md={2} xl={2} className="valeur-numerique"></Col>
             <Col xs={2} md={2} xl={1}>
-                <Form.Check id={'check'+senseurId} type='switch' checked={valeur===1} onChange={toggleSwitchHandler} />
+                <Form.Check id={'check'+senseurId} type='switch' checked={valeur===1} onChange={toggleSwitchHandler} disabled={toggling} />
             </Col>
           </>
         )
