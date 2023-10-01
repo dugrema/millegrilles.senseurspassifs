@@ -1,7 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
 /.pnp
 .pnp.js
 
@@ -20,8 +19,14 @@ yarn-debug.log*
 yarn-error.log*
 
 *.tar.gz
+**/node_modules
 
 /sessions
 /static
+/client/static
+/client/build
 
-settings.json
+.idea
+*/__pycache__/**
+
+version.txt
