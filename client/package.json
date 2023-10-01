@@ -1,9 +1,9 @@
 {
   "name": "millegrilles.senseurspassifs.client",
-  "version": "2023.8.1",
+  "version": "2023.9.0",
   "private": true,
   "dependencies": {
-    "@dugrema/millegrilles.reactjs": "github:dugrema/millegrilles.reactjs#2023.8",
+    "@dugrema/millegrilles.reactjs": "github:dugrema/millegrilles.reactjs#2023.9",
     "buffer": "^6.0.3",
     "comlink": "^4.4.1",
     "crypto-browserify": "^3.12.0",
@@ -23,7 +23,7 @@
     "stream-browserify": "^3.0.0"
   },
   "peerDependencies": {
-    "@dugrema/millegrilles.utiljs": "github:dugrema/millegrilles.utiljs#2023.8",
+    "@dugrema/millegrilles.utiljs": "github:dugrema/millegrilles.utiljs#2023.9",
     "@reduxjs/toolkit": "^1.8",
     "bootstrap": "^5.1",
     "idb": "^7",
@@ -50,6 +50,6 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "https://localhost:3013",
+  "proxy": "https://localhost:4013",
   "homepage": "/senseurspassifs"
 }

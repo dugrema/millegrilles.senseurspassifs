@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react'
 import { setupWorkers, cleanupWorkers } from './workers/workerLoader'
-// import { init as initCollectionsIdb } from './redux/collectionsIdbDao'
 
 const CONST_INTERVAL_VERIF_SESSION = 600_000
 
@@ -39,6 +38,10 @@ export function useEtatPret() {
     return useContext(Context).etatPret
 }
 
+export function useCleMillegrilleChargee() {
+    return useContext(Context).cleMillegrilleChargee
+}
+
 // Provider
 export function WorkerProvider(props) {
 
@@ -48,6 +51,7 @@ export function WorkerProvider(props) {
     const [etatConnexion, setEtatConnexion] = useState('')
     const [formatteurPret, setFormatteurPret] = useState('')
     const [infoConnexion, setInfoConnexion] = useState('')
+    const [cleMillegrilleChargee, setCleMillegrilleChargee] = useState(false)
 
     const etatAuthentifie = useMemo(()=>usager && formatteurPret, [usager, formatteurPret])
     const etatPret = useMemo(()=>{
@@ -55,8 +59,8 @@ export function WorkerProvider(props) {
     }, [etatConnexion, usager, formatteurPret])
 
     const value = useMemo(()=>{
-        if(workersPrets) return { usager, etatConnexion, formatteurPret, etatAuthentifie, infoConnexion, etatPret }
-    }, [workersPrets, usager, etatConnexion, formatteurPret, etatAuthentifie, infoConnexion, etatPret])
+        if(workersPrets) return { usager, etatConnexion, formatteurPret, etatAuthentifie, infoConnexion, etatPret, cleMillegrilleChargee }
+    }, [workersPrets, usager, etatConnexion, formatteurPret, etatAuthentifie, infoConnexion, etatPret, cleMillegrilleChargee])
 
     useEffect(()=>{
         // console.info("Initialiser web workers (ready : %O, workers : %O)", ready, _workers)
@@ -64,13 +68,13 @@ export function WorkerProvider(props) {
         // Initialiser workers et tables collections dans IDB
         // const promiseIdb = initCollectionsIdb()
         // Promise.all([ready, promiseIdb])
-        //     .then(()=>{
-        //         console.info("Workers prets")
-        //         setWorkersPrets(true)
-        //     })
-        //     .catch(err=>console.error("Erreur initialisation collections IDB / workers ", err))
-        setWorkersPrets(true)
-        
+        Promise.all([ready])
+            .then(()=>{
+                console.info("Workers prets")
+                setWorkersPrets(true)
+            })
+            .catch(err=>console.error("Erreur initialisation workers ", err))
+
         // Cleanup
         // return () => { 
         //     console.info("Cleanup web workers")
@@ -96,7 +100,7 @@ export function WorkerProvider(props) {
         // setWorkersTraitementFichiers(workers)
         if(_workers.connexion) {
             // setErreur('')
-            connecter(_workers, setUsager, setEtatConnexion, setFormatteurPret)
+            connecter(_workers, setUsager, setEtatConnexion, setFormatteurPret, setCleMillegrilleChargee)
                 .then(infoConnexion=>{
                     // const statusConnexion = JSON.stringify(infoConnexion)
                     if(infoConnexion.ok === false) {
@@ -115,7 +119,7 @@ export function WorkerProvider(props) {
             // setErreur("Pas de worker de connexion")
             console.error("Pas de worker de connexion")
         }
-    }, [ workersPrets, setUsager, setEtatConnexion, setFormatteurPret, setInfoConnexion ])
+    }, [ workersPrets, setUsager, setEtatConnexion, setFormatteurPret, setInfoConnexion, setCleMillegrilleChargee ])
 
     useEffect(()=>{
         if(etatAuthentifie) {
@@ -134,9 +138,9 @@ export function WorkerContext(props) {
     return <Context.Consumer>{props.children}</Context.Consumer>
 }
 
-async function connecter(workers, setUsager, setEtatConnexion, setFormatteurPret) {
-    const { connecter: connecterWorker } = await import('./workers/connecter')
-    return connecterWorker(workers, setUsager, setEtatConnexion, setFormatteurPret)
+async function connecter(workers, setUsager, setEtatConnexion, setFormatteurPret, setCleMillegrilleChargee) {
+    const { default: connecterWorker } = await import('./workers/connecter')
+    return connecterWorker(workers, setUsager, setEtatConnexion, setFormatteurPret, setCleMillegrilleChargee)
 }
 
 async function verifierSession() {
@@ -144,8 +148,8 @@ async function verifierSession() {
         const importAxios = await import('axios')
         // const reponse = await importAxios.default.get('/millegrilles/authentification/verifier')
         // console.debug("Reponse verifier session sur connexion : ", reponse)
-        const reponseCollections = await importAxios.default.get('/senseurspassifs/initSession')
-        console.debug("Reponse verifier session sur collections : ", reponseCollections)
+        const reponse = await importAxios.default.get('/senseurspassifs/initSession')
+        console.debug("Reponse verifier session : ", reponse)
     } catch(err) {
         redirigerPortail(err)
     }

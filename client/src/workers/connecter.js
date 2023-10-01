@@ -18,16 +18,10 @@ export async function connecter(workers, setUsagerState, setEtatConnexion, setEt
     const setEtatFormatteurMessageCb = proxy(setEtatFormatteurMessage)
     await connexion.setCallbacks(setEtatConnexionCb, setUsagerCb, setEtatFormatteurMessageCb)
 
-    try {
-        const axiosImport = await import('axios')
-        const axios = axiosImport.default
-        await axios.get('/senseurspassifs/initSession')
-    } catch(err) {
-        console.error("Erreur init session : %O", err)
-    }
-
-    return connexion.connecter(location.href, {DEBUG: false})
+    return connexion.connecter(location.href, {DEBUG: true})
 }
+
+export default connecter
 
 async function setUsager(workers, nomUsager, setUsagerState, opts) {
     opts = opts || {}
@@ -61,14 +55,16 @@ async function setUsager(workers, nomUsager, setUsagerState, opts) {
         const extensions = extraireExtensionsMillegrille(certForge)
 
         const reponseAuthentifier = await workers.connexion.authentifier()
-        // console.debug("Reponse authentifier : %O", reponseAuthentifier)
+        console.debug("Reponse authentifier : %O", reponseAuthentifier)
         if(!reponseAuthentifier || reponseAuthentifier.protege !== true) { // throw new Error("Echec authentification (protege=false)")
             console.error("Erreur authentification : reponseAuthentifier = %O", reponseAuthentifier)
             return
         }
 
+        const socketioAuth = reponseAuthentifier.protege
+
         // setUsagerState({nomUsager, fullchain, extensions})
-        await setUsagerState({...usager, nomUsager, extensions})
+        await setUsagerState({...usager, nomUsager, extensions, auth: socketioAuth, socketioAuth: socketioAuth})
 
     } else {
         console.warn("Pas de certificat pour l'usager '%s'", usager)
