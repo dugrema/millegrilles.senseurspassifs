@@ -21,15 +21,62 @@ class SocketIoSenseursPassifsHandler(SocketIoHandler):
     async def _preparer_socketio_events(self):
         await super()._preparer_socketio_events()
 
-        # self._sio.on('getRecoveryCsr', handler=self.get_recovery_csr)
+        self._sio.on('getAppareilsUsager', handler=self.requete_appareils_usager)
+        self._sio.on('getAppareilsEnAttente', handler=self.requete_appareils_en_attente)
+        self._sio.on('getStatistiquesSenseur', handler=self.requete_statistiques_senseur)
+        self._sio.on('challengeAppareil', handler=self.challenge_appareil)
+        self._sio.on('signerAppareil', handler=self.signer_appareil)
+        self._sio.on('majAppareil', handler=self.maj_appareil)
+        self._sio.on('commandeAppareil', handler=self.commande_appareil)
+        self._sio.on('supprimerAppareil', handler=self.supprimer_appareil)
+        self._sio.on('restaurerAppareil', handler=self.restaurer_appareil)
+
+        # self._sio.on('ecouterEvenementsAppareilsUsager', handler=self.ecouter_appareils_usager)
+        # self._sio.on('retirerEvenementsAppareilsUsager', handler=self.retirer_appareils_usager)
 
     @property
     def exchange_default(self):
         return ConstantesSenseursPassifs.EXCHANGE_DEFAUT
 
-    # async def requete_liste_applications_deployees(self, sid: str, message: dict):
-    #     return await self.executer_requete(sid, message, Constantes.DOMAINE_CORE_TOPOLOGIE,
-    #                                        'listeApplicationsDeployees')
+    async def requete_appareils_usager(self, sid: str, message: dict):
+        return await self.executer_requete(sid, message,
+                                           ConstantesSenseursPassifs.NOM_DOMAINE, 'getAppareilsUsager')
+
+    async def challenge_appareil(self, sid: str, message: dict):
+        return await self.executer_commande(sid, message,
+                                            ConstantesSenseursPassifs.NOM_DOMAINE, 'challengeAppareil')
+
+    async def challenge_appareil(self, sid: str, message: dict):
+        return await self.executer_commande(sid, message,
+                                            ConstantesSenseursPassifs.NOM_DOMAINE, 'challengeAppareil')
+
+    async def signer_appareil(self, sid: str, message: dict):
+        return await self.executer_commande(sid, message,
+                                            ConstantesSenseursPassifs.NOM_DOMAINE, 'signerAppareil')
+
+    async def requete_appareils_en_attente(self, sid: str, message: dict):
+        return await self.executer_requete(sid, message,
+                                           ConstantesSenseursPassifs.NOM_DOMAINE, 'getAppareilsEnAttente')
+
+    async def requete_statistiques_senseur(self, sid: str, message: dict):
+        return await self.executer_requete(sid, message,
+                                           ConstantesSenseursPassifs.NOM_DOMAINE, 'getStatistiquesSenseur')
+
+    async def maj_appareil(self, sid: str, message: dict):
+        return await self.executer_commande(sid, message,
+                                            ConstantesSenseursPassifs.NOM_DOMAINE, 'majAppareil')
+
+    async def commande_appareil(self, sid: str, message: dict):
+        return await self.executer_commande(sid, message,
+                                            ConstantesSenseursPassifs.NOM_DOMAINE, 'commandeAppareil')
+
+    async def supprimer_appareil(self, sid: str, message: dict):
+        return await self.executer_commande(sid, message,
+                                            ConstantesSenseursPassifs.NOM_DOMAINE, 'supprimerAppareil')
+
+    async def restaurer_appareil(self, sid: str, message: dict):
+        return await self.executer_commande(sid, message,
+                                            ConstantesSenseursPassifs.NOM_DOMAINE, 'restaurerAppareil')
 
     # Listeners
 
