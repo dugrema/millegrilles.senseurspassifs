@@ -18,7 +18,8 @@ export async function connecter(workers, setUsagerState, setEtatConnexion, setEt
     const setEtatFormatteurMessageCb = proxy(setEtatFormatteurMessage)
     await connexion.setCallbacks(setEtatConnexionCb, setUsagerCb, setEtatFormatteurMessageCb)
 
-    return connexion.connecter(location.href, {DEBUG: true})
+    // return connexion.connecter(location.href, {DEBUG: true})
+    return connexion.connecter(location.href, {reconnectionDelay: 5_000})
 }
 
 export default connecter
