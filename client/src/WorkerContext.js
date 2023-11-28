@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react'
 import { setupWorkers, cleanupWorkers } from './workers/workerLoader'
 
-const CONST_INTERVAL_VERIF_SESSION = 600_000
+// const CONST_INTERVAL_VERIF_SESSION = 600_000
+const CONST_INTERVAL_VERIF_SESSION = 300_000
 
 const Context = createContext()
 
@@ -94,18 +95,23 @@ export function WorkerProvider(props) {
         // }
     }, [setWorkersPrets])
 
-    // useEffect(()=>{
-    //     if(etatConnexion) {
-    //         // Verifier etat connexion
-    //         let interval = null
-    //         verifierSession()
-    //             .then(() => {interval = setInterval(verifierSession, CONST_INTERVAL_VERIF_SESSION)})
-    //             .catch(redirigerPortail)
-    //         return () => {
-    //             if(interval) clearInterval(interval)
-    //         }
-    //     }
-    // }, [etatConnexion])
+    useEffect(()=>{
+        if(etatConnexion) {
+            // Verifier etat connexion
+            let interval = null
+            verifierSession(setEtatConnexionOpts)
+                .then(() => {
+                    interval = setInterval(
+                        () => verifierSession(setEtatConnexionOpts), 
+                        CONST_INTERVAL_VERIF_SESSION
+                    )
+                })
+                .catch(err=>console.error("Erreur verifierSession initial", err))
+            return () => {
+                if(interval) clearInterval(interval)
+            }
+        }
+    }, [etatConnexion])
 
     useEffect(()=>{
         if(!workersPrets) return
@@ -155,21 +161,21 @@ async function connecter(workers, setUsager, setEtatConnexion, setFormatteurPret
     return connecterWorker(workers, setUsager, setEtatConnexion, setFormatteurPret, setCleMillegrilleChargee)
 }
 
-// async function verifierSession() {
-//     try {
-//         const importAxios = await import('axios')
-//         // const reponse = await importAxios.default.get('/millegrilles/authentification/verifier')
-//         // console.debug("Reponse verifier session sur connexion : ", reponse)
-//         const reponse = await importAxios.default.get('/senseurspassifs/initSession')
-//         console.debug("Reponse verifier session : ", reponse)
-//     } catch(err) {
-//         redirigerPortail(err)
-//     }
-// }
+async function verifierSession(setEtatConnexionOpts) {
+    const importAxios = await import('axios')
+    const axios = importAxios.default
 
-// function redirigerPortail(err) {
-//     console.error("Erreur verification session : ", err)
-//     const url = new URL(window.location.href)
-//     //url.pathname = '/millegrilles'
-//     //window.location = url
-// }
+    const urlVerificationSession = new URL(window.location)
+    urlVerificationSession.pathname = '/auth/verifier_usager'
+
+    const reponse = await axios({method: 'GET', url: urlVerificationSession.href, validateStatus: null})
+    const status = reponse.status
+    if(status === 200) {
+        console.debug("Session valide (status: %d)", status)
+    } else if(status === 401) {
+        console.debug("Session expiree (status: %d)", status)
+        setEtatConnexionOpts({ok: false, type: 'SessionExpiree'})
+    } else {
+        console.warn("Session etat non gere : %O", status)
+    }
+}
