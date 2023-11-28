@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react'
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react'
 import { setupWorkers, cleanupWorkers } from './workers/workerLoader'
 
 const CONST_INTERVAL_VERIF_SESSION = 600_000
@@ -20,6 +20,10 @@ export function useUsager() {
 
 export function useEtatConnexion() {
     return useContext(Context).etatConnexion
+}
+
+export function useEtatConnexionOpts() {
+    return useContext(Context).etatConnexionOpts
 }
 
 export function useFormatteurPret() {
@@ -49,9 +53,17 @@ export function WorkerProvider(props) {
     const [workersPrets, setWorkersPrets] = useState(false)
     const [usager, setUsager] = useState('')
     const [etatConnexion, setEtatConnexion] = useState('')
+    const [etatConnexionOpts, setEtatConnexionOpts] = useState('')
     const [formatteurPret, setFormatteurPret] = useState('')
     const [infoConnexion, setInfoConnexion] = useState('')
     const [cleMillegrilleChargee, setCleMillegrilleChargee] = useState(false)
+
+    const setEtatConnexionCb = useCallback((etat, opts) => {
+        opts = opts || {}
+        console.debug("setEtatConnexionCb %s, opts %O", etat, opts)
+        setEtatConnexion(etat)
+        setEtatConnexionOpts(opts)
+    }, [setEtatConnexion, setEtatConnexionOpts])
 
     const etatAuthentifie = useMemo(()=>usager && formatteurPret, [usager, formatteurPret])
     const etatPret = useMemo(()=>{
@@ -59,8 +71,8 @@ export function WorkerProvider(props) {
     }, [etatConnexion, usager, formatteurPret])
 
     const value = useMemo(()=>{
-        if(workersPrets) return { usager, etatConnexion, formatteurPret, etatAuthentifie, infoConnexion, etatPret, cleMillegrilleChargee }
-    }, [workersPrets, usager, etatConnexion, formatteurPret, etatAuthentifie, infoConnexion, etatPret, cleMillegrilleChargee])
+        if(workersPrets) return { usager, etatConnexion, etatConnexionOpts, formatteurPret, etatAuthentifie, infoConnexion, etatPret, cleMillegrilleChargee }
+    }, [workersPrets, usager, etatConnexion, etatConnexionOpts, formatteurPret, etatAuthentifie, infoConnexion, etatPret, cleMillegrilleChargee])
 
     useEffect(()=>{
         // console.info("Initialiser web workers (ready : %O, workers : %O)", ready, _workers)
@@ -100,7 +112,7 @@ export function WorkerProvider(props) {
         // setWorkersTraitementFichiers(workers)
         if(_workers.connexion) {
             // setErreur('')
-            connecter(_workers, setUsager, setEtatConnexion, setFormatteurPret, setCleMillegrilleChargee)
+            connecter(_workers, setUsager, setEtatConnexionCb, setFormatteurPret, setCleMillegrilleChargee)
                 .then(infoConnexion=>{
                     // const statusConnexion = JSON.stringify(infoConnexion)
                     if(infoConnexion.ok === false) {
@@ -119,7 +131,7 @@ export function WorkerProvider(props) {
             // setErreur("Pas de worker de connexion")
             console.error("Pas de worker de connexion")
         }
-    }, [ workersPrets, setUsager, setEtatConnexion, setFormatteurPret, setInfoConnexion, setCleMillegrilleChargee ])
+    }, [ workersPrets, setUsager, setEtatConnexionCb, setFormatteurPret, setInfoConnexion, setCleMillegrilleChargee ])
 
     useEffect(()=>{
         if(etatAuthentifie) {
@@ -158,6 +170,6 @@ async function verifierSession() {
 function redirigerPortail(err) {
     console.error("Erreur verification session : ", err)
     const url = new URL(window.location.href)
-    url.pathname = '/millegrilles'
-    window.location = url
+    //url.pathname = '/millegrilles'
+    //window.location = url
 }

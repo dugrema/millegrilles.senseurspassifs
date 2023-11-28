@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from millegrilles_messages.messages import Constantes
+from millegrilles_messages.messages.ValidateurCertificats import CertificatInconnu
 from millegrilles_web.SocketIoHandler import SocketIoHandler, ErreurAuthentificationMessage
 
 from server_senseurspassifs import Constantes as ConstantesSenseursPassifs
@@ -101,7 +102,7 @@ class SocketIoSenseursPassifsHandler(SocketIoHandler):
             try:
                 enveloppe = await self.authentifier_message(session, message)
                 user_id = enveloppe.get_user_id
-            except ErreurAuthentificationMessage as e:
+            except (CertificatInconnu, ErreurAuthentificationMessage) as e:
                 return self.etat.formatteur_message.signer_message(
                     Constantes.KIND_REPONSE, {'ok': False, 'err': str(e)})[0]
 

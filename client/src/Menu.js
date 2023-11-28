@@ -31,7 +31,7 @@ function Menu(props) {
     const handlerSelect = useCallback(eventKey => {
         switch(eventKey) {
           case 'portail': window.location = '/millegrilles'; break
-          case 'deconnecter': window.location = '/millegrilles/authentification/fermer'; break
+          case 'deconnecter': window.location = '/auth/deconnecter_usager'; break
           case 'instances': setSectionAfficher('Instances'); break
           case 'configuration': setSectionAfficher('Configuration'); break
           case 'information': setShowModalInfo(true); break

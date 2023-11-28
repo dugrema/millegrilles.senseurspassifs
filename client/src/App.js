@@ -6,14 +6,14 @@ import { Provider as ReduxProvider, useDispatch } from 'react-redux'
 import Container from 'react-bootstrap/Container'
 
 import ErrorBoundary from './ErrorBoundary'
-import useWorkers, {useEtatConnexion, WorkerProvider, useUsager, useFormatteurPret, useInfoConnexion} from './WorkerContext'
+import useWorkers, {useEtatConnexion, useEtatConnexionOpts, WorkerProvider, useUsager, useFormatteurPret, useInfoConnexion} from './WorkerContext'
 import storeSetup from './redux/store'
 
 import { setUserId as setUserIdAppareils, verifierExpiration } from './redux/appareilsSlice'
 
 import i18n from './i18n'
 
-import { LayoutMillegrilles, ModalErreur, initI18n } from '@dugrema/millegrilles.reactjs'
+import { LayoutMillegrilles, ModalErreur, initI18n, OuvertureSessionModal } from '@dugrema/millegrilles.reactjs'
 
 // Importer JS global
 import 'react-bootstrap/dist/react-bootstrap.min.js'
@@ -74,6 +74,7 @@ function LayoutMain(props) {
   const workers = useWorkers()
   const usager = useUsager()
   const etatConnexion = useEtatConnexion()
+  const etatConnexionOpts = useEtatConnexionOpts()
   const etatFormatteurMessage = useFormatteurPret()
   const infoConnexion = useInfoConnexion()
 
@@ -129,6 +130,7 @@ function LayoutMain(props) {
           </Container>
 
           <ModalErreur show={!!erreur} err={erreur.err} message={erreur.message} titre={t('Erreur.titre')} fermer={handlerCloseErreur} />
+          <OuvertureSessionModal etatConnexion={etatConnexion} etatConnexionOpts={etatConnexionOpts} />
 
       </LayoutMillegrilles>
   )  
