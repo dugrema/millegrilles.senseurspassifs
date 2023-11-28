@@ -94,18 +94,18 @@ export function WorkerProvider(props) {
         // }
     }, [setWorkersPrets])
 
-    useEffect(()=>{
-        if(etatConnexion) {
-            // Verifier etat connexion
-            let interval = null
-            verifierSession()
-                .then(() => {interval = setInterval(verifierSession, CONST_INTERVAL_VERIF_SESSION)})
-                .catch(redirigerPortail)
-            return () => {
-                if(interval) clearInterval(interval)
-            }
-        }
-    }, [etatConnexion])
+    // useEffect(()=>{
+    //     if(etatConnexion) {
+    //         // Verifier etat connexion
+    //         let interval = null
+    //         verifierSession()
+    //             .then(() => {interval = setInterval(verifierSession, CONST_INTERVAL_VERIF_SESSION)})
+    //             .catch(redirigerPortail)
+    //         return () => {
+    //             if(interval) clearInterval(interval)
+    //         }
+    //     }
+    // }, [etatConnexion])
 
     useEffect(()=>{
         if(!workersPrets) return
@@ -155,21 +155,21 @@ async function connecter(workers, setUsager, setEtatConnexion, setFormatteurPret
     return connecterWorker(workers, setUsager, setEtatConnexion, setFormatteurPret, setCleMillegrilleChargee)
 }
 
-async function verifierSession() {
-    try {
-        const importAxios = await import('axios')
-        // const reponse = await importAxios.default.get('/millegrilles/authentification/verifier')
-        // console.debug("Reponse verifier session sur connexion : ", reponse)
-        const reponse = await importAxios.default.get('/senseurspassifs/initSession')
-        console.debug("Reponse verifier session : ", reponse)
-    } catch(err) {
-        redirigerPortail(err)
-    }
-}
+// async function verifierSession() {
+//     try {
+//         const importAxios = await import('axios')
+//         // const reponse = await importAxios.default.get('/millegrilles/authentification/verifier')
+//         // console.debug("Reponse verifier session sur connexion : ", reponse)
+//         const reponse = await importAxios.default.get('/senseurspassifs/initSession')
+//         console.debug("Reponse verifier session : ", reponse)
+//     } catch(err) {
+//         redirigerPortail(err)
+//     }
+// }
 
-function redirigerPortail(err) {
-    console.error("Erreur verification session : ", err)
-    const url = new URL(window.location.href)
-    //url.pathname = '/millegrilles'
-    //window.location = url
-}
+// function redirigerPortail(err) {
+//     console.error("Erreur verification session : ", err)
+//     const url = new URL(window.location.href)
+//     //url.pathname = '/millegrilles'
+//     //window.location = url
+// }

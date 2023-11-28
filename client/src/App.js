@@ -130,7 +130,12 @@ function LayoutMain(props) {
           </Container>
 
           <ModalErreur show={!!erreur} err={erreur.err} message={erreur.message} titre={t('Erreur.titre')} fermer={handlerCloseErreur} />
-          <OuvertureSessionModal etatConnexion={etatConnexion} etatConnexionOpts={etatConnexionOpts} />
+          <OuvertureSessionModal 
+              workers={workers}
+              etatConnexion={etatConnexion} 
+              etatConnexionOpts={etatConnexionOpts} 
+              usager={usager}
+            />
 
       </LayoutMillegrilles>
   )  
