@@ -184,3 +184,15 @@ $xsmall-width: map.get($grid-breakpoints, xs);
 .senseur-ligne.cache {
     color: $first-color;
 }
+
+.top-spacer-menu {
+    position: sticky;
+    top: 1rem;
+    height: 2.7rem;
+    width: 1rem;
+    z-index: 0;
+}
+
+.table-header .val-numerique {
+    text-align: right;
+}

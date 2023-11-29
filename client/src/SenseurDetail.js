@@ -27,7 +27,6 @@ function SenseurDetail(props) {
     const senseurLectureCourante = senseurs[senseurId] || {}
     const timestampCourant = senseurLectureCourante.timestamp || ''
     const typeValeur = senseurLectureCourante.type
-    const valeur = senseurLectureCourante.valeur
 
     return (
         <div>
@@ -47,17 +46,13 @@ function SenseurDetail(props) {
             <Row>
                 <Col xs={6} md={3} xl={2}>Valeur</Col>
                 <Col>
-                    {valeur?
-                        <FormatterValeur valeur={valeur} typeValeur={typeValeur} />
-                        :
-                        senseurLectureCourante.valeur_str
-                    }
+                    <FormatterValeurSenseur senseur={senseurLectureCourante}/>
                 </Col>
             </Row>
 
             <p></p>
 
-            <StatisquesSenseur 
+            <StatistiquesSenseur 
                 appareil={appareil} 
                 senseurId={senseurId} 
                 typeValeur={typeValeur} />
@@ -68,7 +63,33 @@ function SenseurDetail(props) {
 
 export default SenseurDetail
 
-function StatisquesSenseur(props) {
+function FormatterValeurSenseur(props) {
+    const { senseur } = props
+
+    const typeValeur = senseur.type
+    const { valeur, valeur_str } = senseur
+
+    if(typeValeur === 'switch') {
+        if(valeur === 1.0) return <span>ON</span>
+        if(valeur === 0.0) return <span>OFF</span>
+        const valeurPct = Math.floor(valeur*100)
+        return <span>{valeurPct}%</span>
+    }
+
+    if(valeur) {
+        return (
+            <FormatterValeur valeur={valeur} typeValeur={typeValeur} />
+        )
+    }
+
+    if(valeur_str) {
+        return <span>{valeur_str}</span>
+    }
+
+    return ''
+}
+
+function StatistiquesSenseur(props) {
 
     const { appareil, senseurId, typeValeur } = props
     const uuid_appareil = appareil.uuid_appareil
@@ -167,16 +188,16 @@ function StatistiquesTable72h(props) {
     return (
         <div>
             <h3>Table statistiques 3 jours</h3>
-            <Row>
+            <Row className='table-header'>
                 <Col xs={4} md={2} className='text-overflow-clip'>
                     Date
                 </Col>
                 <Col md={2} className='d-none d-md-block'>
                     Heure
                 </Col>
-                <Col xs={2} lg={1} className='text-overflow-clip'>Moyenne</Col>
-                <Col xs={2} lg={1} className='text-overflow-clip'>Maximum</Col>
-                <Col xs={2} lg={1} className='text-overflow-clip'>Minimum</Col>
+                <Col xs={2} xl={1} className='text-overflow-clip val-numerique'>Moyenne</Col>
+                <Col xs={2} xl={1} className='text-overflow-clip val-numerique'>Maximum</Col>
+                <Col xs={2} xl={1} className='text-overflow-clip val-numerique'>Minimum</Col>
             </Row>
             <ListeHeures liste={liste} typeValeur={typeValeur} />
         </div>
@@ -192,11 +213,11 @@ function StatistiquesTable31j(props) {
     return (
         <div>
             <h3>Table statistiques 31 jours</h3>
-            <Row>
+            <Row className='table-header'>
                 <Col xs={4} md={4} xl={3} className='text-overflow-clip'>Jour</Col>
-                <Col xs={2} lg={1} className='text-overflow-clip'>Moyenne</Col>
-                <Col xs={2} lg={1} className='text-overflow-clip'>Maximum</Col>
-                <Col xs={2} lg={1} className='text-overflow-clip'>Minimum</Col>
+                <Col xs={2} xl={1} className='text-overflow-clip val-numerique'>Moyenne</Col>
+                <Col xs={2} xl={1} className='text-overflow-clip val-numerique'>Maximum</Col>
+                <Col xs={2} xl={1} className='text-overflow-clip val-numerique'>Minimum</Col>
             </Row>
             <ListeJours liste={liste} typeValeur={typeValeur} />
         </div>
@@ -213,6 +234,9 @@ function ListeHeures(props) {
     }, [typeValeur])
 
     if(!liste) return ''
+
+    const afficherMax = typeValeur!=='switch'
+    const afficherMin = typeValeur!=='switch'
 
     let jour = ''
 
@@ -240,9 +264,19 @@ function ListeHeures(props) {
                         :''}
                     </Col>
                     <Col xs={4} md={2}><FormatterDate format='HH:mm:ss' value={item.heure} /></Col>
-                    <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.avg} typeValeur={typeValeur} hideType={true} /></Col>
-                    <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.max} typeValeur={typeValeur} hideType={true} /></Col>
-                    <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.min} typeValeur={typeValeur} hideType={true} /></Col>
+                    <Col xs={2} xl={1} className='valeur-numerique'><FormatterValeur valeur={item.avg} typeValeur={typeValeur} hideType={true} /></Col>
+                    <Col xs={2} xl={1} className='valeur-numerique'>
+                        {afficherMax?
+                            <FormatterValeur valeur={item.max} typeValeur={typeValeur} hideType={true} />
+                            :''
+                        }
+                    </Col>
+                    <Col xs={2} xl={1} className='valeur-numerique'>
+                        {afficherMin?
+                            <FormatterValeur valeur={item.min} typeValeur={typeValeur} hideType={true} />
+                            :''
+                        }
+                    </Col>
                     <Col xs={2} lg={1}>{unite}</Col>
                 </Row>
             </div>
@@ -260,12 +294,25 @@ function ListeJours(props) {
 
     if(!liste) return ''
 
+    const afficherMax = typeValeur!=='switch'
+    const afficherMin = typeValeur!=='switch'
+
     return liste.map(item=>(
         <Row key={item.heure}>
             <Col xs={4} md={4} xl={3}><FormatterDate value={item.heure} format="YYYY/MM/DD" /></Col>
-            <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.avg} typeValeur={typeValeur} hideType={true} /></Col>
-            <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.max} typeValeur={typeValeur} hideType={true} /></Col>
-            <Col xs={2} lg={1} className='valeur-numerique'><FormatterValeur valeur={item.min} typeValeur={typeValeur} hideType={true} /></Col>
+            <Col xs={2} xl={1} className='valeur-numerique'><FormatterValeur valeur={item.avg} typeValeur={typeValeur} hideType={true} /></Col>
+            <Col xs={2} xl={1} className='valeur-numerique'>
+                {afficherMax?
+                    <FormatterValeur valeur={item.max} typeValeur={typeValeur} hideType={true} />
+                    :''
+                }
+            </Col>
+            <Col xs={2} xl={1} className='valeur-numerique'>
+                {afficherMin?
+                    <FormatterValeur valeur={item.min} typeValeur={typeValeur} hideType={true} />
+                    :''
+                }
+            </Col>
             <Col xs={2} lg={1}>{unite}</Col>
         </Row>
     ))
@@ -366,7 +413,14 @@ function StatistiquesTableCustom(props) {
 
 function FormatterValeur(props) {
     const {valeur, typeValeur, hideType} = props
-    if(!valeur || isNaN(valeur)) return ''
+    if(valeur === undefined || valeur === '' || isNaN(valeur)) return ''
+
+    if(typeValeur === 'switch') {
+        if(valeur === 1.0) return <span>ON</span>
+        if(valeur === 0.0) return <span>OFF</span>
+        const valeurPct = Math.floor(valeur*100)
+        return <span>{valeurPct}%</span>
+    }
 
     let [decimals, unite] = getUnite(typeValeur)
     if(hideType) unite = ''
@@ -374,7 +428,7 @@ function FormatterValeur(props) {
     if(!isNaN(decimals)) {
         return <span>{valeur.toFixed(decimals)} {unite}</span>
     } else {
-        return valeur + unite
+        return <span>{`${valeur + unite}`}</span>
     }
 }
 
@@ -384,6 +438,7 @@ function getUnite(typeValeur) {
         case 'temperature': decimals = 1; unite = <span>&deg;C</span>; break
         case 'humidite': decimals = 1; unite = '%'; break
         case 'pression': decimals = 0; unite = 'hPa'; break
+        case 'pression_tendance': decimals = 0; unite = 'Pa'; break
         default:
     }
     return [decimals, unite]

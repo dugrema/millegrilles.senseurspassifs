@@ -102,7 +102,6 @@ function Accueil(props) {
   // Page accueil
   return (
     <div>
-      <h2>Appareils</h2>
       <ListeAppareils 
         liste={appareils} 
         setUuidAppareil={setUuidAppareil} 
@@ -112,6 +111,8 @@ function Accueil(props) {
         liste={appareils} 
         setUuidAppareil={setUuidAppareil} 
         ouvrirDetailSenseur={ouvrirSenseurHandler} />
+
+      <br />
     </div>
   )
 

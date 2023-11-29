@@ -113,6 +113,8 @@ function LayoutMain(props) {
   return (
       <LayoutMillegrilles menu={menu}>
 
+          <div className='top-spacer-menu'></div>
+          
           <Container className="contenu">
 
               <Suspense fallback={<Attente workers={workers} idinfoConnexionmg={infoConnexion} etatConnexion={etatAuthentifie} />}>
