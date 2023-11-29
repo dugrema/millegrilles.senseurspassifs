@@ -26,6 +26,8 @@ class SocketIoSenseursPassifsHandler(SocketIoHandler):
         self._sio.on('commandeAppareil', handler=self.commande_appareil)
         self._sio.on('supprimerAppareil', handler=self.supprimer_appareil)
         self._sio.on('restaurerAppareil', handler=self.restaurer_appareil)
+        self._sio.on('getConfigurationUsager', handler=self.get_configuration_usager)
+        self._sio.on('majConfigurationUsager', handler=self.maj_configuration_usager)
 
         self._sio.on('ecouterEvenementsAppareilsUsager', handler=self.ecouter_appareils_usager)
         self._sio.on('retirerEvenementsAppareilsUsager', handler=self.retirer_appareils_usager)
@@ -53,6 +55,14 @@ class SocketIoSenseursPassifsHandler(SocketIoHandler):
     async def requete_statistiques_senseur(self, sid: str, message: dict):
         return await self.executer_requete(sid, message,
                                            ConstantesSenseursPassifs.NOM_DOMAINE, 'getStatistiquesSenseur')
+
+    async def get_configuration_usager(self, sid: str, message: dict):
+        return await self.executer_requete(sid, message,
+                                           ConstantesSenseursPassifs.NOM_DOMAINE, 'getConfigurationUsager')
+
+    async def maj_configuration_usager(self, sid: str, message: dict):
+        return await self.executer_commande(sid, message,
+                                            ConstantesSenseursPassifs.NOM_DOMAINE, 'majConfigurationUsager')
 
     async def maj_appareil(self, sid: str, message: dict):
         return await self.executer_commande(sid, message,
