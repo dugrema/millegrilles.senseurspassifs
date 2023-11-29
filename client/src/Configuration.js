@@ -1,6 +1,8 @@
 import {useState, useCallback, useEffect, useMemo} from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import PYTZ_TIMEZONES from '@dugrema/millegrilles.utiljs/res/pytz_timezones.json'
+
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 import Modal from 'react-bootstrap/Modal'
@@ -28,6 +30,9 @@ function Configuration(props) {
                 <Tab eventKey="nouveaux" title="Nouveaux">
                     <ListeAppareilsAttente disabled={tabSelectionne!=='nouveaux'} />
                 </Tab>
+                <Tab eventKey="compte" title="Compte">
+                    <ConfigurationCompte />
+                </Tab>
                 <Tab eventKey="fichier" title="Fichier">
                     <FichierConfiguration />
                 </Tab>
@@ -52,6 +57,87 @@ function FichierConfiguration(props) {
     )
 }
 
+function ConfigurationCompte(props) {
+
+    const workers = useWorkers()
+    const usager = useUsager()
+
+    const [compteUsager, setCompteUsager] = useState('')
+    const [changement, setChangement] = useState(false)
+    const [timezone, setTimezone] = useState('')
+
+    const timezoneProps = props.timezone
+    useEffect(()=>{
+        if(timezoneProps) setTimezone(timezoneProps)
+    }, [timezoneProps])
+
+    const timezoneOnChange = useCallback(e=>{
+        const tz = e.currentTarget.value
+        setTimezone(tz)
+        setChangement(true)
+    }, [setTimezone, setChangement])
+
+    const sauvegarderCb = useCallback(()=>{
+        const nomUsager = usager.nomUsager
+        const params = { timezone: timezone?timezone:null }
+        console.debug("Sauvegarder params : ", params)
+        workers.connexion.majConfigurationUsager(nomUsager, params)
+            .then(reponse=>{
+                console.debug("Reponse : ", reponse)
+            })
+            .catch(err=>console.error("Erreur sauvegarer compte usager : ", err))
+    }, [usager, timezone])
+
+    const resetCb = useCallback(()=>{
+        setTimezone(compteUsager.timezone || '')
+        setChangement(false)
+    }, [compteUsager, setTimezone, setChangement])
+
+    useEffect(()=>{
+        if(!usager || !usager.nomUsager) return
+        const nomUsager = usager.nomUsager
+        
+        workers.connexion.getConfigurationUsager(nomUsager)
+            .then(reponse=>{
+                console.debug("Reponse configuration usager : ", reponse)
+                setCompteUsager(reponse)
+                setTimezone(reponse.timezone || '')
+            })
+            .catch(err=>console.error("Erreur requete configuration usager ", err))
+        }, [workers, setCompteUsager, setTimezone])
+
+    return (
+        <div>
+            <p>Ces parametres vont s'appliquer aux appareils et notifications.</p>
+            <Row>
+                <Col xs={4} md={3} xl={2}>Fuseau horaire</Col>
+                <Col>
+                    <Form.Select onChange={timezoneOnChange} value={timezone}>
+                        <option value=''>Choisir une valeur</option>
+                        <OptionsTimezones />
+                    </Form.Select>
+                </Col>
+            </Row>
+
+            <Row>
+                <Col className='button-bar'>
+                    <Button disabled={!changement} onClick={sauvegarderCb}>Sauvegarder</Button>
+                    <Button variant="secondary" onClick={resetCb} disabled={!changement}>Reset</Button>
+                </Col>
+            </Row>
+        </div>
+    )
+}
+
+function OptionsTimezones(props) {
+    return PYTZ_TIMEZONES.map(tz=>{
+        return (
+            <option key={tz} value={tz}>
+                {tz}
+            </option>
+        )
+    })
+}
 
 function ConfigurationAppareil(props) {
     

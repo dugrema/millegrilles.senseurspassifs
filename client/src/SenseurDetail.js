@@ -7,6 +7,7 @@ import Form from 'react-bootstrap/Form'
 
 import Datetime from 'react-datetime'
 
+import PYTZ_TIMEZONES from '@dugrema/millegrilles.utiljs/res/pytz_timezones.json'
 import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 
 import useWorkers from './WorkerContext'
@@ -444,13 +445,13 @@ function getUnite(typeValeur) {
     return [decimals, unite]
 }
 
-const TIMEZONES = [
-    'America/Montreal',
-    'America/Toronto'
-]
+// const TIMEZONES = [
+//     'America/Montreal',
+//     'America/Toronto'
+// ]
 
 function TimezoneOptions(props) {
-    return TIMEZONES.map(item=>{
+    return PYTZ_TIMEZONES.map(item=>{
         return (
             <option key={item} value={item}>{item}</option>
         )

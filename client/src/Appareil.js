@@ -61,6 +61,7 @@ function Appareil(props) {
     const [cacherSenseurs, setCacherSenseurs] = useState([])
     const [descriptif, setDescriptif] = useState('')
     const [descriptifSenseurs, setDescriptifSenseurs] = useState({})
+    const [timezone, setTimezone] = useState('')
     const [displays, setDisplays] = useState({})
     const [displayEdit, setDisplayEdit] = useState('')
     const [programmes, setProgrammes] = useState({})
@@ -180,7 +181,9 @@ function Appareil(props) {
                 appareil={appareil} 
                 modeEdition={modeEdition} 
                 descriptif={descriptif}
-                setDescriptif={setDescriptif} />
+                setDescriptif={setDescriptif}
+                timezone={timezone} 
+                setTimezone={setTimezone} />
 
             <h3>Senseurs</h3>
             <Row>
@@ -237,7 +240,7 @@ function Appareil(props) {
 export default Appareil
 
 function InformationAppareil(props) {
-    const { appareil, modeEdition, descriptif, setDescriptif } = props
+    const { appareil, modeEdition, descriptif, setDescriptif, timezone, setTimezone } = props
     
     return (
         <div>
@@ -252,6 +255,12 @@ function InformationAppareil(props) {
                     {appareil.uuid_appareil}
                 </Col>
             </Row>
+
+            <TimezoneAppareil
+                modeEdition={modeEdition}
+                timezone={timezone}
+                setTimezone={setTimezone}
+                />
         </div>
     )
 }
@@ -292,6 +301,21 @@ function NomAppareil(props) {
         return <p></p>
     }
 
+}
+
+function TimezoneAppareil(props) {
+    const { modeEdition, timezone, setTimezone } = props
+
+    if(!modeEdition) {
+        return (
+            <Row>
+                <Col xs={12} md={5}>Fuseau horaire</Col>
+                <Col>{timezone}</Col>
+            </Row>
+        )
+    }
+
+    return 'edit timezon'
 }
 
 function ListeDisplays(props) {

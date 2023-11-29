@@ -52,7 +52,7 @@ function Accueil(props) {
   // Messages, maj liste appareils
   const messageAppareilHandler = useCallback(evenement=>{
     const { routingKey, message } = evenement
-    console.debug("Message appareil : %O", message)
+    // console.debug("Message appareil : %O", message)
     const action = routingKey.split('.').pop()
     if(['lectureConfirmee', 'majAppareil'].includes(action)) {
       dispatch(mergeAppareil(message))

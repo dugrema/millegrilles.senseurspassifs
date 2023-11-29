@@ -155,6 +155,27 @@ function restaurerAppareil(uuid_appareil) {
   })
 }
 
+function getConfigurationUsager(nomUsager) {
+  const requete = {nom_usager: nomUsager}
+  return ConnexionClient.emitBlocking('getConfigurationUsager', requete, {
+    kind: MESSAGE_KINDS.KIND_REQUETE, 
+    domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+    action: 'getConfigurationUsager',
+    ajouterCertificat: true,
+  })
+}
+
+function majConfigurationUsager(nomUsager, params) {
+  const commande = {nom_usager: nomUsager}
+  commande.timezone = params.timezone
+  return ConnexionClient.emitBlocking('majConfigurationUsager', commande, {
+    kind: MESSAGE_KINDS.KIND_COMMANDE, 
+    domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+    action: 'majConfigurationUsager', 
+    ajouterCertificat: true,
+  })
+}
+
 // Evenements
 
 async function ecouterEvenementsAppareilsUsager(cb) {
@@ -173,7 +194,8 @@ expose({
     getAppareilsUsager, 
     majAppareil, 
     challengeAppareil, signerAppareil, getAppareilsEnAttente,
-
+    
+    getConfigurationUsager, majConfigurationUsager,
     getListeSenseursNoeud, getStatistiquesSenseur,
     getListeNoeuds, majNoeud, 
     majSenseur, commandeAppareil,
