@@ -27,6 +27,8 @@ import '@dugrema/millegrilles.reactjs/dist/index.css'
 import './index.scss'
 import './App.css'
 
+import manifest from './manifest.build'
+
 // Wire i18n dans module @dugrema/millegrilles.reactjs
 initI18n(i18n)
 
@@ -107,7 +109,8 @@ function LayoutMain(props) {
     <Menu
         i18n={i18n} 
         estProprietaire={estProprietaire}
-        setSectionAfficher={setSectionAfficher} />
+        setSectionAfficher={setSectionAfficher} 
+        manifest={manifest} />
   ) 
 
   return (
