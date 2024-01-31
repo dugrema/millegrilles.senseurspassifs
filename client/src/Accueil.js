@@ -12,6 +12,7 @@ import useWorkers, {useEtatPret} from './WorkerContext'
 import { push as pushAppareils, mergeAppareil } from './redux/appareilsSlice'
 
 import Appareil from './Appareil'
+import { IconeConnecte } from './ComponentsPartages'
 
 const AfficherSenseurs = React.lazy( () => import('./AfficherSenseurs') )
 const SenseurDetail = React.lazy( () => import('./SenseurDetail') )
@@ -54,7 +55,7 @@ function Accueil(props) {
     const { routingKey, message } = evenement
     // console.debug("Message appareil : %O", message)
     const action = routingKey.split('.').pop()
-    if(['lectureConfirmee', 'majAppareil'].includes(action)) {
+    if(['lectureConfirmee', 'majAppareil', 'presenceAppareil'].includes(action)) {
       dispatch(mergeAppareil(message))
     }
   }, [dispatch])
@@ -142,7 +143,7 @@ function ListeAppareils(props) {
   if(!listeFiltree || listeFiltree.length === 0) return <p>Aucuns appareils</p>
 
   return listeFiltree.map(item=>{
-    const { uuid_appareil, derniere_lecture } = item
+    const { uuid_appareil, derniere_lecture, connecte } = item
     const configuration = item.configuration || {}
     const nomAppareil = configuration.descriptif || item.uuid_appareil
 
@@ -163,6 +164,7 @@ function ListeAppareils(props) {
             </Button>
           </Col>
           <Col xs={12} sm={5} md={4} className={classNameDate}>
+            <IconeConnecte value={connecte} />{' '}
             <FormatterDate value={derniere_lecture} />
           </Col>
         </Row>

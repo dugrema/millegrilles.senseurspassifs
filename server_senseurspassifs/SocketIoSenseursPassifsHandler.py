@@ -97,6 +97,7 @@ class SocketIoSenseursPassifsHandler(SocketIoHandler):
         routing_keys = [
             f'evenement.SenseursPassifs.{user_id}.lectureConfirmee',
             f'evenement.SenseursPassifs.{user_id}.majAppareil',
+            f'evenement.SenseursPassifs.{user_id}.presenceAppareil',
         ]
 
         reponse = await self.subscribe(sid, message, routing_keys, exchanges, enveloppe=enveloppe)
@@ -120,6 +121,7 @@ class SocketIoSenseursPassifsHandler(SocketIoHandler):
         routing_keys = [
             f'evenement.SenseursPassifs.{user_id}.lectureConfirmee',
             f'evenement.SenseursPassifs.{user_id}.majAppareil',
+            f'evenement.SenseursPassifs.{user_id}.presenceAppareil',
         ]
 
         reponse = await self.unsubscribe(sid, message, routing_keys, exchanges)
