@@ -1,8 +1,6 @@
 import {useState, useCallback, useEffect, useMemo} from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import PYTZ_TIMEZONES from '@dugrema/millegrilles.utiljs/res/pytz_timezones.json'
-
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 import Modal from 'react-bootstrap/Modal'
@@ -16,6 +14,7 @@ import { getRandom } from '@dugrema/millegrilles.utiljs/src/random'
 import useWorkers, {useUsager, useInfoConnexion} from './WorkerContext'
 
 import { push as pushAppareils } from './redux/appareilsSlice'
+import { OptionsTimezones } from './timezones'
 
 
 function Configuration(props) {
@@ -127,16 +126,6 @@ function ConfigurationCompte(props) {
             </Row>
         </div>
     )
-}
-
-function OptionsTimezones(props) {
-    return PYTZ_TIMEZONES.map(tz=>{
-        return (
-            <option key={tz} value={tz}>
-                {tz}
-            </option>
-        )
-    })
 }
 
 function ConfigurationAppareil(props) {

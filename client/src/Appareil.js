@@ -12,6 +12,8 @@ import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 import useWorkers, {useEtatPret} from './WorkerContext'
 import { mergeAppareil } from './redux/appareilsSlice'
 import { ListeProgrammes, EditProgramme } from './Programmes'
+import { geolocate } from './geolocation'
+import { OptionsTimezones } from './timezones'
 
 const AfficherSenseurs = lazy( () => import('./AfficherSenseurs') )
 
@@ -62,6 +64,7 @@ function Appareil(props) {
     const [descriptif, setDescriptif] = useState('')
     const [descriptifSenseurs, setDescriptifSenseurs] = useState({})
     const [timezone, setTimezone] = useState('')
+    const [geoposition, setGeoposition] = useState('')
     const [displays, setDisplays] = useState({})
     const [displayEdit, setDisplayEdit] = useState('')
     const [programmes, setProgrammes] = useState({})
@@ -71,7 +74,10 @@ function Appareil(props) {
     const boutonFermerProgrammesHandler = useCallback(()=>setProgrammeEdit(''), [setProgrammeEdit])
 
     const majConfigurationHandler = useCallback(()=>{
-        const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays, programmes)
+        const configMaj = formatterConfiguration(
+            appareil, cacherSenseurs, 
+            descriptif, descriptifSenseurs, displays, programmes, timezone, geoposition,
+        )
         console.debug("Maj configuration ", configMaj)
         workers.connexion.majAppareil(configMaj)
             .then(reponse=>{
@@ -82,7 +88,11 @@ function Appareil(props) {
                 setProgrammeEdit('')
             })
             .catch(err=>console.error("Erreur maj appareil : ", err))
-    }, [workers, dispatch, appareil, descriptif, cacherSenseurs, descriptifSenseurs, displays, programmes, setModeEdition, setDisplayEdit, setProgrammeEdit])
+    }, [
+        workers, dispatch, appareil, 
+        descriptif, cacherSenseurs, descriptifSenseurs, displays, programmes, timezone, geoposition,
+        setModeEdition, setDisplayEdit, setProgrammeEdit
+    ])
 
     const sauvegarderProgrammeHandler = useCallback(programme=>{
         console.debug("Sauvegarder programme ", programme)
@@ -127,7 +137,9 @@ function Appareil(props) {
         setDescriptifSenseurs(configuration.descriptif_senseurs || {})
         setDisplays(configuration.displays || {})
         setProgrammes(configuration.programmes || {})
-    }, [modeEdition, displayEdit, appareil, setDescriptif, setCacherSenseurs, setDescriptifSenseurs, setDisplays])
+        setTimezone(configuration.timezone || '')
+        setGeoposition(configuration.geoposition || {})
+    }, [modeEdition, displayEdit, appareil, setDescriptif, setCacherSenseurs, setDescriptifSenseurs, setDisplays, setTimezone, setGeoposition])
 
     if(displayEdit) {
         return (
@@ -183,7 +195,9 @@ function Appareil(props) {
                 descriptif={descriptif}
                 setDescriptif={setDescriptif}
                 timezone={timezone} 
-                setTimezone={setTimezone} />
+                setTimezone={setTimezone} 
+                geoposition={geoposition}
+                setGeoposition={setGeoposition} />
 
             <h3>Senseurs</h3>
             <Row>
@@ -240,7 +254,7 @@ function Appareil(props) {
 export default Appareil
 
 function InformationAppareil(props) {
-    const { appareil, modeEdition, descriptif, setDescriptif, timezone, setTimezone } = props
+    const { appareil, modeEdition, descriptif, setDescriptif, timezone, setTimezone, geoposition, setGeoposition } = props
     
     return (
         <div>
@@ -261,6 +275,13 @@ function InformationAppareil(props) {
                 timezone={timezone}
                 setTimezone={setTimezone}
                 />
+
+            <GeopositionAppareil
+                modeEdition={modeEdition}
+                geoposition={geoposition}
+                setGeoposition={setGeoposition}
+                />
+
         </div>
     )
 }
@@ -306,16 +327,125 @@ function NomAppareil(props) {
 function TimezoneAppareil(props) {
     const { modeEdition, timezone, setTimezone } = props
 
+    const timezoneOnChange = useCallback(e=>{
+        const value = e.currentTarget.value
+        console.debug("Fuseau horaire choisi ", value)
+        setTimezone(value)
+    }, [setTimezone])
+
     if(!modeEdition) {
         return (
             <Row>
                 <Col xs={12} md={5}>Fuseau horaire</Col>
-                <Col>{timezone}</Col>
+                <Col>{timezone||'Fuseau horaire par défaut'}</Col>
             </Row>
         )
     }
 
-    return 'edit timezon'
+    return (
+        <Row>
+            <Col xs={12} md={5}>Edit timezone</Col>
+            <Col>
+                <Form.Select onChange={timezoneOnChange} value={timezone}>
+                    <option value=''>Fuseau horaire configuré pour le compte</option>
+                    <OptionsTimezones />
+                </Form.Select>
+            </Col>
+        </Row>
+    )
+}
+
+function GeopositionAppareil(props) {
+    const { modeEdition, setGeoposition } = props
+    const geoposition = props.geoposition
+
+    const [init, setInit] = useState(false)
+    const [latitude, setLatitude] = useState('')
+    const [longitude, setLongitude] = useState('')
+
+    useEffect(()=>{
+        if(!geoposition) return
+        if(init) return
+        setInit(true)
+
+        // Arrondir valeurs recues a 6 decimales
+        const CONST_DECIMALES = 10**6
+        if(geoposition.latitude !== undefined && geoposition.latitude !== null) {
+            const val = Math.round(geoposition.latitude * CONST_DECIMALES)/CONST_DECIMALES
+            setLatitude(''+val)
+        }
+        if(geoposition.longitude !== undefined && geoposition.longitude !== null) {
+            const val = Math.round(geoposition.longitude * CONST_DECIMALES)/CONST_DECIMALES
+            setLongitude(''+val)
+        }
+    }, [init, geoposition, setInit, setLatitude, setLongitude])
+
+    const valeurChangeCb = useCallback(e=>{
+        const { name, value } = e.currentTarget
+
+        const regexValidationBuilding = new RegExp("^\\-?[0-9]{0,3}[\\.[0-9]*]?$")
+        const matches = value.match(regexValidationBuilding)
+        if(!matches) return  // Invalide
+
+        // const nombre = Number.parseFloat(value)
+        // console.debug("%s value %O", name, nombre)
+
+        let setter = null
+        if(name === 'latitude') setter = setLatitude
+        else if(name === 'longitude') setter = setLongitude
+        else {
+            console.error('champ %s non gere', name)
+        }
+
+        setter(value)
+    }, [setLatitude, setLongitude])
+
+    useEffect(()=>{
+        let latitudeFloat = Number.parseFloat(latitude)
+        let longitudeFloat = Number.parseFloat(longitude)
+        if(isNaN(latitudeFloat)) latitudeFloat = null
+        if(isNaN(longitudeFloat)) longitudeFloat = null
+        setGeoposition({latitude: latitudeFloat, longitude: longitudeFloat})
+    }, [setGeoposition, latitude, longitude])
+
+    const locationCb = useCallback(()=>{
+        console.debug("Detecter position")
+        geolocate()
+            .then(resultat=>{
+                console.debug("Resultat geolocation : ", resultat)
+                const coords = resultat.coords || {}
+                setLatitude(''+coords.latitude)
+                setLongitude(''+coords.longitude)
+            })
+            .catch(err=>{
+                console.error("Erreur geolocation : ", err)
+            })
+    }, [setLatitude, setLongitude])
+
+    if(!modeEdition) {
+        return (
+            <Row>
+                <Col xs={12} md={5}>Geoposition</Col>
+                <Col xs={6} md={3}>Latitude {latitude}</Col>
+                <Col xs={6} md={3}>Longitude {longitude}</Col>
+            </Row>
+        )
+    }
+
+    return (
+        <Row>
+            <Col xs={12} md={5}>
+                Edit geoposition{' '}
+                <Button variant="secondary" onClick={locationCb}>Detecter</Button>
+            </Col>
+            <Col xs={6} md={3}>
+                Latitude <Form.Control type="text" name='latitude' value={latitude} onChange={valeurChangeCb} />
+            </Col>
+            <Col xs={6} md={3}>
+                Longitude <Form.Control type="text" name='longitude' value={longitude} onChange={valeurChangeCb} />
+            </Col>
+        </Row>
+    )
 }
 
 function ListeDisplays(props) {
@@ -841,7 +971,7 @@ function ModalEditerMasqueLigne(props) {
     )
 }
 
-function formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays, programmes) {
+function formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays, programmes, timezone, geoposition) {
     const configuration = {}
     
     if(appareil.configuration) Object.assign(configuration, appareil.configuration)
@@ -849,6 +979,8 @@ function formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptif
     configuration.descriptif = descriptif
     configuration.descriptif_senseurs = descriptifSenseurs
     configuration.displays = displays
+    configuration.timezone = timezone?timezone:null
+    configuration.geoposition = geoposition
 
     if(programmes) {
         configuration.programmes = programmes
