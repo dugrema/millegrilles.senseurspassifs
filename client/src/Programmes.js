@@ -82,11 +82,7 @@ export function EditProgramme(props) {
         return [configuration, programmeInformation]
     }, [appareil, programmeEdit])
 
-    const programmeId = useMemo(()=>{
-        if(programmeInformation.programme_id) return programmeInformation.programme_id
-        // Generer nouvel identificateur
-        return ''+uuidv1()
-    }, [programmeInformation])
+    const [programmeId, setProgrammeId] = useState(programmeInformation.programme_id?''+programmeInformation.programme_id:'')
 
     const nomAppareil = configurationAppareil.descriptif || configurationAppareil.uuid_appareil
 
@@ -99,6 +95,14 @@ export function EditProgramme(props) {
     const [classeProgramme, setClasseProgramme] = useState(programmeInformation.class||'')
 
     const [argsProgramme, setArgsProgramme] = useState(programmeInformation.args||{})
+
+    useEffect(()=>{
+        if(programmeId) return
+        // Generer nouvel identificateur
+        const programmeIdNouveau = ''+uuidv1()
+        setProgrammeId(programmeIdNouveau)
+        setDescriptif(programmeIdNouveau)
+    }, [programmeId, setProgrammeId, setDescriptif])
 
     useEffect(()=>{
         if(programmeInformation.programme_id) return
@@ -237,7 +241,8 @@ function OptionsProgrammes(props) {
 function getProgrammesDisponibles() {
     return [
         { nom: 'Humidificateur', 'class': 'programmes.environnement.Humidificateur' },
-        { nom: 'Timer', 'class': 'programmes.timers.TimerHebdomadaire' },
+        { nom: 'Horaire', 'class': 'programmes.horaire.HoraireHebdomadaire' },
+        { nom: 'Timer', 'class': 'programmes.horaire.Timer' },
         { nom: 'Chauffage', 'class': 'programmes.environnement.Chauffage' },
         { nom: 'Climatisation/Refrigeration', 'class': 'programmes.environnement.Climatisation' },
         { nom: 'Notification Temperature', 'class': 'programmes.notifications.NotificationTemperature' },
@@ -259,7 +264,8 @@ function ConfigurerProgramme(props) {
         valeurMax = 100
     switch(classeProgramme) {
         case 'programmes.environnement.Humidificateur': ClasseEditeur = EditerProgrammeHumidificateur; break
-        case 'programmes.timers.TimerHebdomadaire': ClasseEditeur = EditerProgrammeTimer; break
+        case 'programmes.horaire.HoraireHebdomadaire': ClasseEditeur = EditerProgrammeHoraireHebdomadaire; break
+        case 'programmes.horaire.Timer': ClasseEditeur = EditerProgrammeTimer; break
         case 'programmes.environnement.Chauffage':
         case 'programmes.environnement.Climatisation':
             ClasseEditeur = EditerProgrammeTemperature; break
@@ -737,7 +743,7 @@ function EditerNotificationValeur(props) {
     )
 }
 
-function EditerProgrammeTimer(props) {
+function EditerProgrammeHoraireHebdomadaire(props) {
     const { appareil, programmeId, args, setArgs, listeSenseurs } = props
 
     const switchChangeHandler = useCallback(e=>{
@@ -782,8 +788,14 @@ function EditerProgrammeTimer(props) {
         }
 
         if(valueAjustee !== null) {
-            horaireMaj[idx] = {...horaireMaj[idx], [champ]: valueAjustee}
-            setArgs({...args, horaire: horaireMaj})
+            if(valueAjustee !== '') {
+                horaireMaj[idx] = {...horaireMaj[idx], [champ]: valueAjustee}
+            } else {
+                horaireMaj[idx] = {...horaireMaj[idx], [champ]: undefined}
+            }
+            const argsMaj = {...args, horaire: horaireMaj}
+            console.debug("Horaire maj : ", argsMaj)
+            setArgs(argsMaj)
         }
 
     }, [args, setArgs])
@@ -817,6 +829,39 @@ function EditerProgrammeTimer(props) {
                 onChange={onChangeHandler}
                 />
 
+        </div>
+    )
+}
+
+function EditerProgrammeTimer(props) {
+    const { appareil, programmeId, args, setArgs, listeSenseurs } = props
+
+    const switchChangeHandler = useCallback(e=>{
+        const value = e.currentTarget.value
+        const switches = []
+        if(value) switches.push(value)
+        setArgs({...args, switches})
+    }, [args, setArgs])
+
+    let switchTimer = ''
+    if(args.switches && args.switches.length > 0) switchTimer = args.switches[0]
+
+    return (
+        <div>
+            <Form.Group as={Row} className="mb-3" controlId={"switch-" + programmeId}>
+                <Form.Label column xs={12} md={5}>Switch</Form.Label>
+                <Col xs={12} md={7}>
+                    <ListeDevicesOptions 
+                        appareil={appareil} 
+                        devices={listeSenseurs} 
+                        typeDevice='switch' 
+                        local={true} 
+                        value={switchTimer} 
+                        onChange={switchChangeHandler} />
+                </Col>
+            </Form.Group>
+
+            <h3>Timer</h3>
         </div>
     )
 }
@@ -863,6 +908,7 @@ function EditerHoraire(props) {
             {horaire.length>0?
                 <Row>
                     <Col xs={2} sm={1}></Col>
+                    <Col className='d-none d-sm-block' sm={6}></Col>
                     <Col xs={3} sm={2} lg={1}>ON/OFF</Col>
                     <Col xs={3} sm={2} lg={1}>Heure</Col>
                     <Col xs={3} sm={2} lg={1}>Minutes</Col>
@@ -884,7 +930,15 @@ function EditerHeures(props) {
                 <Col xs={2} sm={1}>
                     <Button variant="danger" onClick={retirer} value={''+idx}>X</Button>
                 </Col>
-                <Col xs={3} sm={2} lg={1}>
+                <Col xs={5} sm={3}>
+                    <SelectJoursSemaine name={'jour_'+idx} value={item.jour} onChange={onChange} />
+                </Col>
+                <Col xs={5} sm={3}>
+                    <SelectHeureSolaire name={'solaire_'+idx} value={item.solaire} onChange={onChange} />
+                </Col>
+
+                <Col xs={2} className='d-sm-none'></Col>
+                <Col xs={3} sm={1} lg={1}>
                     <Form.Check id={'etat_'+idx} type="switch" name={'etat_'+idx} checked={item.etat === 1} onChange={onChange} />
                 </Col>
                 <Col xs={3} sm={2} lg={1}>
@@ -906,6 +960,42 @@ function EditerHeures(props) {
             </Row>
         )
     })
+}
+
+const CONST_JOURS_SEMAINE = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+
+function SelectJoursSemaine(props) {
+    const { name, value, onChange } = props
+
+    const valueStr = value?''+value:''
+
+    const jours = CONST_JOURS_SEMAINE.map((item, idx)=>{
+        return (<option value={''+idx}>{item}</option>)
+    })
+    return (
+        <Form.Select name={name} value={valueStr} onChange={onChange}>
+            <option value=''>Tous les jours</option>
+            {jours}
+        </Form.Select>
+    )
+}
+
+const CONST_HEURE_SOLAIRE = ['dawn', 'sunrise', 'noon', 'sunset', 'dusk']
+
+function SelectHeureSolaire(props) {
+    const { name, value, onChange } = props
+
+    const valueStr = value?''+value:''
+
+    const jours = CONST_HEURE_SOLAIRE.map((item, idx)=>{
+        return (<option value={item}>{item}</option>)
+    })
+    return (
+        <Form.Select name={name} value={valueStr} onChange={onChange}>
+            <option value=''>Heure</option>
+            {jours}
+        </Form.Select>
+    )
 }
 
 function validateNumber(val, opts) {
