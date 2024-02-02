@@ -970,7 +970,7 @@ function SelectJoursSemaine(props) {
     const valueStr = value?''+value:''
 
     const jours = CONST_JOURS_SEMAINE.map((item, idx)=>{
-        return (<option value={''+idx}>{item}</option>)
+        return <option key={''+idx} value={''+idx}>{item}</option>
     })
     return (
         <Form.Select name={name} value={valueStr} onChange={onChange}>
@@ -988,7 +988,7 @@ function SelectHeureSolaire(props) {
     const valueStr = value?''+value:''
 
     const jours = CONST_HEURE_SOLAIRE.map((item, idx)=>{
-        return (<option value={item}>{item}</option>)
+        return <option key={''+idx} value={item}>{item}</option>
     })
     return (
         <Form.Select name={name} value={valueStr} onChange={onChange}>

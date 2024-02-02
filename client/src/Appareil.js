@@ -104,9 +104,18 @@ function Appareil(props) {
         }
         setProgrammes(programmesMaj)
 
-        const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays, programmesMaj)
-        console.debug("Maj configuration ", configMaj)
-        workers.connexion.majAppareil(configMaj)
+        // S'assurer d'avoir les valeurs mandatory si suppression
+        programme['class'] = programme['class'] || ''
+        programme.args = programme.args || {}
+
+        const programmeCommande = {
+            uuid_appareil: appareil.uuid_appareil,
+            programme,
+            supprimer: programme.supprimer || false,
+        }
+
+        console.debug("Commande programme : ", programmeCommande)
+        workers.connexion.sauvegarderProgramme(programmeCommande)
             .then(reponse=>{
                 console.debug("Reponse MAJ appareil : ", reponse)
                 dispatch(mergeAppareil(reponse))
@@ -115,6 +124,18 @@ function Appareil(props) {
                 setProgrammeEdit('')
             })
             .catch(err=>console.error("Erreur maj appareil : ", err))
+
+        // const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays, programmesMaj)
+        // console.debug("Maj programme ", configMaj)
+        // workers.connexion.sauvegarderProgramme(programme)
+        //     .then(reponse=>{
+        //         console.debug("Reponse MAJ appareil : ", reponse)
+        //         dispatch(mergeAppareil(reponse))
+        //         setModeEdition(false)
+        //         setDisplayEdit('')
+        //         setProgrammeEdit('')
+        //     })
+        //     .catch(err=>console.error("Erreur maj appareil : ", err))
 
     }, [workers, dispatch, appareil, descriptif, cacherSenseurs, descriptifSenseurs, displays, programmes, setModeEdition, setDisplayEdit, setProgrammeEdit, setProgrammes])
 

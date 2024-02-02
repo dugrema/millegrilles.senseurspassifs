@@ -96,6 +96,19 @@ function majSenseur(partition, params) {
   )
 }
 
+function sauvegarderProgramme(params) {
+  return ConnexionClient.emitBlocking(
+    'sauvegarderProgramme', 
+    params, 
+    {
+      kind: MESSAGE_KINDS.KIND_COMMANDE, 
+      domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+      action: 'sauvegarderProgramme', 
+      ajouterCertificat: true,
+    }
+  )
+}
+
 function challengeAppareil(commande) {
   return ConnexionClient.emitBlocking('challengeAppareil', commande, {
     kind: MESSAGE_KINDS.KIND_COMMANDE, 
@@ -192,7 +205,7 @@ expose({
 
     // Requetes et commandes privees
     getAppareilsUsager, 
-    majAppareil, 
+    majAppareil, sauvegarderProgramme,
     challengeAppareil, signerAppareil, getAppareilsEnAttente,
     
     getConfigurationUsager, majConfigurationUsager,
