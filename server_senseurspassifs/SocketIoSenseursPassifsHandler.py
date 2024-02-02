@@ -23,6 +23,7 @@ class SocketIoSenseursPassifsHandler(SocketIoHandler):
         self._sio.on('challengeAppareil', handler=self.challenge_appareil)
         self._sio.on('signerAppareil', handler=self.signer_appareil)
         self._sio.on('majAppareil', handler=self.maj_appareil)
+        self._sio.on('sauvegarderProgramme', handler=self.sauvegarder_programme)
         self._sio.on('commandeAppareil', handler=self.commande_appareil)
         self._sio.on('supprimerAppareil', handler=self.supprimer_appareil)
         self._sio.on('restaurerAppareil', handler=self.restaurer_appareil)
@@ -67,6 +68,10 @@ class SocketIoSenseursPassifsHandler(SocketIoHandler):
     async def maj_appareil(self, sid: str, message: dict):
         return await self.executer_commande(sid, message,
                                             ConstantesSenseursPassifs.NOM_DOMAINE, 'majAppareil')
+
+    async def sauvegarder_programme(self, sid: str, message: dict):
+        return await self.executer_commande(sid, message,
+                                            ConstantesSenseursPassifs.NOM_DOMAINE, 'sauvegarderProgramme')
 
     async def commande_appareil(self, sid: str, message: dict):
         return await self.executer_commande(sid, message,
