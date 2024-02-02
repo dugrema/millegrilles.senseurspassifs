@@ -822,6 +822,15 @@ function EditerProgrammeHoraireHebdomadaire(props) {
 
             <h3>Horaire</h3>
 
+            <p>
+                Notes
+            </p>
+            <ul>
+                <li>Options solaires (dawn, sunrise, etc) vont ignorer l'heure. Il faut avoir fourni les coordonnées (géoposition) de l'appareil pour utiliser cette option. Les minutes sont optionnelles et utilisées comme offset (e.g. levé du soleil +10 minutes).</li>
+                <li>Les jours de la semaine sont programmables un par un. Pour avoir un horaire du lundi au vendredi, il faut programmer chaque jour séparément. Noter que pour une lumière, il est possible de la faire fermer tous les jours mais juste allumer certains jours.</li>
+                <li>L'ordre des lignes n'a pas d'importance.</li>
+            </ul>
+
             <EditerHoraire 
                 horaire={horaire}
                 ajouter={ajouterHeureHandler}
@@ -962,7 +971,8 @@ function EditerHeures(props) {
     })
 }
 
-const CONST_JOURS_SEMAINE = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+// Aligner sur Python - monday=0, sunday=6
+const CONST_JOURS_SEMAINE = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
 
 function SelectJoursSemaine(props) {
     const { name, value, onChange } = props
