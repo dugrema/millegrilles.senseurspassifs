@@ -5,6 +5,7 @@ import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
+import Alert from 'react-bootstrap/Alert'
 
 import {useEtatPret} from './WorkerContext'
 
@@ -242,6 +243,7 @@ function getProgrammesDisponibles() {
     return [
         { nom: 'Humidificateur', 'class': 'programmes.environnement.Humidificateur' },
         { nom: 'Horaire', 'class': 'programmes.horaire.HoraireHebdomadaire' },
+        { nom: 'Horaire (Obsolete, <2024.0)', 'class': 'programmes.timers.TimerHebdomadaire' },
         { nom: 'Timer', 'class': 'programmes.horaire.Timer' },
         { nom: 'Chauffage', 'class': 'programmes.environnement.Chauffage' },
         { nom: 'Climatisation/Refrigeration', 'class': 'programmes.environnement.Climatisation' },
@@ -265,6 +267,7 @@ function ConfigurerProgramme(props) {
     switch(classeProgramme) {
         case 'programmes.environnement.Humidificateur': ClasseEditeur = EditerProgrammeHumidificateur; break
         case 'programmes.horaire.HoraireHebdomadaire': ClasseEditeur = EditerProgrammeHoraireHebdomadaire; break
+        case 'programmes.timers.TimerHebdomadaire': ClasseEditeur = EditerProgrammeHorairePre2024; break
         case 'programmes.horaire.Timer': ClasseEditeur = EditerProgrammeTimer; break
         case 'programmes.environnement.Chauffage':
         case 'programmes.environnement.Climatisation':
@@ -860,6 +863,151 @@ function EditerProgrammeHoraireHebdomadaire(props) {
 
         </div>
     )
+}
+
+function EditerProgrammeHorairePre2024(props) {
+    const { appareil, programmeId, args, setArgs, listeSenseurs } = props
+
+    const switchChangeHandler = useCallback(e=>{
+        const value = e.currentTarget.value
+        const switches = []
+        if(value) switches.push(value)
+        setArgs({...args, switches})
+    }, [args, setArgs])
+
+    const ajouterHeureHandler = useCallback(()=>{
+        const horaire = args.horaire || []
+        const horaireMaj = [...horaire, {etat: 0, heure: 8, minute: 0}]
+        setArgs({...args, horaire: horaireMaj})
+    }, [args, setArgs])
+
+    const retirerHeureHandler = useCallback( e => {
+        const ligneNo = Number.parseInt(e.currentTarget.value)
+        const horaireMaj = args.horaire.filter((_, idx)=>idx!==ligneNo)
+        setArgs({...args, horaire: horaireMaj})
+    }, [args, setArgs])
+
+    const onChangeHandler = useCallback( e => {
+        const { name, checked, value } = e.currentTarget
+        const [ champ, idx ] = name.split('_')
+        
+        // Copier horaire
+        const horaireMaj = [...args.horaire]
+
+        // Copier ligne avec nouvelle valeur
+        let valueAjustee = value
+        switch(champ) {
+            case 'etat':
+                valueAjustee = (checked===true)?1:0
+                break
+            case 'heure':
+                valueAjustee = validateNumber(value, {min: 0, max: 23})
+                break
+            case 'minute':
+                valueAjustee = validateNumber(value, {min: 0, max: 59})
+                break
+            default:
+        }
+
+        if(valueAjustee !== null) {
+            horaireMaj[idx] = {...horaireMaj[idx], [champ]: valueAjustee}
+            setArgs({...args, horaire: horaireMaj})
+        }
+
+    }, [args, setArgs])
+
+    const horaire = args.horaire || []
+    let switchTimer = ''
+    if(args.switches && args.switches.length > 0) switchTimer = args.switches[0]
+
+    return (
+        <div>
+
+            <Form.Group as={Row} className="mb-3" controlId={"switch-" + programmeId}>
+                <Form.Label column xs={12} md={5}>Switch</Form.Label>
+                <Col xs={12} md={7}>
+                    <ListeDevicesOptions 
+                        appareil={appareil} 
+                        devices={listeSenseurs} 
+                        typeDevice='switch' 
+                        local={true} 
+                        value={switchTimer} 
+                        onChange={switchChangeHandler} />
+                </Col>
+            </Form.Group>
+
+            <h3>Horaire</h3>
+
+            <Alert variant="warning">
+                <Alert.Heading>Obsolete</Alert.Heading>
+                <p>Obsolete, pre 2024.0. Ne pas utiliser avec des appareils post 2024.0</p>
+            </Alert>
+
+            <EditerHorairePre2024 
+                horaire={horaire}
+                ajouter={ajouterHeureHandler}
+                retirer={retirerHeureHandler}
+                onChange={onChangeHandler}
+                />
+
+        </div>
+    )
+}
+
+
+function EditerHorairePre2024(props) {
+
+    const { horaire, ajouter, retirer, onChange } = props
+
+    return (
+        <div>
+            <Button variant='secondary' onClick={ajouter}>Ajouter heure</Button>
+            {horaire.length>0?
+                <Row>
+                    <Col xs={2} sm={1}></Col>
+                    <Col xs={3} sm={2} lg={1}>ON/OFF</Col>
+                    <Col xs={3} sm={2} lg={1}>Heure</Col>
+                    <Col xs={3} sm={2} lg={1}>Minutes</Col>
+                </Row>
+            :''}
+            <EditerHeuresPre2024 horaire={horaire} retirer={retirer} onChange={onChange} />
+        </div>
+    )
+}
+
+function EditerHeuresPre2024(props) {
+    const { horaire, retirer, onChange } = props
+
+    if(horaire.length === 0) return ''
+
+    return horaire.map((item, idx)=>{
+        return (
+            <Row key={idx}>
+                <Col xs={2} sm={1}>
+                    <Button variant="danger" onClick={retirer} value={''+idx}>X</Button>
+                </Col>
+                <Col xs={3} sm={2} lg={1}>
+                    <Form.Check id={'etat_'+idx} type="switch" name={'etat_'+idx} checked={item.etat === 1} onChange={onChange} />
+                </Col>
+                <Col xs={3} sm={2} lg={1}>
+                    <Form.Control 
+                        type='text' 
+                        inputMode='numeric'
+                        name={'heure_'+idx} 
+                        value={item.heure} 
+                        onChange={onChange} />
+                </Col>
+                <Col xs={3} sm={2} lg={1}>
+                    <Form.Control 
+                        type='text' 
+                        inputMode='numeric'
+                        name={'minute_'+idx} 
+                        value={item.minute} 
+                        onChange={onChange} />
+                </Col>
+            </Row>
+        )
+    })
 }
 
 function EditerProgrammeTimer(props) {
