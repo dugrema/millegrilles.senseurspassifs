@@ -848,6 +848,7 @@ function EditerProgrammeHoraireHebdomadaire(props) {
                 <li>Options solaires (dawn, sunrise, etc) vont ignorer l'heure. Il faut avoir fourni les coordonnées (géoposition) de l'appareil pour utiliser cette option. Les minutes sont optionnelles et utilisées comme offset (e.g. levé du soleil +10 minutes).</li>
                 <li>Les jours de la semaine sont programmables un par un. Pour avoir un horaire du lundi au vendredi, il faut programmer chaque jour séparément. Noter que pour une lumière, il est possible de la faire fermer tous les jours mais juste allumer certains jours.</li>
                 <li>L'ordre des lignes n'a pas d'importance.</li>
+                <li>L'activation initiale au redémarrage détermine si la switch devrait être ON ou OFF lors du démarrage de l'appareil. Utile en cas de panne de courant.</li>
             </ul>
 
             <EditerHoraire 

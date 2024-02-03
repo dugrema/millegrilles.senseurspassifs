@@ -12,14 +12,10 @@ import useWorkers, {useEtatPret} from './WorkerContext'
 import { push as pushAppareils, mergeAppareil } from './redux/appareilsSlice'
 
 import Appareil from './Appareil'
-import { IconeConnecte } from './ComponentsPartages'
+import { IconeConnecte, CONST_DATE_VIEILLE, CONST_DATE_EXPIREE } from './ComponentsPartages'
 
 const AfficherSenseurs = React.lazy( () => import('./AfficherSenseurs') )
 const SenseurDetail = React.lazy( () => import('./SenseurDetail') )
-
-const CONST_DATE_VIEILLE = 300,
-      CONST_DATE_EXPIREE = 1800
-
 
 function Accueil(props) {
 

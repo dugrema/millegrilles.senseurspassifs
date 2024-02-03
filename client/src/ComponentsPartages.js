@@ -1,3 +1,6 @@
+export const CONST_DATE_VIEILLE = 300,
+      CONST_DATE_EXPIREE = 1800
+
 export function IconeConnecte(props) {
     const { value } = props
   

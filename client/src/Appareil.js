@@ -15,6 +15,8 @@ import { ListeProgrammes, EditProgramme } from './Programmes'
 import { geolocate } from './geolocation'
 import { OptionsTimezones } from './timezones'
 
+import { IconeConnecte, CONST_DATE_VIEILLE, CONST_DATE_EXPIREE } from './ComponentsPartages'
+
 const AfficherSenseurs = lazy( () => import('./AfficherSenseurs') )
 
 function Appareil(props) {
@@ -58,6 +60,20 @@ function Appareil(props) {
         if(modeEdition) setModeEdition(false)
         else fermer()
     }, [modeEdition, setModeEdition, fermer])
+
+    const classNameDate = useMemo(()=>{
+        const dateCourante = new Date().getTime() / 1000,
+              dateVieille = dateCourante - CONST_DATE_VIEILLE,
+              dateExpiree = dateCourante - CONST_DATE_EXPIREE
+        let classNameDate = 'valeur-date-droite'
+        const derniere_lecture = appareil.derniere_lecture
+        if(!derniere_lecture || derniere_lecture < dateExpiree) {
+          classNameDate += ' expire'
+        } else if(!derniere_lecture || derniere_lecture < dateVieille) {
+          classNameDate += ' vieux'
+        }
+        return classNameDate
+    }, [appareil])
 
     // Configuration sommaire
     const [cacherSenseurs, setCacherSenseurs] = useState([])
@@ -124,18 +140,6 @@ function Appareil(props) {
                 setProgrammeEdit('')
             })
             .catch(err=>console.error("Erreur maj appareil : ", err))
-
-        // const configMaj = formatterConfiguration(appareil, cacherSenseurs, descriptif, descriptifSenseurs, displays, programmesMaj)
-        // console.debug("Maj programme ", configMaj)
-        // workers.connexion.sauvegarderProgramme(programme)
-        //     .then(reponse=>{
-        //         console.debug("Reponse MAJ appareil : ", reponse)
-        //         dispatch(mergeAppareil(reponse))
-        //         setModeEdition(false)
-        //         setDisplayEdit('')
-        //         setProgrammeEdit('')
-        //     })
-        //     .catch(err=>console.error("Erreur maj appareil : ", err))
 
     }, [workers, dispatch, appareil, descriptif, cacherSenseurs, descriptifSenseurs, displays, programmes, setModeEdition, setDisplayEdit, setProgrammeEdit, setProgrammes])
 
@@ -223,7 +227,8 @@ function Appareil(props) {
             <h3>Senseurs</h3>
             <Row>
                 <Col xs={12} md={5}>Plus recente lecture</Col>
-                <Col>
+                <Col className={classNameDate}>
+                    <IconeConnecte value={appareil.connecte} />{' '}
                     <FormatterDate value={appareil.derniere_lecture} />
                 </Col>
             </Row>
@@ -277,6 +282,10 @@ export default Appareil
 function InformationAppareil(props) {
     const { appareil, modeEdition, descriptif, setDescriptif, timezone, setTimezone, geoposition, setGeoposition } = props
     
+    useEffect(()=>{
+        console.debug("Appareil : %O", appareil)
+    }, [appareil])
+
     return (
         <div>
             <NomAppareil 
@@ -288,6 +297,13 @@ function InformationAppareil(props) {
                 <Col xs={12} md={5}>Identificateur unique (uuid_appareil)</Col>
                 <Col>
                     {appareil.uuid_appareil}
+                </Col>
+            </Row>
+
+            <Row>
+                <Col xs={12} md={5}>Version</Col>
+                <Col>
+                    {appareil.version}
                 </Col>
             </Row>
 
