@@ -753,6 +753,16 @@ function EditerProgrammeHoraireHebdomadaire(props) {
         setArgs({...args, switches})
     }, [args, setArgs])
 
+    const [activationInitiale, setActivationInitiale] = useState(args.activationInitiale||false)
+    const activationInitialeChangeHandler = useCallback(e=>{
+        const checked = e.currentTarget.checked
+        console.debug("activationInitialeChangeHandler checked %O", checked)
+        const copieArgs = {...args, activationInitiale: checked}
+        setActivationInitiale(checked)
+        console.debug("Args modifies : %O", copieArgs)
+        setArgs(copieArgs)
+    }, [args, setArgs, setActivationInitiale])
+
     const ajouterHeureHandler = useCallback(()=>{
         const horaire = args.horaire || []
         const horaireMaj = [...horaire, {etat: 0, heure: 8, minute: 0}]
@@ -817,6 +827,15 @@ function EditerProgrammeHoraireHebdomadaire(props) {
                         local={true} 
                         value={switchTimer} 
                         onChange={switchChangeHandler} />
+                </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId="activationInitiale">
+                <Form.Label column xs={12} md={5}>
+                    Activation initiale au redemarrage
+                </Form.Label>
+                <Col>
+                    <Form.Check id='activationInitiale' type="switch" checked={activationInitiale} onChange={activationInitialeChangeHandler} />
                 </Col>
             </Form.Group>
 
