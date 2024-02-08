@@ -29,6 +29,7 @@ class SocketIoSenseursPassifsHandler(SocketIoHandler):
         self._sio.on('restaurerAppareil', handler=self.restaurer_appareil)
         self._sio.on('getConfigurationUsager', handler=self.get_configuration_usager)
         self._sio.on('majConfigurationUsager', handler=self.maj_configuration_usager)
+        self._sio.on('resetCertificatsAppareils', handler=self.reset_certificats_appareils)
 
         self._sio.on('ecouterEvenementsAppareilsUsager', handler=self.ecouter_appareils_usager)
         self._sio.on('retirerEvenementsAppareilsUsager', handler=self.retirer_appareils_usager)
@@ -64,6 +65,10 @@ class SocketIoSenseursPassifsHandler(SocketIoHandler):
     async def maj_configuration_usager(self, sid: str, message: dict):
         return await self.executer_commande(sid, message,
                                             ConstantesSenseursPassifs.NOM_DOMAINE, 'majConfigurationUsager')
+
+    async def reset_certificats_appareils(self, sid: str, message: dict):
+        return await self.executer_commande(sid, message,
+                                            ConstantesSenseursPassifs.NOM_DOMAINE, 'resetCertificatsAppareils')
 
     async def maj_appareil(self, sid: str, message: dict):
         return await self.executer_commande(sid, message,

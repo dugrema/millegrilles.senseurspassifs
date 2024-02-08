@@ -211,9 +211,7 @@ function ListeAppareilsAttente(props) {
     const workers = useWorkers()
     const dispatch = useDispatch()
 
-    useEffect(()=>{
-        if(disabled) return
-
+    const rafraichir = useCallback(()=>{
         workers.connexion.getAppareilsEnAttente()
             .then(reponse => {
                 console.debug("Reponse appareils en attente ", reponse)
@@ -222,11 +220,40 @@ function ListeAppareilsAttente(props) {
             .catch(err=>console.error("Erreur chargement appareils en attente : %O", err))
     }, [dispatch, workers, disabled])
 
+    useEffect(()=>{
+        if(disabled) return
+        rafraichir()
+        const interval = setInterval(rafraichir, 10_000)
+        return () => {
+            clearInterval(interval)
+        }
+    }, [rafraichir, disabled])
+
     return (
         <div>
             <h2>Appareils en attente</h2>
+            <AppareilsCommandes />
             <AfficherAppareils />
         </div>
+    )
+}
+
+function AppareilsCommandes(props) {
+
+    const workers = useWorkers()
+
+    const clearCertificats = useCallback(()=>{
+        workers.connexion.resetCertificatsAppareils()
+            .then(reponse => {
+                console.debug("Reponse reset certificats ", reponse)
+            })
+            .catch(err=>console.error("Erreur reset certificats : %O", err))
+    }, [workers])
+
+    return (
+        <>
+            <Button variant="secondary" onClick={clearCertificats}>Clear certificats (debug)</Button>{' '}
+        </>
     )
 }
 

@@ -189,6 +189,16 @@ function majConfigurationUsager(nomUsager, params) {
   })
 }
 
+function resetCertificatsAppareils() {
+  const commande = {}
+  return ConnexionClient.emitBlocking('resetCertificatsAppareils', commande, {
+    kind: MESSAGE_KINDS.KIND_COMMANDE, 
+    domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
+    action: 'resetCertificatsAppareils', 
+    ajouterCertificat: true,
+  })
+}
+
 // Evenements
 
 async function ecouterEvenementsAppareilsUsager(cb) {
@@ -212,7 +222,7 @@ expose({
     getListeSenseursNoeud, getStatistiquesSenseur,
     getListeNoeuds, majNoeud, 
     majSenseur, commandeAppareil,
-    supprimerAppareil, restaurerAppareil,
+    supprimerAppareil, restaurerAppareil, resetCertificatsAppareils,
 
     // Event listeners proteges
     ecouterEvenementsAppareilsUsager, retirerEvenementsAppareilsUsager,
