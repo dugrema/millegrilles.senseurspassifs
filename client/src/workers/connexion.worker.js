@@ -140,7 +140,7 @@ function getAppareilsEnAttente(commande) {
 
 function commandeAppareil(instance_id, commande) {
   commande = commande || {}
-  return connexionClient.emitWithAck('commandeAppareil', commande, {
+  return connexionClient.emit('commandeAppareil', commande, {
     kind: MESSAGE_KINDS.KIND_COMMANDE, 
     domaine: CONST_SENSEURSPASSIFS_RELAI, 
     partition: instance_id,

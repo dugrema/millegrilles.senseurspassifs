@@ -80,7 +80,7 @@ class SocketIoSenseursPassifsHandler(SocketIoHandler):
 
     async def commande_appareil(self, sid: str, message: dict):
         return await self.executer_commande(sid, message,
-                                            'senseurspassifs_relai', 'commandeAppareil')
+                                            'senseurspassifs_relai', 'commandeAppareil', nowait=True)
 
     async def supprimer_appareil(self, sid: str, message: dict):
         return await self.executer_commande(sid, message,

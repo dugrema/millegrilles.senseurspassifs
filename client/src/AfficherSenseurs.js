@@ -166,12 +166,9 @@ function AfficherValeurFormattee(props) {
             valeur: toggleValeur,
             commande_action: 'setSwitchValue'
         }
-        console.debug("Emettre commande switch ", commande)
+        // console.debug("Emettre commande switch ", commande)
         startTogglingCb()
         connexion.commandeAppareil(instance_id, commande)
-            .then(reponse=>{
-                console.debug("Commande emise ", reponse)
-            })
             .catch(err=>console.error("AfficherValeurFormattee.toggleSwitchHandler Erreur ", err))
     }, [workers, instance_id, uuid_appareil, senseurId, valeur, startTogglingCb])
 
