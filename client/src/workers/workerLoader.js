@@ -20,26 +20,6 @@ export function setupWorkers() {
 
   const ready = wireWorkers(workers)
 
-  // const location = new URL(window.location)
-  // location.pathname = '/fiche.json'
-
-  // import('axios')
-  //   .then(axiosImport=>{
-  //       const axios = axiosImport.default
-  //       console.debug("Axios : ", axios)
-  //       return axios.get(location.href)
-  //     })
-  //   .then(reponse=>{
-  //     const fiche = reponse.data || {}
-  //     const ca = fiche.ca
-  //     if(ca) {
-  //       return connexion.proxy.initialiserCertificateStore(ca, {isPEM: true, DEBUG: false})
-  //     }
-  //   })
-  //   .catch(err=>{
-  //     console.error("Erreur chargement fiche systeme : %O", err)
-  //   })
-
   return { workerInstances, workers, ready }
 }
 
@@ -61,7 +41,8 @@ async function wireWorkers(workers) {
       // console.debug("initialiserCertificateStore (connexion, chiffrage)")
       await Promise.all([
           connexion.initialiserCertificateStore(ca, {isPEM: true, DEBUG: false}),
-          chiffrage.initialiserCertificateStore(ca, {isPEM: true, DEBUG: false})
+          chiffrage.initialiserCertificateStore(ca, {isPEM: true, DEBUG: false}),
+          chiffrage.init(ca),  // x509
       ])
   } else {
       throw new Error("Erreur initialisation - fiche/CA non disponible")

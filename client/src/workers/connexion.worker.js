@@ -1,12 +1,13 @@
 import { expose } from 'comlink'
-import * as ConnexionClient from '@dugrema/millegrilles.reactjs/src/connexionClient'
+// import * as ConnexionClient from '@dugrema/millegrilles.reactjs/src/connexionClient'
+import connexionClient from '@dugrema/millegrilles.reactjs/src/connexionClientV2'
 import { MESSAGE_KINDS } from '@dugrema/millegrilles.utiljs/src/constantes'
 
 const CONST_DOMAINE_SENSEURSPASSIFS = 'SenseursPassifs',
       CONST_SENSEURSPASSIFS_RELAI = 'senseurspassifs_relai'
 
 function getListeNoeuds() {
-  return ConnexionClient.emitBlocking('getListeNoeuds', {}, {
+  return connexionClient.emitWithAck('getListeNoeuds', {}, {
     kind: MESSAGE_KINDS.KIND_REQUETE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, action: 'listeNoeuds', ajouterCertificat: true})
 }
@@ -15,7 +16,7 @@ function getListeSenseursNoeud(instance_id, opts) {
   opts = opts || {}
   const partition = opts.partition || instance_id
   console.debug("getListeSenseursNoeud, instance_id: %s", instance_id)
-  return ConnexionClient.emitBlocking(
+  return connexionClient.emitWithAck(
     'getListeSenseursNoeud', 
     {instance_id}, 
     {
@@ -30,7 +31,7 @@ function getListeSenseursNoeud(instance_id, opts) {
 
 function getAppareilsUsager(requete) {
   requete = requete || {}
-  return ConnexionClient.emitBlocking(
+  return connexionClient.emitWithAck(
     'getAppareilsUsager',
     requete,
     {
@@ -43,7 +44,7 @@ function getAppareilsUsager(requete) {
 }
 
 function getStatistiquesSenseur(requete) {
-  return ConnexionClient.emitBlocking(
+  return connexionClient.emitWithAck(
     'getStatistiquesSenseur',
     requete,
     {
@@ -56,7 +57,7 @@ function getStatistiquesSenseur(requete) {
 }
 
 function majAppareil(params) {
-  return ConnexionClient.emitBlocking(
+  return connexionClient.emitWithAck(
     'majAppareil', 
     params, 
     {
@@ -69,7 +70,7 @@ function majAppareil(params) {
 }
 
 function majNoeud(partition, params) {
-  return ConnexionClient.emitBlocking(
+  return connexionClient.emitWithAck(
     'majNoeud', 
     params, 
     {
@@ -83,7 +84,7 @@ function majNoeud(partition, params) {
 }
 
 function majSenseur(partition, params) {
-  return ConnexionClient.emitBlocking(
+  return connexionClient.emitWithAck(
     'majSenseur', 
     params, 
     {
@@ -97,7 +98,7 @@ function majSenseur(partition, params) {
 }
 
 function sauvegarderProgramme(params) {
-  return ConnexionClient.emitBlocking(
+  return connexionClient.emitWithAck(
     'sauvegarderProgramme', 
     params, 
     {
@@ -110,7 +111,7 @@ function sauvegarderProgramme(params) {
 }
 
 function challengeAppareil(commande) {
-  return ConnexionClient.emitBlocking('challengeAppareil', commande, {
+  return connexionClient.emitWithAck('challengeAppareil', commande, {
     kind: MESSAGE_KINDS.KIND_COMMANDE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
     action: 'challengeAppareil', 
@@ -119,7 +120,7 @@ function challengeAppareil(commande) {
 }
 
 function signerAppareil(commande) {
-  return ConnexionClient.emitBlocking('signerAppareil', commande, {
+  return connexionClient.emitWithAck('signerAppareil', commande, {
     kind: MESSAGE_KINDS.KIND_COMMANDE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
     action: 'signerAppareil', 
@@ -129,7 +130,7 @@ function signerAppareil(commande) {
 
 function getAppareilsEnAttente(commande) {
   commande = commande || {}
-  return ConnexionClient.emitBlocking('getAppareilsEnAttente', commande, {
+  return connexionClient.emitWithAck('getAppareilsEnAttente', commande, {
     kind: MESSAGE_KINDS.KIND_REQUETE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
     action: 'getAppareilsEnAttente', 
@@ -139,7 +140,7 @@ function getAppareilsEnAttente(commande) {
 
 function commandeAppareil(instance_id, commande) {
   commande = commande || {}
-  return ConnexionClient.emitBlocking('commandeAppareil', commande, {
+  return connexionClient.emitWithAck('commandeAppareil', commande, {
     kind: MESSAGE_KINDS.KIND_COMMANDE, 
     domaine: CONST_SENSEURSPASSIFS_RELAI, 
     partition: instance_id,
@@ -150,7 +151,7 @@ function commandeAppareil(instance_id, commande) {
 
 function supprimerAppareil(uuid_appareil) {
   const commande = { uuid_appareil }
-  return ConnexionClient.emitBlocking('supprimerAppareil', commande, {
+  return connexionClient.emitWithAck('supprimerAppareil', commande, {
     kind: MESSAGE_KINDS.KIND_COMMANDE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
     action: 'supprimerAppareil', 
@@ -160,7 +161,7 @@ function supprimerAppareil(uuid_appareil) {
 
 function restaurerAppareil(uuid_appareil) {
   const commande = { uuid_appareil }
-  return ConnexionClient.emitBlocking('restaurerAppareil', commande, {
+  return connexionClient.emitWithAck('restaurerAppareil', commande, {
     kind: MESSAGE_KINDS.KIND_COMMANDE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
     action: 'restaurerAppareil', 
@@ -170,7 +171,7 @@ function restaurerAppareil(uuid_appareil) {
 
 function getConfigurationUsager(nomUsager) {
   const requete = {nom_usager: nomUsager}
-  return ConnexionClient.emitBlocking('getConfigurationUsager', requete, {
+  return connexionClient.emitWithAck('getConfigurationUsager', requete, {
     kind: MESSAGE_KINDS.KIND_REQUETE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
     action: 'getConfigurationUsager',
@@ -181,7 +182,7 @@ function getConfigurationUsager(nomUsager) {
 function majConfigurationUsager(nomUsager, params) {
   const commande = {nom_usager: nomUsager}
   commande.timezone = params.timezone
-  return ConnexionClient.emitBlocking('majConfigurationUsager', commande, {
+  return connexionClient.emitWithAck('majConfigurationUsager', commande, {
     kind: MESSAGE_KINDS.KIND_COMMANDE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
     action: 'majConfigurationUsager', 
@@ -191,7 +192,7 @@ function majConfigurationUsager(nomUsager, params) {
 
 function resetCertificatsAppareils() {
   const commande = {}
-  return ConnexionClient.emitBlocking('resetCertificatsAppareils', commande, {
+  return connexionClient.emitWithAck('resetCertificatsAppareils', commande, {
     kind: MESSAGE_KINDS.KIND_COMMANDE, 
     domaine: CONST_DOMAINE_SENSEURSPASSIFS, 
     action: 'resetCertificatsAppareils', 
@@ -202,16 +203,17 @@ function resetCertificatsAppareils() {
 // Evenements
 
 async function ecouterEvenementsAppareilsUsager(cb) {
-  return ConnexionClient.subscribe('ecouterEvenementsAppareilsUsager', cb, {}) 
+  return connexionClient.subscribe('ecouterEvenementsAppareilsUsager', cb, {}) 
 }
 
 async function retirerEvenementsAppareilsUsager(cb) {
-  return ConnexionClient.unsubscribe('retirerEvenementsAppareilsUsager', cb, {}) 
+  return connexionClient.unsubscribe('retirerEvenementsAppareilsUsager', cb, {}) 
 }
 
 // Exposer methodes du Worker
 expose({
-    ...ConnexionClient, 
+    // ...ConnexionClient, 
+    ...connexionClient,
 
     // Requetes et commandes privees
     getAppareilsUsager, 
