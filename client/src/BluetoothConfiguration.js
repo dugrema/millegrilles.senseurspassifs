@@ -239,15 +239,15 @@ function sortDevices(a, b) {
 
 async function requestDevice() {
     let device = null
-    const configurerUuid = millegrillesServicesConst.services.configurer.uuid,
+    const commandesUuid = millegrillesServicesConst.services.commandes.uuid,
           etatUuid  = millegrillesServicesConst.services.etat.uuid,
           environmentalUuid = 0x181a
-    console.debug("Services %s, %s", configurerUuid, etatUuid)
+    console.debug("Services %s, %s", commandesUuid, etatUuid)
     try {
         device = await bluetooth.requestDevice({
             // Requis : service de configuration
             // filters: [{services: [etatUuid]}],
-            filters: [{services: [configurerUuid]}],
+            filters: [{services: [commandesUuid]}],
             // Optionnels - requis par Chrome sur Windows (permission d'acces)
             // optionalServices: [configurerUuid, environmentalUuid],
             optionalServices: [etatUuid, environmentalUuid],
@@ -260,7 +260,7 @@ async function requestDevice() {
         // Reessayer sans optionalServices (pour navigateur bluefy)
         device = await bluetooth.requestDevice({
             // Requis : service de configuration
-            filters: [{services: [configurerUuid, etatUuid]}],
+            filters: [{services: [commandesUuid, etatUuid]}],
         })
     }
     console.debug("Device choisi ", device)
@@ -301,6 +301,7 @@ function ConfigurerAppareilSelectionne(props) {
             <h3>Configurer {deviceSelectionne.name}</h3>
 
             <EtatAppareil value={etatAppareil} />
+            <EtatLectures value={etatAppareil} />
             
             <SoumettreConfiguration 
                 show={!!etatAppareil}
@@ -327,10 +328,58 @@ function EtatAppareil(props) {
             <Row><Col xs={6} sm={4} md={3}>WIFI subnet</Col><Col>{value.subnet}</Col></Row>
             <Row><Col xs={6} sm={4} md={3}>WIFI gateway</Col><Col>{value.gateway}</Col></Row>
             <Row><Col xs={6} sm={4} md={3}>WIFI dns</Col><Col>{value.dns}</Col></Row>
+        </div>
+    )
+}
+
+function EtatLectures(props) {
+    const { value } = props
+
+    if(!value) return ''
+
+    return (
+        <div>
+            <p></p>
 
             <Row><Col xs={6} sm={4} md={3}>Ntp sync</Col><Col>{value.ntp?'Oui':'Non'}</Col></Row>
             <Row><Col xs={6} sm={4} md={3}>Heure</Col><Col><FormatterDate value={value.time}/></Col></Row>
+            <ValeurTemperature value={value.temp1} label='Temperature 1' />
+            <ValeurTemperature value={value.temp2} label='Temperature 2' />
+            <ValeurHumidite value={value.hum} />
+            <SwitchBluetooth value={value.switches[0]} label='Switch 1' />
+            <SwitchBluetooth value={value.switches[1]} label='Switch 2' />
+            <SwitchBluetooth value={value.switches[2]} label='Switch 3' />
+            <SwitchBluetooth value={value.switches[3]} label='Switch 4' />
         </div>
+    )
+}
+
+function ValeurTemperature(props) {
+    const { value, label } = props
+
+    if(!value) return ''
+
+    return (
+        <Row><Col xs={6} sm={4} md={3}>{label||'Temperature'}</Col><Col>{value}&deg;C</Col></Row>
+    )
+}
+
+function ValeurHumidite(props) {
+    const { value, label } = props
+
+    if(!value) return ''
+
+    return (
+        <Row><Col xs={6} sm={4} md={3}>{label||'Humidite'}</Col><Col>{value}%</Col></Row>
+    )
+}
+
+function SwitchBluetooth(props) {
+    const { value, label } = props
+    if(!value.present) return ''
+
+    return (
+        <Row><Col xs={6} sm={4} md={3}>{label||'Switch'}</Col><Col>{value.valeur?'ON':'OFF'}</Col></Row>
     )
 }
 
@@ -341,7 +390,7 @@ async function chargerEtatAppareil(server) {
             return
         }
         const service = await server.getPrimaryService(millegrillesServicesConst.services.etat.uuid)
-        console.debug("Service : ", service)
+        // console.debug("Service : ", service)
         const characteristics = await service.getCharacteristics()
         const etat = await lireEtatCharacteristics(characteristics)
 
@@ -352,10 +401,10 @@ async function chargerEtatAppareil(server) {
 }
 
 async function lireEtatCharacteristics(characteristics) {
-    console.debug("Nombre characteristics : " + characteristics.length)
+    // console.debug("Nombre characteristics : " + characteristics.length)
     const etat = {}
     for await(const characteristic of characteristics) {
-        console.debug("Lire characteristic " + characteristic.uuid)
+        // console.debug("Lire characteristic " + characteristic.uuid)
         const uuidLowercase = characteristic.uuid.toLowerCase()
         switch(uuidLowercase) {
             case millegrillesServicesConst.services.etat.characteristics.getUserId:
@@ -364,17 +413,14 @@ async function lireEtatCharacteristics(characteristics) {
             case millegrillesServicesConst.services.etat.characteristics.getIdmg:
                 etat.idmg = await readTextValue(characteristic)
                 break
-            case millegrillesServicesConst.services.etat.characteristics.getWifi1:
-                Object.assign(etat, await readWifi1(characteristic))
+            case millegrillesServicesConst.services.etat.characteristics.getWifi:
+                Object.assign(etat, await readWifi(characteristic))
                 break
-            case millegrillesServicesConst.services.etat.characteristics.getWifi2:
-                etat.ssid = await readTextValue(characteristic)
-                break
-            case millegrillesServicesConst.services.etat.characteristics.getTime:
-                Object.assign(etat, await readTime(characteristic))
+            case millegrillesServicesConst.services.etat.characteristics.getLectures:
+                Object.assign(etat, await readLectures(characteristic))
                 break
             default:
-                console.debug("Characteristic etat inconnue : " + characteristic.uuid)
+                console.warn("Characteristic etat inconnue : " + characteristic.uuid)
         }
     }
     return etat
@@ -385,26 +431,14 @@ async function readTextValue(characteristic) {
     return new TextDecoder().decode(value)
 }
 
-async function readTime(characteristic) {
-    const value = await characteristic.readValue()
-    console.debug("readTime value %O", value)
-    const etatNtp = value.getUint8(0) === 1
-    const timeSliceVal = new Uint32Array(value.buffer.slice(1, 5))
-    console.debug("Time slice val ", timeSliceVal)
-    const timeVal = timeSliceVal[0]
-    const dateTime = new Date(timeVal * 1000)
-    console.debug("Time val : %O, Date %O", timeVal, dateTime)
-    return {ntp: etatNtp, time: timeVal}
-}
-
 function convertirBytesIp(adresse) {
     let adresseStr = adresse.join('.')
     return adresseStr
 }
 
-async function readWifi1(characteristic) {
+async function readWifi(characteristic) {
     const value = await characteristic.readValue()
-    console.debug("readWifi1 value %O", value)
+    console.debug("readWifi value %O", value)
     const connected = value.getUint8(0) === 1,
           status = value.getUint8(1),
           channel = value.getUint8(2)
@@ -415,14 +449,72 @@ async function readWifi1(characteristic) {
     const gateway = convertirBytesIp(adressesList.slice(8, 12))
     const dns = convertirBytesIp(adressesList.slice(12, 16))
 
+    const ssidBytes = value.buffer.slice(19)
+    const ssid = new TextDecoder().decode(ssidBytes)
+
     const etatWifi = {
         connected,
         status,
         channel,
-        ip, subnet, gateway, dns
+        ip, subnet, gateway, dns,
+        ssid
     }
 
     return etatWifi
+}
+
+async function readLectures(characteristic) {
+    const value = await characteristic.readValue()
+    console.debug("readLectures value %O", value)
+
+    // Structure du buffer:
+    // 0: NTP OK true/false
+    // 1-4: int date epoch (secs)
+    // 5-6: temp1 (small int)
+    // 7-8: temp2 (small int)
+    // 9-10: hum (small int)
+    // 11: switch 1,2,3,4 avec bits 0=switch1 present, 1=switch1 ON/OFF, 2=switch2 present ...
+
+    const etatNtp = value.getUint8(0) === 1
+    const timeSliceVal = new Uint32Array(value.buffer.slice(1, 5))
+    console.debug("Time slice val ", timeSliceVal)
+    const timeVal = timeSliceVal[0]
+    const dateTime = new Date(timeVal * 1000)
+    console.debug("Time val : %O, Date %O", timeVal, dateTime)
+
+    const lecturesNumeriques = new Int16Array(value.buffer.slice(5, 11))
+    const temp1 = decoderValeurSmallint(lecturesNumeriques[0]),
+          temp2 = decoderValeurSmallint(lecturesNumeriques[1]),
+          hum = decoderValeurSmallint(lecturesNumeriques[2],{facteur: 10.0})
+
+    const switches = decoderSwitches(value.getUint8(11))
+
+    return {ntp: etatNtp, time: timeVal, temp1, temp2, hum, switches}
+}
+
+function decoderValeurSmallint(val, opts) {
+    opts = opts || {}
+    const facteur = opts.facteur || 100.0
+    if(val === -32768) return null
+    return val / facteur
+}
+
+function decoderSwitches(val) {
+    const valeursListe = []
+    for(let i = 0; i < 8; i++) {
+        const boolVal = (val & 1 << i)?1:0
+        valeursListe.push(boolVal)
+    }
+    // console.debug("Valeurs liste : ", valeursListe)
+    const switches = []
+    for(let sw=0; sw < 4; sw++) {
+        const switchValue = {present: valeursListe[2*sw]?true:false}
+        if(switchValue.present) {
+            switchValue.valeur = valeursListe[2*sw+1]?true:false
+        }
+        switches.push(switchValue)
+    }
+    return switches
 }
 
 function ValeursConfiguration(props) {
@@ -430,9 +522,6 @@ function ValeursConfiguration(props) {
     const { ssid, setSsid, wifiPassword, setWifiPassword, relai, setRelai } = props
 
     const usager = useUsager()
-    const userId = usager.extensions.userId,
-          idmg = usager.idmg
-
 
     // Initialiser url relai
     useEffect(()=>{
