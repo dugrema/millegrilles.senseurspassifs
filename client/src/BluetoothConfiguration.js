@@ -298,7 +298,7 @@ function ConfigurerAppareilSelectionne(props) {
     return (
         <div>
             <hr />
-            <h3>Configurer {deviceSelectionne.name}</h3>
+            <h3>{deviceSelectionne.name}</h3>
 
             <EtatAppareil value={etatAppareil} />
             <EtatLectures value={etatAppareil} />
