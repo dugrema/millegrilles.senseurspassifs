@@ -6,6 +6,7 @@ import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 import Form from 'react-bootstrap/Form'
 
+import { MESSAGE_KINDS } from '@dugrema/millegrilles.utiljs/src/constantes'
 import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 
 import millegrillesServicesConst from './services.json'
@@ -112,6 +113,9 @@ function ConfigurationJson(props) {
 }
 
 function BluetoothSupporte(props) {
+
+    const workers = useWorkers()
+
     const [devices, setDevices] = useState('')
     const [deviceSelectionne, setDeviceSelectionne] = useState('')
     const [bluetoothServer, setBluetoothServer] = useState('')
@@ -199,6 +203,30 @@ function BluetoothSupporte(props) {
             }                
         }
     }, [deviceSelectionne, setBluetoothServer])
+
+    useEffect(()=>{
+        if(!bluetoothServer) return
+        console.debug("Authentifier l'usager")
+        const commande = {}  // Le contenu est le certificat
+
+        workers.chiffrage.formatterMessage(
+            commande, 'SenseursPassifs',
+            {kind: MESSAGE_KINDS.KIND_COMMANDE, action: 'authentifier'}
+        )
+            .then(async commandeSignee => {
+                const cb = async characteristic => {
+                    await transmettreDict(characteristic, commandeSignee)
+                }
+                const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
+                      setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
+                await submitParamAppareil(bluetoothServer, commandeUuid, setCommandUuid, cb)
+                // messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
+            })
+            .catch(err=>{
+                console.error("Erreur commande switch ", err)
+                // setMessageErreur({err, message: 'Les parametres wifi n\'ont pas ete recus par l\'appareil.'})
+            })
+    }, [workers, bluetoothServer])
 
     return (
         <div>
@@ -301,7 +329,7 @@ function ConfigurerAppareilSelectionne(props) {
             <h3>{deviceSelectionne.name}</h3>
 
             <EtatAppareil value={etatAppareil} />
-            <EtatLectures value={etatAppareil} />
+            <EtatLectures value={etatAppareil} server={server} />
             
             <SoumettreConfiguration 
                 show={!!etatAppareil}
@@ -333,7 +361,7 @@ function EtatAppareil(props) {
 }
 
 function EtatLectures(props) {
-    const { value } = props
+    const { value, server } = props
 
     if(!value) return ''
 
@@ -346,10 +374,10 @@ function EtatLectures(props) {
             <ValeurTemperature value={value.temp1} label='Temperature 1' />
             <ValeurTemperature value={value.temp2} label='Temperature 2' />
             <ValeurHumidite value={value.hum} />
-            <SwitchBluetooth value={value.switches[0]} label='Switch 1' />
-            <SwitchBluetooth value={value.switches[1]} label='Switch 2' />
-            <SwitchBluetooth value={value.switches[2]} label='Switch 3' />
-            <SwitchBluetooth value={value.switches[3]} label='Switch 4' />
+            <SwitchBluetooth value={value.switches[0]} idx={0} label='Switch 1' server={server} />
+            <SwitchBluetooth value={value.switches[1]} idx={1} label='Switch 2' server={server} />
+            <SwitchBluetooth value={value.switches[2]} idx={2} label='Switch 3' server={server} />
+            <SwitchBluetooth value={value.switches[3]} idx={3} label='Switch 4' server={server} />
         </div>
     )
 }
@@ -375,11 +403,53 @@ function ValeurHumidite(props) {
 }
 
 function SwitchBluetooth(props) {
-    const { value, label } = props
+    const { value, label, idx, server } = props
+
+    const workers = useWorkers()
+
+    const commandeSwitchCb = useCallback(e=>{
+        const { name, value } = e.currentTarget
+        const idx = Number.parseInt(name)
+        const valeur = value==='1'
+        const commande = { idx, valeur }
+
+        workers.chiffrage.formatterMessage(
+            commande, 'SenseursPassifs',
+            {kind: MESSAGE_KINDS.KIND_COMMANDE, action: 'setSwitch'}
+        )
+            .then(async commandeSignee => {
+                delete commandeSignee.certificat
+                // const commandeString = JSON.stringify(commandeSignee)
+                // console.debug("Commande signee : %O\nCommande string (taille %d) %s", 
+                //     commandeSignee, commandeString.length, commandeString)
+                
+                const cb = async characteristic => {
+                    await transmettreDict(characteristic, commandeSignee)
+                }
+        
+                const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
+                      setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
+        
+                await submitParamAppareil(server, commandeUuid, setCommandUuid, cb)
+                // messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
+            })
+            .catch(err=>{
+                console.error("Erreur commande switch ", err)
+                // setMessageErreur({err, message: 'Les parametres wifi n\'ont pas ete recus par l\'appareil.'})
+            })
+    }, [workers, idx, server])
+
     if(!value.present) return ''
 
     return (
-        <Row><Col xs={6} sm={4} md={3}>{label||'Switch'}</Col><Col>{value.valeur?'ON':'OFF'}</Col></Row>
+        <Row>
+            <Col xs={6} sm={4} md={3}>{label||'Switch'}</Col>
+            <Col>{value.valeur?'ON':'OFF'}</Col>
+            <Col>
+                <Button variant="secondary" name={''+idx} value="1" onClick={commandeSwitchCb} disabled={!server}>ON</Button>{' '}
+                <Button variant="secondary" name={''+idx} value="0" onClick={commandeSwitchCb} disabled={!server}>OFF</Button>
+            </Col>
+        </Row>
     )
 }
 
@@ -580,8 +650,8 @@ function SoumettreConfiguration(props) {
         e.stopPropagation()
         e.preventDefault()
 
-        const configurerUuid = millegrillesServicesConst.services.configurer.uuid,
-              setConfigUuid = millegrillesServicesConst.services.configurer.characteristics.setConfig
+        const commandesUuid = millegrillesServicesConst.services.commandes.uuid,
+              setCommandUuid = millegrillesServicesConst.services.configurer.characteristics.setCommand
 
         // Transmettre relai
         const cbRelai = async characteristic => {
@@ -595,9 +665,9 @@ function SoumettreConfiguration(props) {
 
         Promise.resolve()
             .then(async ()=>{
-                await submitParamAppareil(server, configurerUuid, setConfigUuid, cbRelai)
+                await submitParamAppareil(server, commandesUuid, setCommandUuid, cbRelai)
                 console.debug("Params relai envoyes")
-                await submitParamAppareil(server, configurerUuid, setConfigUuid, cbUser)
+                await submitParamAppareil(server, commandesUuid, setCommandUuid, cbUser)
                 console.debug("Params user envoyes")
                 messageSuccesCb('Les parametres serveur ont ete transmis correctement.')
             })
@@ -617,10 +687,10 @@ function SoumettreConfiguration(props) {
             await transmettreDict(characteristic, params)
         }
 
-        const configurerUuid = millegrillesServicesConst.services.configurer.uuid,
-              setConfigUuid = millegrillesServicesConst.services.configurer.characteristics.setConfig
+        const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
+              setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
 
-        submitParamAppareil(server, configurerUuid, setConfigUuid, cb).then(()=>{
+        submitParamAppareil(server, commandeUuid, setCommandUuid, cb).then(()=>{
             messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
         })
         .catch(err=>{
