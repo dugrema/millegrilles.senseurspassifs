@@ -1,4 +1,4 @@
-import {useState, useCallback, useEffect, useMemo} from 'react'
+import {lazy, useState, useCallback, useEffect, useMemo} from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import Button from 'react-bootstrap/Button'
@@ -16,6 +16,7 @@ import useWorkers, {useUsager, useInfoConnexion} from './WorkerContext'
 import { push as pushAppareils } from './redux/appareilsSlice'
 import { OptionsTimezones } from './timezones'
 
+const BluetoothConfiguration = lazy(()=>import('./BluetoothConfiguration'))
 
 function Configuration(props) {
 
@@ -32,8 +33,8 @@ function Configuration(props) {
                 <Tab eventKey="compte" title="Compte">
                     <ConfigurationCompte />
                 </Tab>
-                <Tab eventKey="fichier" title="Fichier">
-                    <FichierConfiguration />
+                <Tab eventKey="bluetooth" title="Bluetooth">
+                    <BluetoothConfiguration />
                 </Tab>
             </Tabs>
             
@@ -43,18 +44,6 @@ function Configuration(props) {
 
 export default Configuration
 
-
-function FichierConfiguration(props) {
-    return (
-        <div>
-            <h2>Fichier de configuration</h2>
-
-            <p>Copier le fichier conn.json sur l'appareil avec Thonny.</p>
-
-            <ConfigurationAppareil />
-        </div>        
-    )
-}
 
 function ConfigurationCompte(props) {
 
@@ -126,82 +115,6 @@ function ConfigurationCompte(props) {
             </Row>
         </div>
     )
-}
-
-function ConfigurationAppareil(props) {
-    
-    const infoConnexion = useInfoConnexion()
-    const usager = useUsager()
-
-    const [valeur, setValeur] = useState('')
-    const [ssid, setSsid] = useState('')
-    const [motdepasse, setMotdepasse] = useState('')
-    const [copieOk, setCopieOk] = useState(false)
-
-    useEffect(()=>{
-        if(!usager || !infoConnexion) return
-
-        const userId = usager.extensions.userId
-
-        const instanceUrl = new URL(window.location.href)
-        instanceUrl.pathname = ''
-        let instanceUrlString = instanceUrl.href
-        if(instanceUrlString.endsWith('/')) instanceUrlString = instanceUrlString.substring(0, instanceUrlString.length-1)
-
-        const v = {
-            "idmg": infoConnexion.idmg,
-            "user_id": userId,
-            "http_instance": instanceUrlString, 
-            "http_timeout": 25,
-        }
-        if(ssid && motdepasse) {
-            v.wifis = [{wifi_ssid: ssid, wifi_password: motdepasse}]
-        }
-
-        setValeur(JSON.stringify(v, null, 2))
-    }, [usager, infoConnexion, setValeur, ssid, motdepasse])
-
-    const ssidHandler = useCallback(event=>{setSsid(event.currentTarget.value)}, [setSsid])
-    const motdepasseHandler = useCallback(event=>{setMotdepasse(event.currentTarget.value)}, [setMotdepasse])
-
-    const copierClipboard = useCallback(()=>{
-        navigator.clipboard.writeText(valeur)
-        setCopieOk(true)
-        setTimeout(()=>setCopieOk(false), 5_000)
-    }, [valeur, setCopieOk])
-
-    return (
-        <div>
-            <p>Configurer WIFI</p>
-            <Form>
-                <Row>
-                    <Col>
-                        <Form.Group className="mb-3" controlId="formSsid">
-                            <Form.Label>SSID</Form.Label>
-                            <Form.Control type="text" placeholder="MON_WIFI" value={ssid} onChange={ssidHandler} />
-                        </Form.Group>
-                    </Col>
-                    <Col>
-                        <Form.Group className="mb-3" controlId="formPassword">
-                            <Form.Label>Mot de passe</Form.Label>
-                            <Form.Control type="text" placeholder="e.g. pepiniere" value={motdepasse} onChange={motdepasseHandler} />
-                        </Form.Group>
-                    </Col>
-                </Row>
-            </Form>
-
-            <p>Fichier conn.json</p>
-            <pre>{valeur}</pre>
-
-            <Row>
-                <Col>
-                    <Button onClick={copierClipboard}>Copier</Button>
-                    {copieOk?<p>Copie faite <i className='fa fa-check'/></p>:''}
-                </Col>
-            </Row>
-        </div>
-    )
-
 }
 
 function ListeAppareilsAttente(props) {

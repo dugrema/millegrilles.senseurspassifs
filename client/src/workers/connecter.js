@@ -1,10 +1,11 @@
 import { proxy } from 'comlink'
+import { idmg as idmgUtils } from '@dugrema/millegrilles.reactjs'
 
 // const CONST_APP_URL = 'senseurspassifs'
 const URL_SOCKET = '/senseurspassifs/socket.io'
 
 export async function connecter(workers, setUsagerState, setEtatConnexion, setEtatFormatteurMessage) {
-    console.debug("!!! setEtatConnexion :%O, setEtatFormatteur : %O", setEtatConnexion, setEtatFormatteurMessage)
+    // console.debug("!!! setEtatConnexion :%O, setEtatFormatteur : %O", setEtatConnexion, setEtatFormatteurMessage)
     const { connexion } = workers
   
     // console.debug("Set callbacks connexion worker")
@@ -51,8 +52,11 @@ async function setUsager(workers, nomUsager, setUsagerState, opts) {
 
         const certificatPem = fullchain.join('')
 
+        // Calculer le idmg
+        const idmg = await idmgUtils.getIdmg(caPem)
+
         // Initialiser le CertificateStore
-        await chiffrage.initialiserCertificateStore(caPem, {isPEM: true, DEBUG: false})
+        // await chiffrage.initialiserCertificateStore(caPem, {isPEM: true, DEBUG: false})
 
         // Init cles privees
         await chiffrage.initialiserFormatteurMessage(certificatPem, usager.clePriveePem, {DEBUG: false})
@@ -71,7 +75,9 @@ async function setUsager(workers, nomUsager, setUsagerState, opts) {
         const socketioAuth = reponseAuthentifier.protege
 
         // setUsagerState({nomUsager, fullchain, extensions})
-        await setUsagerState({...usager, nomUsager, extensions, auth: socketioAuth, socketioAuth: socketioAuth})
+        const usagerState = {...usager, idmg, nomUsager, extensions, auth: socketioAuth, socketioAuth: socketioAuth}
+        console.info("Usager state %O", usagerState)
+        await setUsagerState(usagerState)
 
     } else {
         console.warn("Pas de certificat pour l'usager '%s'", usager)

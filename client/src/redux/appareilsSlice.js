@@ -58,12 +58,14 @@ function clearAction(state) {
 
 function verifierExpirationAction(state, action) {
     const expiration = (new Date().getTime() / 1000) - 300  // 5 minutes
-    state.listeAppareils.forEach(item=>{
-        if(item.derniere_lecture < expiration) {
-            // Modifier pour forcer re-rendering
-            item.expiration = expiration
-        }
-    })
+    if(state.listeAppareils) {
+        state.listeAppareils.forEach(item=>{
+            if(item.derniere_lecture < expiration) {
+                // Modifier pour forcer re-rendering
+                item.expiration = expiration
+            }
+        })
+    }
 }
 
 // payload {uuid_appareil, ...data}
