@@ -1,4 +1,4 @@
-import React, {Suspense, useState, useEffect, useMemo, useCallback} from 'react'
+import React, {useState, useMemo, useCallback} from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Nav from 'react-bootstrap/Nav'
@@ -6,8 +6,9 @@ import Navbar from 'react-bootstrap/Navbar'
 import NavDropdown from 'react-bootstrap/NavDropdown'
 
 import { Menu as MenuMillegrilles, DropDownLanguage, ModalInfo } from '@dugrema/millegrilles.reactjs'
+import { supprimerContenuIdb } from '@dugrema/millegrilles.reactjs/src/dbNettoyage'
 
-import useWorkers, {useEtatConnexion, WorkerProvider, useUsager, useFormatteurPret, useInfoConnexion} from './WorkerContext'
+import {useEtatConnexion, useUsager, useInfoConnexion} from './WorkerContext'
 
 import manifest from './manifest.build'
 
@@ -31,7 +32,7 @@ function Menu(props) {
     const handlerSelect = useCallback(eventKey => {
         switch(eventKey) {
           case 'portail': window.location = '/millegrilles'; break
-          case 'deconnecter': window.location = '/auth/deconnecter_usager'; break
+          case 'deconnecter': deconnecter(usager.nomUsager); break
           case 'instances': setSectionAfficher('Instances'); break
           case 'configuration': setSectionAfficher('Configuration'); break
           case 'information': setShowModalInfo(true); break
@@ -94,3 +95,13 @@ function Menu(props) {
   }
 
   export default Menu
+
+async function deconnecter(nomUsager) {
+    try {
+      await supprimerContenuIdb({nomUsager})
+    } catch (err) {
+      console.error("deconnecter Erreur nettoyage IDB : ", err)
+    } finally {
+      window.location = '/auth/deconnecter_usager'
+    }
+}
