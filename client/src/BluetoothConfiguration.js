@@ -477,10 +477,10 @@ async function readLectures(characteristic) {
 
     const etatNtp = value.getUint8(0) === 1
     const timeSliceVal = new Uint32Array(value.buffer.slice(1, 5))
-    console.debug("Time slice val ", timeSliceVal)
+    // console.debug("Time slice val ", timeSliceVal)
     const timeVal = timeSliceVal[0]
     const dateTime = new Date(timeVal * 1000)
-    console.debug("Time val : %O, Date %O", timeVal, dateTime)
+    // console.debug("Time val : %O, Date %O", timeVal, dateTime)
 
     const lecturesNumeriques = new Int16Array(value.buffer.slice(5, 11))
     const temp1 = decoderValeurSmallint(lecturesNumeriques[0]),
