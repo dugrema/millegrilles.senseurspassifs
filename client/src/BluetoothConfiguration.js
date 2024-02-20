@@ -225,7 +225,7 @@ function BluetoothSupporte(props) {
 
             // Calculer shared secret
             const sharedSecret = await calculerSharedKey(keyPair.private, publicPeer)
-            console.debug("Shared secret : %s %O", Buffer.from(sharedSecret).toString('hex'), sharedSecret)
+            // console.debug("Shared secret : %s %O", Buffer.from(sharedSecret).toString('hex'), sharedSecret)
 
             // Transmettre cle publique
             const commande = {pubkey: publicString}
@@ -455,32 +455,29 @@ function SwitchBluetooth(props) {
         const { name, value } = e.currentTarget
         const idx = Number.parseInt(name)
         const valeur = value==='1'
-        const commande = { idx, valeur }
+        const commande = JSON.stringify({ commande: 'setSwitchValue', idx, valeur })
+        const commandeBytes = new TextEncoder().encode(commande)
 
-        workers.chiffrage.formatterMessage(
-            commande, 'SenseursPassifs',
-            {kind: MESSAGE_KINDS.KIND_COMMANDE, action: 'setSwitch'}
-        )
-            .then(async commandeSignee => {
-                delete commandeSignee.certificat
-                // const commandeString = JSON.stringify(commandeSignee)
-                // console.debug("Commande signee : %O\nCommande string (taille %d) %s", 
-                //     commandeSignee, commandeString.length, commandeString)
-                
-                const cb = async characteristic => {
-                    await transmettreDict(characteristic, commandeSignee)
-                }
-        
-                const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
-                      setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
-        
-                await submitParamAppareil(server, commandeUuid, setCommandUuid, cb)
-                // messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
-            })
-            .catch(err=>{
-                console.error("Erreur commande switch ", err)
-                // setMessageErreur({err, message: 'Les parametres wifi n\'ont pas ete recus par l\'appareil.'})
-            })
+        Promise.resolve().then(async ()=>{
+            const resultat = await workers.chiffrage.chiffrage.chiffrer(
+                commandeBytes, {cipherAlgo: 'chacha20-poly1305', key: authSharedSecret}
+            )
+            console.debug("Commande chiffree : %O (key input: %O)", resultat, authSharedSecret)
+            const ciphertext = Buffer.from(resultat.ciphertext).toString('base64')
+            const commandeChiffree = {
+                ciphertext,
+                nonce: Buffer.from(resultat.nonce.slice(1), 'base64').toString('base64'),  // Retrirer m multibase, utiliser base64 padding
+                tag: Buffer.from(resultat.rawTag).toString('base64'),
+            }
+            const cb = async characteristic => {
+                await transmettreDict(characteristic, commandeChiffree)
+            }
+            const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
+                  setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
+            await submitParamAppareil(server, commandeUuid, setCommandUuid, cb)
+        })
+        .catch(err=>console.error("Erreur switch BLE : ", err))
+
     }, [workers, idx, server, authSharedSecret])
 
     if(!value.present) return ''
