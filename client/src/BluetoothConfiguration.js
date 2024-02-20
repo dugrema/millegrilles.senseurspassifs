@@ -127,6 +127,12 @@ function BluetoothSupporte(props) {
     const [wifiPassword, setWifiPassword] = useState('')
     const [relai, setRelai] = useState('')    
 
+    const fermerAppareilCb = useCallback(()=>{
+        setDeviceSelectionne('')
+        setBluetoothServer('')
+        setAuthSharedSecret('')
+    }, [setDeviceSelectionne, setBluetoothServer, setAuthSharedSecret])
+
     const selectionnerDevice = useCallback(deviceId=>{
         console.debug("Selectioner device %s", deviceId)
         bluetooth.getDevices()
@@ -180,11 +186,6 @@ function BluetoothSupporte(props) {
             .catch(err=>console.error("Erreur chargement device ", err))
     }, [devices, setDevices, setDeviceSelectionne])
 
-    const fermerAppareilCb = useCallback(()=>{
-        setDeviceSelectionne('')
-        setBluetoothServer('')
-    }, [setDeviceSelectionne, setBluetoothServer])
-
     useEffect(()=>{
         let connexion = null
         if(deviceSelectionne) {
@@ -200,13 +201,13 @@ function BluetoothSupporte(props) {
             return () => {
                 if(connexion) {
                     console.debug("Deconnexion bluetooth de %O", connexion)
-                    setAuthSharedSecret('')  // Retirer authentification
                     connexion.disconnect()
                         // .catch(err=>console.error("Erreur deconnexion bluetooth", err))
+                    fermerAppareilCb()
                 }
             }                
         }
-    }, [deviceSelectionne, setBluetoothServer, setAuthSharedSecret])
+    }, [deviceSelectionne, setBluetoothServer, fermerAppareilCb])
 
     useEffect(()=>{
         if(!bluetoothServer) return
@@ -271,6 +272,19 @@ function BluetoothSupporte(props) {
         })
     }, [workers, bluetoothServer, setAuthSharedSecret])
 
+    if(bluetoothServer) return (
+        <div>
+            <ConfigurerAppareilSelectionne 
+                deviceSelectionne={deviceSelectionne} 
+                server={bluetoothServer} 
+                ssid={ssid}
+                wifiPassword={wifiPassword}
+                relai={relai} 
+                authSharedSecret={authSharedSecret} 
+                fermer={fermerAppareilCb} />
+        </div>
+    )
+
     return (
         <div>
             <ValeursConfiguration 
@@ -282,18 +296,11 @@ function BluetoothSupporte(props) {
                 setRelai={setRelai} />
 
             <p>Les boutons suivants permettent de trouver un appareil avec la radio bluetooth.</p>
+
             <p>
                 <Button variant="primary" onClick={scanCb}>Scan</Button>{' '}
                 <Button variant="secondary" onClick={fermerAppareilCb} disabled={!deviceSelectionne}>Fermer</Button>
             </p>
-
-            <ConfigurerAppareilSelectionne 
-                deviceSelectionne={deviceSelectionne} 
-                server={bluetoothServer} 
-                ssid={ssid}
-                wifiPassword={wifiPassword}
-                relai={relai} 
-                authSharedSecret={authSharedSecret} />
         </div>
     )
 }
@@ -340,21 +347,36 @@ async function requestDevice() {
 }
 
 function ConfigurerAppareilSelectionne(props) {
-    const { deviceSelectionne, server, ssid, wifiPassword, relai, authSharedSecret } = props
+    const { deviceSelectionne, server, ssid, wifiPassword, relai, authSharedSecret, fermer } = props
+
+    const workers = useWorkers()
 
     const [etatAppareil, setEtatAppareil] = useState('')
 
     const rafraichir = useCallback(()=>{
         if(!server.connected) {
             console.warn("Connexion bluetooth coupee")
+            fermer()
         }
         chargerEtatAppareil(server)
             .then(etat=>{
                 console.debug("Etat appareil %O", etat)
                 setEtatAppareil(etat)
             })
-            .catch(err=>console.debug("Erreur chargement etat appareil ", err))
-    }, [server, setEtatAppareil])
+            .catch(err=>{
+                console.debug("Erreur chargement etat appareil ", err)
+                fermer()
+            })
+    }, [server, setEtatAppareil, fermer])
+
+    const rebootCb = useCallback(()=>{
+        const commande = { commande: 'reboot' }
+        transmettreDictChiffre(workers, server, authSharedSecret, commande)
+            .then(()=>{
+                console.debug("Commande reboot transmise")
+            })
+            .catch(err=>console.error("Erreur reboot ", err))
+    }, [workers, server, authSharedSecret])
 
     useEffect(()=>{
         if(server.connected) {
@@ -368,8 +390,15 @@ function ConfigurerAppareilSelectionne(props) {
 
     return (
         <div>
-            <hr />
-            <h3>{deviceSelectionne.name}</h3>
+            <Row>
+                <Col xs={9} md={10} lg={11}>
+                    <h3>{deviceSelectionne.name}</h3>
+                </Col>
+                <Col>
+                    <br/>
+                    <Button variant="secondary" onClick={fermer}>X</Button>
+                </Col>
+            </Row>
 
             <EtatAppareil value={etatAppareil} />
             <EtatLectures value={etatAppareil} server={server} authSharedSecret={authSharedSecret} />
@@ -380,6 +409,12 @@ function ConfigurerAppareilSelectionne(props) {
                 ssid={ssid}
                 wifiPassword={wifiPassword}
                 relai={relai} />
+
+            <p></p>
+            <hr/>
+            <Button variant="danger" onClick={rebootCb} disabled={!authSharedSecret}>Reboot</Button>
+            <p></p>
+            <p></p>
         </div>
     )
 }
@@ -445,9 +480,9 @@ function ValeurHumidite(props) {
     )
 }
 
-async function commandeSwitchHandler(workers, server, authSharedSecret, idx, valeur) {
-    const commande = JSON.stringify({ commande: 'setSwitchValue', idx, valeur })
-    const commandeBytes = new TextEncoder().encode(commande)
+async function transmettreDictChiffre(workers, server, authSharedSecret, commande) {
+    const commandeString = JSON.stringify(commande)
+    const commandeBytes = new TextEncoder().encode(commandeString)
 
     const resultat = await workers.chiffrage.chiffrage.chiffrer(
         commandeBytes, {cipherAlgo: 'chacha20-poly1305', key: authSharedSecret}
@@ -467,6 +502,28 @@ async function commandeSwitchHandler(workers, server, authSharedSecret, idx, val
     await submitParamAppareil(server, commandeUuid, setCommandUuid, cb)
 }
 
+// async function commandeSwitchHandler(workers, server, authSharedSecret, idx, valeur) {
+//     const commande = JSON.stringify({ commande: 'setSwitchValue', idx, valeur })
+//     const commandeBytes = new TextEncoder().encode(commande)
+
+//     const resultat = await workers.chiffrage.chiffrage.chiffrer(
+//         commandeBytes, {cipherAlgo: 'chacha20-poly1305', key: authSharedSecret}
+//     )
+//     console.debug("Commande chiffree : %O (key input: %O)", resultat, authSharedSecret)
+//     const ciphertext = Buffer.from(resultat.ciphertext).toString('base64')
+//     const commandeChiffree = {
+//         ciphertext,
+//         nonce: Buffer.from(resultat.nonce.slice(1), 'base64').toString('base64'),  // Retrirer m multibase, utiliser base64 padding
+//         tag: Buffer.from(resultat.rawTag).toString('base64'),
+//     }
+//     const cb = async characteristic => {
+//         await transmettreDict(characteristic, commandeChiffree)
+//     }
+//     const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
+//           setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
+//     await submitParamAppareil(server, commandeUuid, setCommandUuid, cb)
+// }
+
 function SwitchBluetooth(props) {
     const { value, label, idx, server, authSharedSecret } = props
 
@@ -476,7 +533,8 @@ function SwitchBluetooth(props) {
         const { name, value } = e.currentTarget
         const idx = Number.parseInt(name)
         const valeur = value==='1'
-        commandeSwitchHandler(workers, server, authSharedSecret, idx, valeur)
+        const commande = { commande: 'setSwitchValue', idx, valeur }
+        transmettreDictChiffre(workers, server, authSharedSecret, commande)
             .then(()=>{
                 console.debug("Commande switch transmise")
             })
