@@ -720,7 +720,7 @@ function SoumettreConfiguration(props) {
         e.preventDefault()
 
         const commandesUuid = millegrillesServicesConst.services.commandes.uuid,
-              setCommandUuid = millegrillesServicesConst.services.configurer.characteristics.setCommand
+              setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
 
         // Transmettre relai
         const cbRelai = async characteristic => {
