@@ -339,7 +339,6 @@ async function requestDevice() {
     return device
 }
 
-
 function ConfigurerAppareilSelectionne(props) {
     const { deviceSelectionne, server, ssid, wifiPassword, relai, authSharedSecret } = props
 
@@ -446,6 +445,28 @@ function ValeurHumidite(props) {
     )
 }
 
+async function commandeSwitchHandler(workers, server, authSharedSecret, idx, valeur) {
+    const commande = JSON.stringify({ commande: 'setSwitchValue', idx, valeur })
+    const commandeBytes = new TextEncoder().encode(commande)
+
+    const resultat = await workers.chiffrage.chiffrage.chiffrer(
+        commandeBytes, {cipherAlgo: 'chacha20-poly1305', key: authSharedSecret}
+    )
+    console.debug("Commande chiffree : %O (key input: %O)", resultat, authSharedSecret)
+    const ciphertext = Buffer.from(resultat.ciphertext).toString('base64')
+    const commandeChiffree = {
+        ciphertext,
+        nonce: Buffer.from(resultat.nonce.slice(1), 'base64').toString('base64'),  // Retrirer m multibase, utiliser base64 padding
+        tag: Buffer.from(resultat.rawTag).toString('base64'),
+    }
+    const cb = async characteristic => {
+        await transmettreDict(characteristic, commandeChiffree)
+    }
+    const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
+          setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
+    await submitParamAppareil(server, commandeUuid, setCommandUuid, cb)
+}
+
 function SwitchBluetooth(props) {
     const { value, label, idx, server, authSharedSecret } = props
 
@@ -455,29 +476,11 @@ function SwitchBluetooth(props) {
         const { name, value } = e.currentTarget
         const idx = Number.parseInt(name)
         const valeur = value==='1'
-        const commande = JSON.stringify({ commande: 'setSwitchValue', idx, valeur })
-        const commandeBytes = new TextEncoder().encode(commande)
-
-        Promise.resolve().then(async ()=>{
-            const resultat = await workers.chiffrage.chiffrage.chiffrer(
-                commandeBytes, {cipherAlgo: 'chacha20-poly1305', key: authSharedSecret}
-            )
-            console.debug("Commande chiffree : %O (key input: %O)", resultat, authSharedSecret)
-            const ciphertext = Buffer.from(resultat.ciphertext).toString('base64')
-            const commandeChiffree = {
-                ciphertext,
-                nonce: Buffer.from(resultat.nonce.slice(1), 'base64').toString('base64'),  // Retrirer m multibase, utiliser base64 padding
-                tag: Buffer.from(resultat.rawTag).toString('base64'),
-            }
-            const cb = async characteristic => {
-                await transmettreDict(characteristic, commandeChiffree)
-            }
-            const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
-                  setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
-            await submitParamAppareil(server, commandeUuid, setCommandUuid, cb)
-        })
-        .catch(err=>console.error("Erreur switch BLE : ", err))
-
+        commandeSwitchHandler(workers, server, authSharedSecret, idx, valeur)
+            .then(()=>{
+                console.debug("Commande switch transmise")
+            })
+            .catch(err=>console.error("Erreur switch BLE : ", err))
     }, [workers, idx, server, authSharedSecret])
 
     if(!value.present) return ''
