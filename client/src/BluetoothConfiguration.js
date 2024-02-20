@@ -242,11 +242,14 @@ function BluetoothSupporte(props) {
 
             // Verifier que la characteristic auth est vide (len: 0). Indique succes.
             let succes = false
+            const fingerprint = commandeSignee.pubkey
+            console.debug("Fingerprint certificat signature : ", fingerprint)
             for(let i=0; i<10; i++) {
                 await new Promise(resolve=>setTimeout(resolve, 500))
                 const confirmation = await chargerClePublique(bluetoothServer)
-                // console.debug("Confirmation auth : ", confirmation)
-                if(confirmation.byteLength === 0) {
+                const confirmationKeyString = Buffer.from(confirmation.buffer).toString('hex')
+                console.debug("Confirmation auth : %s (%O)", confirmationKeyString, confirmation)
+                if(confirmationKeyString === fingerprint) {
                     console.debug("Auth succes")
                     succes = true
                     break
