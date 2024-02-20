@@ -200,12 +200,13 @@ function BluetoothSupporte(props) {
             return () => {
                 if(connexion) {
                     console.debug("Deconnexion bluetooth de %O", connexion)
+                    setAuthSharedSecret('')  // Retirer authentification
                     connexion.disconnect()
                         // .catch(err=>console.error("Erreur deconnexion bluetooth", err))
                 }
             }                
         }
-    }, [deviceSelectionne, setBluetoothServer])
+    }, [deviceSelectionne, setBluetoothServer, setAuthSharedSecret])
 
     useEffect(()=>{
         if(!bluetoothServer) return
@@ -240,18 +241,26 @@ function BluetoothSupporte(props) {
             await submitParamAppareil(bluetoothServer, commandeUuid, setCommandUuid, cb)
 
             // Verifier que la characteristic auth est vide (len: 0). Indique succes.
-            await new Promise(resolve=>setTimeout(resolve, 5_000))
-            const confirmation = await chargerClePublique(bluetoothServer)
-            console.debug("Confirmation auth : ", confirmation)
-            if(confirmation.byteLength !== 0) {
-                console.error("Echec authentification")
-                return
+            let succes = false
+            for(let i=0; i<10; i++) {
+                await new Promise(resolve=>setTimeout(resolve, 500))
+                const confirmation = await chargerClePublique(bluetoothServer)
+                // console.debug("Confirmation auth : ", confirmation)
+                if(confirmation.byteLength === 0) {
+                    console.debug("Auth succes")
+                    succes = true
+                    break
+                }
             }
 
-            // Sauvegarder le shared secret pour activer les commandes authentifiees.
-            setAuthSharedSecret(sharedSecret)
+            if(succes) {
+                // Sauvegarder le shared secret pour activer les commandes authentifiees.
+                setAuthSharedSecret(sharedSecret)
 
-            // messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
+                // messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
+            } else {
+                console.error("Echec authentification")
+            }
         })
         .catch(err=>{
             console.error("Erreur commande auth ", err)
@@ -280,7 +289,8 @@ function BluetoothSupporte(props) {
                 server={bluetoothServer} 
                 ssid={ssid}
                 wifiPassword={wifiPassword}
-                relai={relai} />
+                relai={relai} 
+                authSharedSecret={authSharedSecret} />
         </div>
     )
 }
@@ -328,7 +338,7 @@ async function requestDevice() {
 
 
 function ConfigurerAppareilSelectionne(props) {
-    const { deviceSelectionne, server, ssid, wifiPassword, relai } = props
+    const { deviceSelectionne, server, ssid, wifiPassword, relai, authSharedSecret } = props
 
     const [etatAppareil, setEtatAppareil] = useState('')
 
@@ -360,7 +370,7 @@ function ConfigurerAppareilSelectionne(props) {
             <h3>{deviceSelectionne.name}</h3>
 
             <EtatAppareil value={etatAppareil} />
-            <EtatLectures value={etatAppareil} server={server} />
+            <EtatLectures value={etatAppareil} server={server} authSharedSecret={authSharedSecret} />
             
             <SoumettreConfiguration 
                 show={!!etatAppareil}
@@ -392,7 +402,7 @@ function EtatAppareil(props) {
 }
 
 function EtatLectures(props) {
-    const { value, server } = props
+    const { value, server, authSharedSecret } = props
 
     if(!value) return ''
 
@@ -405,10 +415,10 @@ function EtatLectures(props) {
             <ValeurTemperature value={value.temp1} label='Temperature 1' />
             <ValeurTemperature value={value.temp2} label='Temperature 2' />
             <ValeurHumidite value={value.hum} />
-            <SwitchBluetooth value={value.switches[0]} idx={0} label='Switch 1' server={server} />
-            <SwitchBluetooth value={value.switches[1]} idx={1} label='Switch 2' server={server} />
-            <SwitchBluetooth value={value.switches[2]} idx={2} label='Switch 3' server={server} />
-            <SwitchBluetooth value={value.switches[3]} idx={3} label='Switch 4' server={server} />
+            <SwitchBluetooth value={value.switches[0]} idx={0} label='Switch 1' server={server} authSharedSecret={authSharedSecret} />
+            <SwitchBluetooth value={value.switches[1]} idx={1} label='Switch 2' server={server} authSharedSecret={authSharedSecret} />
+            <SwitchBluetooth value={value.switches[2]} idx={2} label='Switch 3' server={server} authSharedSecret={authSharedSecret} />
+            <SwitchBluetooth value={value.switches[3]} idx={3} label='Switch 4' server={server} authSharedSecret={authSharedSecret} />
         </div>
     )
 }
@@ -434,7 +444,7 @@ function ValeurHumidite(props) {
 }
 
 function SwitchBluetooth(props) {
-    const { value, label, idx, server } = props
+    const { value, label, idx, server, authSharedSecret } = props
 
     const workers = useWorkers()
 
@@ -468,7 +478,7 @@ function SwitchBluetooth(props) {
                 console.error("Erreur commande switch ", err)
                 // setMessageErreur({err, message: 'Les parametres wifi n\'ont pas ete recus par l\'appareil.'})
             })
-    }, [workers, idx, server])
+    }, [workers, idx, server, authSharedSecret])
 
     if(!value.present) return ''
 
@@ -477,8 +487,8 @@ function SwitchBluetooth(props) {
             <Col xs={6} sm={4} md={3}>{label||'Switch'}</Col>
             <Col>{value.valeur?'ON':'OFF'}</Col>
             <Col>
-                <Button variant="secondary" name={''+idx} value="1" onClick={commandeSwitchCb} disabled={!server}>ON</Button>{' '}
-                <Button variant="secondary" name={''+idx} value="0" onClick={commandeSwitchCb} disabled={!server}>OFF</Button>
+                <Button variant="secondary" name={''+idx} value="1" onClick={commandeSwitchCb} disabled={!authSharedSecret}>ON</Button>{' '}
+                <Button variant="secondary" name={''+idx} value="0" onClick={commandeSwitchCb} disabled={!authSharedSecret}>OFF</Button>
             </Col>
         </Row>
     )
@@ -778,6 +788,8 @@ function SoumettreConfiguration(props) {
     )
 }
 
+const CONST_TAILLE_BUFFER_COMMANDE = 100
+
 async function transmettreString(characteristic, valeur) {
     const CONST_FIN = new Uint8Array(1)
     CONST_FIN.set(0, 0x0)
@@ -785,8 +797,8 @@ async function transmettreString(characteristic, valeur) {
     let valeurArray = new TextEncoder().encode(valeur)
 
     while(valeurArray.length > 0) {
-        let valSlice = valeurArray.slice(0, 20)
-        valeurArray = valeurArray.slice(20)
+        let valSlice = valeurArray.slice(0, CONST_TAILLE_BUFFER_COMMANDE)
+        valeurArray = valeurArray.slice(CONST_TAILLE_BUFFER_COMMANDE)
         await characteristic.writeValueWithResponse(valSlice)
     }
 
