@@ -9,6 +9,8 @@ import Form from 'react-bootstrap/Form'
 import { MESSAGE_KINDS } from '@dugrema/millegrilles.utiljs/src/constantes'
 import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 
+import { genererKeyPairX25519, calculerSharedKey } from '@dugrema/millegrilles.utiljs/src/chiffrage.x25519'
+
 import millegrillesServicesConst from './services.json'
 import useWorkers, {useUsager, useInfoConnexion} from './WorkerContext'
 
@@ -119,6 +121,7 @@ function BluetoothSupporte(props) {
     const [devices, setDevices] = useState('')
     const [deviceSelectionne, setDeviceSelectionne] = useState('')
     const [bluetoothServer, setBluetoothServer] = useState('')
+    const [authSharedSecret, setAuthSharedSecret] = useState('')
 
     const [ssid, setSsid] = useState('')
     const [wifiPassword, setWifiPassword] = useState('')
@@ -207,26 +210,54 @@ function BluetoothSupporte(props) {
     useEffect(()=>{
         if(!bluetoothServer) return
         console.debug("Authentifier l'usager")
-        const commande = {}  // Le contenu est le certificat
 
-        workers.chiffrage.formatterMessage(
-            commande, 'SenseursPassifs',
-            {kind: MESSAGE_KINDS.KIND_COMMANDE, action: 'authentifier'}
-        )
-            .then(async commandeSignee => {
-                const cb = async characteristic => {
-                    await transmettreDict(characteristic, commandeSignee)
-                }
-                const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
-                      setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
-                await submitParamAppareil(bluetoothServer, commandeUuid, setCommandUuid, cb)
-                // messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
-            })
-            .catch(err=>{
-                console.error("Erreur commande switch ", err)
-                // setMessageErreur({err, message: 'Les parametres wifi n\'ont pas ete recus par l\'appareil.'})
-            })
-    }, [workers, bluetoothServer])
+        Promise.resolve().then(async ()=>{
+            // Recuperer la cle publique de l'appareil
+            const publicPeerDataview = await chargerClePublique(bluetoothServer)
+            const publicPeer = new Uint8Array(publicPeerDataview.buffer)
+            console.debug("Cle publique peer pour auth ", publicPeer)
+
+            // Generer keypair pour le chiffrage des commandes
+            const keyPair = genererKeyPairX25519()
+            const publicString = Buffer.from(keyPair.public).toString('hex')
+            console.debug("Keypair : %O, public %s", keyPair, publicString)
+
+            // Calculer shared secret
+            const sharedSecret = await calculerSharedKey(keyPair.private, publicPeer)
+            console.debug("Shared secret : %s %O", Buffer.from(sharedSecret).toString('hex'), sharedSecret)
+
+            // Transmettre cle publique
+            const commande = {pubkey: publicString}
+            const commandeSignee = await workers.chiffrage.formatterMessage(
+                commande, 'SenseursPassifs',
+                {kind: MESSAGE_KINDS.KIND_COMMANDE, action: 'authentifier'}
+            )
+            const cb = async characteristic => {
+                await transmettreDict(characteristic, commandeSignee)
+            }
+            const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
+                    setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
+            await submitParamAppareil(bluetoothServer, commandeUuid, setCommandUuid, cb)
+
+            // Verifier que la characteristic auth est vide (len: 0). Indique succes.
+            await new Promise(resolve=>setTimeout(resolve, 5_000))
+            const confirmation = await chargerClePublique(bluetoothServer)
+            console.debug("Confirmation auth : ", confirmation)
+            if(confirmation.byteLength !== 0) {
+                console.error("Echec authentification")
+                return
+            }
+
+            // Sauvegarder le shared secret pour activer les commandes authentifiees.
+            setAuthSharedSecret(sharedSecret)
+
+            // messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
+        })
+        .catch(err=>{
+            console.error("Erreur commande auth ", err)
+            // setMessageErreur({err, message: 'Les parametres wifi n\'ont pas ete recus par l\'appareil.'})
+        })
+    }, [workers, bluetoothServer, setAuthSharedSecret])
 
     return (
         <div>
@@ -465,6 +496,31 @@ async function chargerEtatAppareil(server) {
         const etat = await lireEtatCharacteristics(characteristics)
 
         return etat
+    } catch(err) {
+        console.error("Erreur chargerEtatAppareil %O", err)
+    }
+}
+
+async function chargerClePublique(server) {
+    try {
+        if(!server.connected) {
+            console.error("GATT connexion - echec")
+            return
+        }
+        const service = await server.getPrimaryService(millegrillesServicesConst.services.commandes.uuid)
+        const characteristics = await service.getCharacteristics()
+        
+        for await(const characteristic of characteristics) {
+            // console.debug("Lire characteristic " + characteristic.uuid)
+            const uuidLowercase = characteristic.uuid.toLowerCase()
+            switch(uuidLowercase) {
+                case millegrillesServicesConst.services.commandes.characteristics.getAuth:
+                    return await characteristic.readValue()
+                default:
+            }
+        }
+    
+        throw Error('characteristic auth introuvable')
     } catch(err) {
         console.error("Erreur chargerEtatAppareil %O", err)
     }

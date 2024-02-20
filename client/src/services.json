@@ -3,7 +3,8 @@
         "commandes": {
             "uuid": "7aac7580-88d7-480f-8a01-65406c2decaf",
             "characteristics": {
-                "setCommand": "7aac7581-88d7-480f-8a01-65406c2decaf"
+                "setCommand": "7aac7581-88d7-480f-8a01-65406c2decaf",
+                "getAuth": "7aac7582-88d7-480f-8a01-65406c2decaf"
             }
         },
         "etat": {
