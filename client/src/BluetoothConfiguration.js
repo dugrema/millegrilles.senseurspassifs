@@ -19,15 +19,28 @@ const bluetooth = navigator.bluetooth
 
 function ConfigurationBluetooth(props) {
 
-    const usager = useUsager()
+    if(!bluetoothSupporte) return <BluetoothNonSupporte />
+
+    return <BluetoothSupporte />
+}
+
+export default ConfigurationBluetooth
+
+function BluetoothNonSupporte(props) {
 
     const [jsonConfiguration, setJsonConfiguration] = useState('')
+
+    const workers = useWorkers(),
+          usager = useUsager()
 
     useEffect(()=>{
         if(!usager) return
 
+        console.debug("Usager ", usager)
+
         const userId = usager.extensions.userId,
-              idmg = usager.idmg
+              idmg = usager.idmg,
+              caPem = usager.ca
 
         const instanceUrl = new URL(window.location.href)
         instanceUrl.pathname = ''
@@ -37,25 +50,29 @@ function ConfigurationBluetooth(props) {
         const serveurRelai = new URL(window.location.href)
         serveurRelai.pathname = ''
 
-        const v = {
-            idmg,
-            "user_id": userId,
+        const keyPair = genererKeyPairX25519()
+        const privateString = Buffer.from(keyPair.private).toString('hex')
+        const publicString = Buffer.from(keyPair.public).toString('hex')
+        console.debug("Keypair : %O, private: %s, public %s", keyPair, privateString, publicString)
+
+        const commande = {
+            // idmg,
+            // "user_id": userId,
             "relai": serveurRelai.href,
+            "pubkey": publicString,
         }
 
-        setJsonConfiguration(JSON.stringify(v, null, 2))
-    }, [usager, setJsonConfiguration])
-
-    if(!bluetoothSupporte) return <BluetoothNonSupporte jsonConfiguration={jsonConfiguration} />
-
-    return <BluetoothSupporte />
-}
-
-export default ConfigurationBluetooth
-
-function BluetoothNonSupporte(props) {
-
-    const { jsonConfiguration } = props
+        workers.chiffrage.formatterMessage(
+            commande, 'SenseursPassifs',
+            {kind: MESSAGE_KINDS.KIND_COMMANDE, action: 'authentifier'}
+        )
+            .then(messageSigne=>{
+                messageSigne.millegrille = caPem
+                messageSigne.attachements = {'privateKey': privateString}
+                setJsonConfiguration(JSON.stringify(messageSigne, null, 2))                
+            })
+            .catch(err=>console.error("Erreur signature configuration ", err))
+    }, [workers, usager, setJsonConfiguration])
 
     return (
         <div>
@@ -96,6 +113,10 @@ function ConfigurationJson(props) {
         setCopieOk(true)
         setTimeout(()=>setCopieOk(false), 5_000)
     }, [jsonConfiguration, setCopieOk])
+
+    useEffect(()=>{
+        
+    }, [])
 
     if(!props.show) return ''
 
