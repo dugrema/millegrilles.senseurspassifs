@@ -9,18 +9,30 @@ import Form from 'react-bootstrap/Form'
 import { MESSAGE_KINDS } from '@dugrema/millegrilles.utiljs/src/constantes'
 import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 
-import { genererKeyPairX25519, calculerSharedKey } from '@dugrema/millegrilles.utiljs/src/chiffrage.x25519'
+import { genererKeyPairX25519 } from '@dugrema/millegrilles.utiljs/src/chiffrage.x25519'
 
 import millegrillesServicesConst from './services.json'
-import useWorkers, {useUsager, useInfoConnexion} from './WorkerContext'
+import useWorkers, { useUsager } from './WorkerContext'
 
-const bluetoothSupporte = 'bluetooth' in navigator
-const bluetooth = navigator.bluetooth
+import { 
+    verifierBluetoothAvailable, requestDevice, authentifier as bleAuthentifier, chargerEtatAppareil, 
+    submitConfiguration as bleSubmitConfiguration, submitWifi as bleSubmitWifi,
+    transmettreDictChiffre, 
+    decoderLectures as bleDecoderLectures, decoderWifi as bleDecoderWifi,
+    addEventListener as bleAddEventListener, removeEventListener as bleRemoveEventListener
+} from './bluetoothCommandes'
 
 function ConfigurationBluetooth(props) {
 
-    if(!bluetoothSupporte) return <BluetoothNonSupporte />
+    const [bluetoothActif, setBluetoothActif] = useState('')
+    
+    useEffect(()=>{
+        verifierBluetoothAvailable()
+            .then(setBluetoothActif)
+    }, [setBluetoothActif])
 
+    if(bluetoothActif === '') return <p>Detection Bluetooth</p>
+    if(!bluetoothActif) return <BluetoothNonSupporte />
     return <BluetoothSupporte />
 }
 
@@ -70,7 +82,8 @@ function BluetoothNonSupporte(props) {
             .then(messageSigne=>{
                 messageSigne.millegrille = caPem
                 messageSigne.attachements = {'privateKey': privateString}
-                setJsonConfiguration(JSON.stringify(messageSigne, null, 2))                
+                // setJsonConfiguration(JSON.stringify(messageSigne, null, 2))                
+                setJsonConfiguration(JSON.stringify(messageSigne))
             })
             .catch(err=>console.error("Erreur signature configuration ", err))
     }, [workers, usager, setJsonConfiguration])
@@ -131,11 +144,9 @@ function ConfigurationJson(props) {
             
             <p>
                 <Button variant={copieOk?'success':'primary'} onClick={copierClipboard} disabled={!!copieOk}>
-                    {copieOk?
-                        <span>Copie OK<i className='fa fa-check'/></span>
-                    :
-                    'Copier'}
+                    <span>Copie <i className="fa fa-key"/></span>
                 </Button>
+                {copieOk?<span>{' '}Cle copiee en memoire <i className='fa fa-check'/></span>:''}
             </p>
         </div>
     )
@@ -160,21 +171,49 @@ function BluetoothSupporte(props) {
         setAuthSharedSecret('')
     }, [setDeviceSelectionne, setBluetoothServer, setAuthSharedSecret])
 
-    const selectionnerDevice = useCallback(deviceId=>{
-        console.debug("Selectioner device %s", deviceId)
-        bluetooth.getDevices()
-            .then(devices=>{
-                for(const device of devices) {
-                    if(device.id === deviceId) {
-                        console.debug("Device trouve ", device)
-                        setDeviceSelectionne(device)
-                        return
-                    }
+    const authentifierHandler = useCallback(()=>{
+        setAuthSharedSecret('')
+        bleAuthentifier(workers, bluetoothServer)
+            .then(result=>{
+                console.debug("Authentifier resultat : ", result)
+                if(result && result.sharedSecret) {
+                    setAuthSharedSecret(result.sharedSecret)
+                } else {
+                    setAuthSharedSecret(false)
                 }
-                console.error("Device Id %s inconnu", deviceId)
             })
-            .catch(err=>console.error("Erreur getDevices", err))
-    }, [setDeviceSelectionne])
+            .catch(err=>{
+                console.error("Erreur BLE authentifier ", err)
+                setAuthSharedSecret(false)
+            })
+    }, [workers, bluetoothServer, setAuthSharedSecret])
+
+    useEffect(()=>{
+        if(!deviceSelectionne) return
+        deviceSelectionne.addEventListener('gattserverdisconnected', ()=>fermerAppareilCb('bluetooth deconnecte'))
+    }, [deviceSelectionne])
+
+    useEffect(()=>{
+        if(bluetoothServer && bluetoothServer.connected) {
+            authentifierHandler()
+        }
+    }, [bluetoothServer, authentifierHandler, fermerAppareilCb])
+
+    // const selectionnerDevice = useCallback(deviceId=>{
+    //     console.debug("Selectioner device %s", deviceId)
+    //     bluetooth.getDevices()
+    //         .then(devices=>{
+    //             for(const device of devices) {
+    //                 if(device.id === deviceId) {
+    //                     console.debug("Device trouve ", device)
+    //                     setDeviceSelectionne(device)
+    //                     return
+    //                 }
+    //             }
+    //             console.error("Device Id %s inconnu", deviceId)
+    //         })
+    //         .catch(err=>console.error("Erreur getDevices", err))
+    // }, [setDeviceSelectionne])
 
     // const refreshDevices = useCallback(()=>{
     //     console.debug("Refresh devices")
@@ -236,69 +275,6 @@ function BluetoothSupporte(props) {
         }
     }, [deviceSelectionne, setBluetoothServer, fermerAppareilCb])
 
-    useEffect(()=>{
-        if(!bluetoothServer) return
-        console.debug("Authentifier l'usager")
-
-        Promise.resolve().then(async ()=>{
-            // Recuperer la cle publique de l'appareil
-            const publicPeerDataview = await chargerClePublique(bluetoothServer)
-            const publicPeer = new Uint8Array(publicPeerDataview.buffer)
-            console.debug("Cle publique peer pour auth ", publicPeer)
-
-            // Generer keypair pour le chiffrage des commandes
-            const keyPair = genererKeyPairX25519()
-            const publicString = Buffer.from(keyPair.public).toString('hex')
-            console.debug("Keypair : %O, public %s", keyPair, publicString)
-
-            // Calculer shared secret
-            const sharedSecret = await calculerSharedKey(keyPair.private, publicPeer)
-            // console.debug("Shared secret : %s %O", Buffer.from(sharedSecret).toString('hex'), sharedSecret)
-
-            // Transmettre cle publique
-            const commande = {pubkey: publicString}
-            const commandeSignee = await workers.chiffrage.formatterMessage(
-                commande, 'SenseursPassifs',
-                {kind: MESSAGE_KINDS.KIND_COMMANDE, action: 'authentifier'}
-            )
-            const cb = async characteristic => {
-                await transmettreDict(characteristic, commandeSignee)
-            }
-            const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
-                    setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
-            await submitParamAppareil(bluetoothServer, commandeUuid, setCommandUuid, cb)
-
-            // Verifier que la characteristic auth est vide (len: 0). Indique succes.
-            let succes = false
-            const fingerprint = commandeSignee.pubkey
-            console.debug("Fingerprint certificat signature : ", fingerprint)
-            for(let i=0; i<10; i++) {
-                await new Promise(resolve=>setTimeout(resolve, 500))
-                const confirmation = await chargerClePublique(bluetoothServer)
-                const confirmationKeyString = Buffer.from(confirmation.buffer).toString('hex')
-                console.debug("Confirmation auth : %s (%O)", confirmationKeyString, confirmation)
-                if(confirmationKeyString === fingerprint) {
-                    console.debug("Auth succes")
-                    succes = true
-                    break
-                }
-            }
-
-            if(succes) {
-                // Sauvegarder le shared secret pour activer les commandes authentifiees.
-                setAuthSharedSecret(sharedSecret)
-
-                // messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
-            } else {
-                console.error("Echec authentification")
-            }
-        })
-        .catch(err=>{
-            console.error("Erreur commande auth ", err)
-            // setMessageErreur({err, message: 'Les parametres wifi n\'ont pas ete recus par l\'appareil.'})
-        })
-    }, [workers, bluetoothServer, setAuthSharedSecret])
-
     if(bluetoothServer) return (
         <div>
             <ConfigurerAppareilSelectionne 
@@ -308,6 +284,7 @@ function BluetoothSupporte(props) {
                 wifiPassword={wifiPassword}
                 relai={relai} 
                 authSharedSecret={authSharedSecret} 
+                authentifier={authentifierHandler}
                 fermer={fermerAppareilCb} />
         </div>
     )
@@ -322,13 +299,35 @@ function BluetoothSupporte(props) {
                 relai={relai}
                 setRelai={setRelai} />
 
-            <p>Les boutons suivants permettent de trouver un appareil avec la radio bluetooth.</p>
+            <p>Le boutons suivant permet de trouver un appareil avec bluetooth.</p>
 
             <p>
                 <Button variant="primary" onClick={scanCb}>Scan</Button>{' '}
-                <Button variant="secondary" onClick={fermerAppareilCb} disabled={!deviceSelectionne}>Fermer</Button>
             </p>
         </div>
+    )
+}
+
+function AuthentifierAppareil(props) {
+
+    const { show, authSharedSecret, authentifier } = props
+
+    const messageEtat = useMemo(()=>{
+        if(authSharedSecret === '') return <span>En cours <i className="fa fa-spinner fa-spin"/></span>
+        if(authSharedSecret === false) return (
+            <span>Echec <Button variant="secondary" onClick={authentifier}>Ressayer</Button></span>
+        )
+        if(authSharedSecret) return <span>OK</span>
+        return <span>Erreur</span>
+    }, [authSharedSecret, authentifier])
+
+    if(!show) return ''
+
+    return (
+        <Row>
+            <Col xs={12} md={3}>Authentification</Col>
+            <Col>{messageEtat}</Col>
+        </Row>
     )
 }
 
@@ -343,42 +342,48 @@ function sortDevices(a, b) {
     return a.id.localeCompare(b.id)
 }
 
-async function requestDevice() {
-    let device = null
-    const commandesUuid = millegrillesServicesConst.services.commandes.uuid,
-          etatUuid  = millegrillesServicesConst.services.etat.uuid,
-          environmentalUuid = 0x181a
-    console.debug("Services %s, %s", commandesUuid, etatUuid)
-    try {
-        device = await bluetooth.requestDevice({
-            // Requis : service de configuration
-            // filters: [{services: [etatUuid]}],
-            filters: [{services: [commandesUuid]}],
-            // Optionnels - requis par Chrome sur Windows (permission d'acces)
-            // optionalServices: [configurerUuid, environmentalUuid],
-            optionalServices: [etatUuid, environmentalUuid],
-        })
-    } catch(err) {
-        if(err.code === 8) {
-            // Cancel
-            return
-        }
-        // Reessayer sans optionalServices (pour navigateur bluefy)
-        device = await bluetooth.requestDevice({
-            // Requis : service de configuration
-            filters: [{services: [commandesUuid, etatUuid]}],
-        })
-    }
-    console.debug("Device choisi ", device)
-    return device
-}
+// async function requestDevice() {
+//     let device = null
+//     const commandesUuid = millegrillesServicesConst.services.commandes.uuid,
+//           etatUuid  = millegrillesServicesConst.services.etat.uuid,
+//           environmentalUuid = 0x181a
+//     console.debug("Services %s, %s", commandesUuid, etatUuid)
+//     try {
+//         device = await bluetooth.requestDevice({
+//             // Requis : service de configuration
+//             // filters: [{services: [etatUuid]}],
+//             filters: [{services: [commandesUuid]}],
+//             // Optionnels - requis par Chrome sur Windows (permission d'acces)
+//             // optionalServices: [configurerUuid, environmentalUuid],
+//             optionalServices: [etatUuid, environmentalUuid],
+//         })
+//     } catch(err) {
+//         if(err.code === 8) {
+//             // Cancel
+//             return
+//         }
+//         // Reessayer sans optionalServices (pour navigateur bluefy)
+//         device = await bluetooth.requestDevice({
+//             // Requis : service de configuration
+//             filters: [{services: [commandesUuid, etatUuid]}],
+//         })
+//     }
+//     console.debug("Device choisi ", device)
+//     return device
+// }
 
 function ConfigurerAppareilSelectionne(props) {
-    const { deviceSelectionne, server, ssid, wifiPassword, relai, authSharedSecret, fermer } = props
+    const { deviceSelectionne, server, ssid, wifiPassword, relai, authSharedSecret, authentifier, fermer } = props
 
     const workers = useWorkers()
 
     const [etatAppareil, setEtatAppareil] = useState('')
+    const [autoUpdate, setAutoUpdate] = useState(true)
+    const [lecturesMaj, setLecturesMaj] = useState('')
+
+    const etatCharge = useMemo(()=>{
+        return !!etatAppareil
+    }, [etatAppareil])
 
     const rafraichir = useCallback(()=>{
         if(!server.connected) {
@@ -396,6 +401,33 @@ function ConfigurerAppareilSelectionne(props) {
             })
     }, [server, setEtatAppareil, fermer])
 
+    const updateLecturesHandler = useCallback( e => {
+        // console.debug("Event lectures : ", e)
+        setAutoUpdate(false)  // Les listeners fonctionnent
+        try {
+            const valeur = e.target.value
+            const etatLectures = bleDecoderLectures(valeur)
+            // console.debug("Lectures decode : ", etatLectures)
+            setLecturesMaj(etatLectures)
+        } catch(err) {
+            console.error("Erreur decodage lectures ", err)
+        }
+    }, [setAutoUpdate, setLecturesMaj])
+
+    const updateWifiHandler = useCallback(e => {
+        // console.debug("Event wifi : ", e)
+        setAutoUpdate(false)  // Les listeners fonctionnent
+        try {
+            const valeur = e.target.value
+            const etatWifi = bleDecoderWifi(valeur)
+            // console.debug("Wifi decode : ", etatWifi)
+            setLecturesMaj(etatWifi)
+            setAutoUpdate(false)  // Les listeners fonctionnent
+        } catch(err) {
+            console.error("Erreur decodage lectures ", err)
+        }
+    }, [setAutoUpdate, setLecturesMaj])    
+
     const rebootCb = useCallback(()=>{
         const commande = { commande: 'reboot' }
         transmettreDictChiffre(workers, server, authSharedSecret, commande)
@@ -406,12 +438,40 @@ function ConfigurerAppareilSelectionne(props) {
     }, [workers, server, authSharedSecret])
 
     useEffect(()=>{
-        if(server.connected) {
+        if(!lecturesMaj) return
+        const maj = {...etatAppareil, ...lecturesMaj}
+        setLecturesMaj('')
+        setEtatAppareil(maj)
+    }, [etatAppareil, setEtatAppareil, lecturesMaj, setLecturesMaj])
+
+    useEffect(()=>{
+        if(server.connected && autoUpdate) {
             rafraichir()
             const interval = setInterval(rafraichir, 7_500)
-            return () => clearInterval(interval)
+            return () => {
+                console.info("Desactiver polling BLE")
+                clearInterval(interval)
+            }
         }
-    }, [server, rafraichir])
+    }, [server, rafraichir, autoUpdate])
+
+    useEffect(()=>{
+        if(server.connected && etatCharge) {
+            const etatUuid = millegrillesServicesConst.services.etat.uuid
+            const lecturesUuid = millegrillesServicesConst.services.etat.characteristics.getLectures
+            const wifiUuid = millegrillesServicesConst.services.etat.characteristics.getWifi
+            bleAddEventListener(server, etatUuid, lecturesUuid, updateLecturesHandler)
+                .catch(err=>console.error("Erreur ajout listener sur lectures", err))
+            bleAddEventListener(server, etatUuid, wifiUuid, updateWifiHandler)
+                .catch(err=>console.error("Erreur ajout listener sur wifi", err))
+            return () => {
+                bleRemoveEventListener(server, etatUuid, lecturesUuid, updateLecturesHandler)
+                    .catch(err=>console.error("Erreur retrait listener sur lectures", err))
+                bleRemoveEventListener(server, etatUuid, wifiUuid, updateWifiHandler)
+                    .catch(err=>console.error("Erreur retrait listener sur lectures", err))
+            }
+        }
+    }, [server, etatCharge, updateLecturesHandler, updateWifiHandler])
 
     if(!server) return ''
 
@@ -428,6 +488,12 @@ function ConfigurerAppareilSelectionne(props) {
             </Row>
 
             <EtatAppareil value={etatAppareil} />
+            
+            <AuthentifierAppareil 
+                show={!!etatAppareil} 
+                authSharedSecret={authSharedSecret} 
+                authentifier={authentifier} />
+
             <EtatLectures value={etatAppareil} server={server} authSharedSecret={authSharedSecret} />
             
             <SoumettreConfiguration 
@@ -507,31 +573,9 @@ function ValeurHumidite(props) {
     )
 }
 
-async function transmettreDictChiffre(workers, server, authSharedSecret, commande) {
-    const commandeString = JSON.stringify(commande)
-    const commandeBytes = new TextEncoder().encode(commandeString)
-
-    const resultat = await workers.chiffrage.chiffrage.chiffrer(
-        commandeBytes, {cipherAlgo: 'chacha20-poly1305', key: authSharedSecret}
-    )
-    console.debug("Commande chiffree : %O (key input: %O)", resultat, authSharedSecret)
-    const ciphertext = Buffer.from(resultat.ciphertext).toString('base64')
-    const commandeChiffree = {
-        ciphertext,
-        nonce: Buffer.from(resultat.nonce.slice(1), 'base64').toString('base64'),  // Retrirer m multibase, utiliser base64 padding
-        tag: Buffer.from(resultat.rawTag).toString('base64'),
-    }
-    const cb = async characteristic => {
-        await transmettreDict(characteristic, commandeChiffree)
-    }
-    const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
-          setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
-    await submitParamAppareil(server, commandeUuid, setCommandUuid, cb)
-}
-
-// async function commandeSwitchHandler(workers, server, authSharedSecret, idx, valeur) {
-//     const commande = JSON.stringify({ commande: 'setSwitchValue', idx, valeur })
-//     const commandeBytes = new TextEncoder().encode(commande)
+// async function transmettreDictChiffre(workers, server, authSharedSecret, commande) {
+//     const commandeString = JSON.stringify(commande)
+//     const commandeBytes = new TextEncoder().encode(commandeString)
 
 //     const resultat = await workers.chiffrage.chiffrage.chiffrer(
 //         commandeBytes, {cipherAlgo: 'chacha20-poly1305', key: authSharedSecret}
@@ -580,165 +624,6 @@ function SwitchBluetooth(props) {
             </Col>
         </Row>
     )
-}
-
-async function chargerEtatAppareil(server) {
-    try {
-        if(!server.connected) {
-            console.error("GATT connexion - echec")
-            return
-        }
-        const service = await server.getPrimaryService(millegrillesServicesConst.services.etat.uuid)
-        // console.debug("Service : ", service)
-        const characteristics = await service.getCharacteristics()
-        const etat = await lireEtatCharacteristics(characteristics)
-
-        return etat
-    } catch(err) {
-        console.error("Erreur chargerEtatAppareil %O", err)
-    }
-}
-
-async function chargerClePublique(server) {
-    try {
-        if(!server.connected) {
-            console.error("GATT connexion - echec")
-            return
-        }
-        const service = await server.getPrimaryService(millegrillesServicesConst.services.commandes.uuid)
-        const characteristics = await service.getCharacteristics()
-        
-        for await(const characteristic of characteristics) {
-            // console.debug("Lire characteristic " + characteristic.uuid)
-            const uuidLowercase = characteristic.uuid.toLowerCase()
-            switch(uuidLowercase) {
-                case millegrillesServicesConst.services.commandes.characteristics.getAuth:
-                    return await characteristic.readValue()
-                default:
-            }
-        }
-    
-        throw Error('characteristic auth introuvable')
-    } catch(err) {
-        console.error("Erreur chargerEtatAppareil %O", err)
-    }
-}
-
-async function lireEtatCharacteristics(characteristics) {
-    // console.debug("Nombre characteristics : " + characteristics.length)
-    const etat = {}
-    for await(const characteristic of characteristics) {
-        // console.debug("Lire characteristic " + characteristic.uuid)
-        const uuidLowercase = characteristic.uuid.toLowerCase()
-        switch(uuidLowercase) {
-            case millegrillesServicesConst.services.etat.characteristics.getUserId:
-                etat.userId = await readTextValue(characteristic)
-                break
-            case millegrillesServicesConst.services.etat.characteristics.getIdmg:
-                etat.idmg = await readTextValue(characteristic)
-                break
-            case millegrillesServicesConst.services.etat.characteristics.getWifi:
-                Object.assign(etat, await readWifi(characteristic))
-                break
-            case millegrillesServicesConst.services.etat.characteristics.getLectures:
-                Object.assign(etat, await readLectures(characteristic))
-                break
-            default:
-                console.warn("Characteristic etat inconnue : " + characteristic.uuid)
-        }
-    }
-    return etat
-}
-
-async function readTextValue(characteristic) {
-    const value = await characteristic.readValue()
-    return new TextDecoder().decode(value)
-}
-
-function convertirBytesIp(adresse) {
-    let adresseStr = adresse.join('.')
-    return adresseStr
-}
-
-async function readWifi(characteristic) {
-    const value = await characteristic.readValue()
-    console.debug("readWifi value %O", value)
-    const connected = value.getUint8(0) === 1,
-          status = value.getUint8(1),
-          channel = value.getUint8(2)
-    const adressesSlice = value.buffer.slice(3, 19)
-    const adressesList = new Uint8Array(adressesSlice)
-    const ip = convertirBytesIp(adressesList.slice(0, 4))
-    const subnet = convertirBytesIp(adressesList.slice(4, 8))
-    const gateway = convertirBytesIp(adressesList.slice(8, 12))
-    const dns = convertirBytesIp(adressesList.slice(12, 16))
-
-    const ssidBytes = value.buffer.slice(19)
-    const ssid = new TextDecoder().decode(ssidBytes)
-
-    const etatWifi = {
-        connected,
-        status,
-        channel,
-        ip, subnet, gateway, dns,
-        ssid
-    }
-
-    return etatWifi
-}
-
-async function readLectures(characteristic) {
-    const value = await characteristic.readValue()
-    console.debug("readLectures value %O", value)
-
-    // Structure du buffer:
-    // 0: NTP OK true/false
-    // 1-4: int date epoch (secs)
-    // 5-6: temp1 (small int)
-    // 7-8: temp2 (small int)
-    // 9-10: hum (small int)
-    // 11: switch 1,2,3,4 avec bits 0=switch1 present, 1=switch1 ON/OFF, 2=switch2 present ...
-
-    const etatNtp = value.getUint8(0) === 1
-    const timeSliceVal = new Uint32Array(value.buffer.slice(1, 5))
-    // console.debug("Time slice val ", timeSliceVal)
-    const timeVal = timeSliceVal[0]
-    const dateTime = new Date(timeVal * 1000)
-    // console.debug("Time val : %O, Date %O", timeVal, dateTime)
-
-    const lecturesNumeriques = new Int16Array(value.buffer.slice(5, 11))
-    const temp1 = decoderValeurSmallint(lecturesNumeriques[0]),
-          temp2 = decoderValeurSmallint(lecturesNumeriques[1]),
-          hum = decoderValeurSmallint(lecturesNumeriques[2],{facteur: 10.0})
-
-    const switches = decoderSwitches(value.getUint8(11))
-
-    return {ntp: etatNtp, time: timeVal, temp1, temp2, hum, switches}
-}
-
-function decoderValeurSmallint(val, opts) {
-    opts = opts || {}
-    const facteur = opts.facteur || 100.0
-    if(val === -32768) return null
-    return val / facteur
-}
-
-function decoderSwitches(val) {
-    const valeursListe = []
-    for(let i = 0; i < 8; i++) {
-        const boolVal = (val & 1 << i)?1:0
-        valeursListe.push(boolVal)
-    }
-    // console.debug("Valeurs liste : ", valeursListe)
-    const switches = []
-    for(let sw=0; sw < 4; sw++) {
-        const switchValue = {present: valeursListe[2*sw]?true:false}
-        if(switchValue.present) {
-            switchValue.valeur = valeursListe[2*sw+1]?true:false
-        }
-        switches.push(switchValue)
-    }
-    return switches
 }
 
 function ValeursConfiguration(props) {
@@ -804,31 +689,41 @@ function SoumettreConfiguration(props) {
         e.stopPropagation()
         e.preventDefault()
 
-        const commandesUuid = millegrillesServicesConst.services.commandes.uuid,
-              setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
-
-        // Transmettre relai
-        const cbRelai = async characteristic => {
-            const params = {commande: 'setRelai', relai}
-            await transmettreDict(characteristic, params)
-        }
-        const cbUser = async characteristic => {
-            const params = {commande: 'setUser', idmg, user_id: userId}
-            await transmettreDict(characteristic, params)
-        }
-
-        Promise.resolve()
-            .then(async ()=>{
-                await submitParamAppareil(server, commandesUuid, setCommandUuid, cbRelai)
-                console.debug("Params relai envoyes")
-                await submitParamAppareil(server, commandesUuid, setCommandUuid, cbUser)
-                console.debug("Params user envoyes")
+        bleSubmitConfiguration(server, relai, idmg, userId)
+            .then(()=>{
+                console.debug("Params configuration envoyes")
                 messageSuccesCb('Les parametres serveur ont ete transmis correctement.')
             })
             .catch(err=>{
                 console.error("Erreur sauvegarde parametres serveur", err)
                 setMessageErreur({err, message: 'Les parametres serveur n\'ont pas ete recus par l\'appareil.'})
             })
+
+        // const commandesUuid = millegrillesServicesConst.services.commandes.uuid,
+        //       setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
+
+        // // Transmettre relai
+        // const cbRelai = async characteristic => {
+        //     const params = {commande: 'setRelai', relai}
+        //     await transmettreDict(characteristic, params)
+        // }
+        // const cbUser = async characteristic => {
+        //     const params = {commande: 'setUser', idmg, user_id: userId}
+        //     await transmettreDict(characteristic, params)
+        // }
+
+        // Promise.resolve()
+        //     .then(async ()=>{
+        //         await submitParamAppareil(server, commandesUuid, setCommandUuid, cbRelai)
+        //         console.debug("Params relai envoyes")
+        //         await submitParamAppareil(server, commandesUuid, setCommandUuid, cbUser)
+        //         console.debug("Params user envoyes")
+        //         messageSuccesCb('Les parametres serveur ont ete transmis correctement.')
+        //     })
+        //     .catch(err=>{
+        //         console.error("Erreur sauvegarde parametres serveur", err)
+        //         setMessageErreur({err, message: 'Les parametres serveur n\'ont pas ete recus par l\'appareil.'})
+        //     })
     }, [server, idmg, userId, relai, messageSuccesCb, setMessageErreur])
 
     const submitWifi = useCallback(e=>{
@@ -836,21 +731,30 @@ function SoumettreConfiguration(props) {
         e.stopPropagation()
         e.preventDefault()
 
-        const cb = async characteristic => {
-            const params = {commande: 'setWifi', ssid, password: wifiPassword}
-            await transmettreDict(characteristic, params)
-        }
+        bleSubmitWifi(server, ssid, wifiPassword)
+            .then(()=>{
+                messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
+            })
+            .catch(err=>{
+                console.error("Erreur submit wifi ", err)
+                setMessageErreur({err, message: 'Les parametres wifi n\'ont pas ete recus par l\'appareil.'})
+            })
+    
+        // const cb = async characteristic => {
+        //     const params = {commande: 'setWifi', ssid, password: wifiPassword}
+        //     await transmettreDict(characteristic, params)
+        // }
 
-        const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
-              setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
+        // const commandeUuid = millegrillesServicesConst.services.commandes.uuid,
+        //       setCommandUuid = millegrillesServicesConst.services.commandes.characteristics.setCommand
 
-        submitParamAppareil(server, commandeUuid, setCommandUuid, cb).then(()=>{
-            messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
-        })
-        .catch(err=>{
-            console.error("Erreur submit wifi ", err)
-            setMessageErreur({err, message: 'Les parametres wifi n\'ont pas ete recus par l\'appareil.'})
-        })
+        // submitParamAppareil(server, commandeUuid, setCommandUuid, cb).then(()=>{
+        //     messageSuccesCb('Les parametres wifi ont ete transmis correctement.')
+        // })
+        // .catch(err=>{
+        //     console.error("Erreur submit wifi ", err)
+        //     setMessageErreur({err, message: 'Les parametres wifi n\'ont pas ete recus par l\'appareil.'})
+        // })
 
     }, [server, ssid, wifiPassword, messageSuccesCb, setMessageErreur])
 
@@ -874,63 +778,4 @@ function SoumettreConfiguration(props) {
             <p></p>
         </div>
     )
-}
-
-const CONST_TAILLE_BUFFER_COMMANDE = 100
-
-async function transmettreString(characteristic, valeur) {
-    const CONST_FIN = new Uint8Array(1)
-    CONST_FIN.set(0, 0x0)
-
-    let valeurArray = new TextEncoder().encode(valeur)
-
-    while(valeurArray.length > 0) {
-        let valSlice = valeurArray.slice(0, CONST_TAILLE_BUFFER_COMMANDE)
-        valeurArray = valeurArray.slice(CONST_TAILLE_BUFFER_COMMANDE)
-        await characteristic.writeValueWithResponse(valSlice)
-    }
-
-    // Envoyer char 0x0
-    await characteristic.writeValueWithResponse(CONST_FIN)
-}
-
-async function transmettreDict(characteristic, valeur) {
-    return transmettreString(characteristic, JSON.stringify(valeur))
-}
-
-async function submitParamAppareil(server, serviceUuid, characteristicUuid, callback) {
-    if(!server) throw new Error("Server manquant")
-    if(!serviceUuid) throw new Error('serviceUuid vide')
-    if(!characteristicUuid) throw new Error('characteristicUuid vide')
-
-    console.debug("submitParamAppareil serviceUuid %s, characteristicUuid %s", serviceUuid, characteristicUuid)
-
-    try {
-        if(!server.connected) {
-            console.error("GATT connexion - echec")
-            return
-        }
-        console.debug("GATT server ", server)
-        const service = await server.getPrimaryService(serviceUuid)
-        console.debug("GATT service ", service)
-        const characteristics = await service.getCharacteristics()
-        console.debug("GATT service characteristics ", characteristics)
-
-        let traite = false
-        for(const characteristic of characteristics) {
-            const uuidLowercase = characteristic.uuid.toLowerCase()
-            if(uuidLowercase === characteristicUuid) {
-                await callback(characteristic)
-                traite = true
-                break
-            }
-        }
-
-        if(!traite) {
-            throw new Error(`characteristic ${characteristicUuid} inconnue pour service ${serviceUuid}`)
-        }
-
-    } catch(err) {
-        console.error("Erreur chargerEtatAppareil %O", err)
-    }
 }
