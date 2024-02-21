@@ -36,11 +36,9 @@ function BluetoothNonSupporte(props) {
     useEffect(()=>{
         if(!usager) return
 
-        console.debug("Usager ", usager)
+        // console.debug("Usager ", usager)
 
-        const userId = usager.extensions.userId,
-              idmg = usager.idmg,
-              caPem = usager.ca
+        const caPem = usager.ca
 
         const instanceUrl = new URL(window.location.href)
         instanceUrl.pathname = ''
@@ -53,13 +51,16 @@ function BluetoothNonSupporte(props) {
         const keyPair = genererKeyPairX25519()
         const privateString = Buffer.from(keyPair.private).toString('hex')
         const publicString = Buffer.from(keyPair.public).toString('hex')
-        console.debug("Keypair : %O, private: %s, public %s", keyPair, privateString, publicString)
+        // console.debug("Keypair : %O, private: %s, public %s", keyPair, privateString, publicString)
+
+        const now = Math.floor(new Date().getTime()/1000)
+        const duree = 3 * 3600  // 3 h
+        const expiration = now + duree
 
         const commande = {
-            // idmg,
-            // "user_id": userId,
             "relai": serveurRelai.href,
             "pubkey": publicString,
+            "exp": expiration,
         }
 
         workers.chiffrage.formatterMessage(
@@ -92,11 +93,12 @@ function BluetoothNonSupporte(props) {
 
             <h3>Configuration manuelle</h3>
             <p>
-                Copiez cette configuration.
+                Cliquer sur le bouton pour copier la configuration en memoire (clipboard).
             </p>
-            <ConfigurationJson show={true} jsonConfiguration={jsonConfiguration} />
+            <ConfigurationJson show={!!jsonConfiguration} jsonConfiguration={jsonConfiguration} />
             <p>
-                Utiliser un navigateur qui supporte bluetooth pour aller sur <a href="http://millegrilles.com/bluetooth" target="_blank">millegrilles.com/bluetooth</a>. 
+                Utilisez un navigateur qui supporte bluetooth et ouvrir la 
+                page <a href="http://millegrilles.com/bluetooth" target="_blank">millegrilles.com/bluetooth</a>. 
             </p>
         </div>
     )
@@ -106,6 +108,7 @@ function ConfigurationJson(props) {
 
     const { jsonConfiguration } = props
 
+    const [showJson, setShowJson] = useState(false)
     const [copieOk, setCopieOk] = useState(false)
 
     const copierClipboard = useCallback(()=>{
@@ -122,7 +125,10 @@ function ConfigurationJson(props) {
 
     return (
         <div>
-            <pre>{jsonConfiguration}</pre>
+            {showJson?
+                <pre>{jsonConfiguration}</pre>
+            :''}
+            
             <p>
                 <Button variant={copieOk?'success':'primary'} onClick={copierClipboard} disabled={!!copieOk}>
                     {copieOk?
