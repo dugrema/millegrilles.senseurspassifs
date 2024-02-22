@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useCallback} from 'react'
+import React, {useState, useMemo, useCallback, useEffect} from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Nav from 'react-bootstrap/Nav'
@@ -8,7 +8,7 @@ import NavDropdown from 'react-bootstrap/NavDropdown'
 import { Menu as MenuMillegrilles, DropDownLanguage, ModalInfo } from '@dugrema/millegrilles.reactjs'
 import { supprimerContenuIdb } from '@dugrema/millegrilles.reactjs/src/dbNettoyage'
 
-import {useEtatConnexion, useUsager, useInfoConnexion} from './WorkerContext'
+import {useEtatConnexion, useUsager, useInfoConnexion, useIdmg } from './WorkerContext'
 
 import manifest from './manifest.build'
 
@@ -16,14 +16,15 @@ function Menu(props) {
 
     const { i18n, setSectionAfficher, estProprietaire } = props
   
-    const infoConnexion = useInfoConnexion()
+    useEffect(()=>console.debug("Manifest : ", manifest), [])
+
     const usager = useUsager()
     const etatConnexion = useEtatConnexion()
   
     const idmg = useMemo(()=>{
-      if(!infoConnexion) return null
-      return infoConnexion.idmg
-    }, [infoConnexion])
+      if(!usager) return null
+      return usager.idmg
+    }, [usager])
   
     const { t } = useTranslation()
     const [showModalInfo, setShowModalInfo] = useState(false)
