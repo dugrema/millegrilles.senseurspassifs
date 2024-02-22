@@ -399,6 +399,13 @@ function GeopositionAppareil(props) {
     const [init, setInit] = useState(false)
     const [latitude, setLatitude] = useState('')
     const [longitude, setLongitude] = useState('')
+    const [geolocateWorking, setGeolocateWorking] = useState(false)
+    const [errGeolocate, setErrGeolocate] = useState('')
+
+    const variantButtonGeolocate = useMemo(()=>{
+        if(errGeolocate) return 'danger'
+        return 'secondary'
+    }, [errGeolocate])
 
     useEffect(()=>{
         if(!geoposition) return
@@ -447,17 +454,23 @@ function GeopositionAppareil(props) {
 
     const locationCb = useCallback(()=>{
         console.debug("Detecter position")
+        setGeolocateWorking(true)
         geolocate()
             .then(resultat=>{
                 console.debug("Resultat geolocation : ", resultat)
                 const coords = resultat.coords || {}
                 setLatitude(''+coords.latitude)
                 setLongitude(''+coords.longitude)
+                setErrGeolocate('')
             })
             .catch(err=>{
                 console.error("Erreur geolocation : ", err)
+                setErrGeolocate(err)
             })
-    }, [setLatitude, setLongitude])
+            .finally(()=>{
+                setGeolocateWorking(false)
+            })
+    }, [setLatitude, setLongitude, setErrGeolocate, setGeolocateWorking])
 
     if(!modeEdition) {
         return (
@@ -472,8 +485,13 @@ function GeopositionAppareil(props) {
     return (
         <Row>
             <Col xs={12} md={5}>
-                Edit geoposition{' '}
-                <Button variant="secondary" onClick={locationCb}>Detecter</Button>
+                Geoposition (GPS)
+                {' '}
+                <Button variant={variantButtonGeolocate} onClick={locationCb} disabled={geolocateWorking}>
+                    Detecter
+                </Button>
+                {' '}
+                {geolocateWorking?<i className='fa fa-spinner fa-spin'/>:''}
             </Col>
             <Col xs={6} md={3}>
                 Latitude <Form.Control type="text" name='latitude' value={latitude} onChange={valeurChangeCb} />
