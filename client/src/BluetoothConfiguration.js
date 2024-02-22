@@ -402,8 +402,7 @@ function ConfigurerAppareilSelectionne(props) {
     }, [server, setEtatAppareil, fermer])
 
     const updateLecturesHandler = useCallback( e => {
-        // console.debug("Event lectures : ", e)
-        setAutoUpdate(false)  // Les listeners fonctionnent
+        console.debug("Event lectures : ", e)
         try {
             const valeur = e.target.value
             const etatLectures = bleDecoderLectures(valeur)
@@ -412,21 +411,19 @@ function ConfigurerAppareilSelectionne(props) {
         } catch(err) {
             console.error("Erreur decodage lectures ", err)
         }
-    }, [setAutoUpdate, setLecturesMaj])
+    }, [setLecturesMaj])
 
     const updateWifiHandler = useCallback(e => {
         // console.debug("Event wifi : ", e)
-        setAutoUpdate(false)  // Les listeners fonctionnent
         try {
             const valeur = e.target.value
             const etatWifi = bleDecoderWifi(valeur)
             // console.debug("Wifi decode : ", etatWifi)
             setLecturesMaj(etatWifi)
-            setAutoUpdate(false)  // Les listeners fonctionnent
         } catch(err) {
             console.error("Erreur decodage lectures ", err)
         }
-    }, [setAutoUpdate, setLecturesMaj])    
+    }, [setLecturesMaj])    
 
     const rebootCb = useCallback(()=>{
         const commande = { commande: 'reboot' }
@@ -461,9 +458,10 @@ function ConfigurerAppareilSelectionne(props) {
             const lecturesUuid = millegrillesServicesConst.services.etat.characteristics.getLectures
             const wifiUuid = millegrillesServicesConst.services.etat.characteristics.getWifi
             bleAddEventListener(server, etatUuid, lecturesUuid, updateLecturesHandler)
-                .catch(err=>console.error("Erreur ajout listener sur lectures", err))
-            bleAddEventListener(server, etatUuid, wifiUuid, updateWifiHandler)
-                .catch(err=>console.error("Erreur ajout listener sur wifi", err))
+                .then(()=>bleAddEventListener(server, etatUuid, wifiUuid, updateWifiHandler))
+                .then(()=>setAutoUpdate(false))
+                .catch(err=>console.error("Erreur ajout listener sur lectures/wifi", err))
+    
             return () => {
                 bleRemoveEventListener(server, etatUuid, lecturesUuid, updateLecturesHandler)
                     .catch(err=>console.error("Erreur retrait listener sur lectures", err))
@@ -471,7 +469,7 @@ function ConfigurerAppareilSelectionne(props) {
                     .catch(err=>console.error("Erreur retrait listener sur lectures", err))
             }
         }
-    }, [server, etatCharge, updateLecturesHandler, updateWifiHandler])
+    }, [server, etatCharge, updateLecturesHandler, updateWifiHandler, setAutoUpdate])
 
     if(!server) return ''
 

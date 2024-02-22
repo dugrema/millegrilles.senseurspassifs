@@ -101,7 +101,7 @@ export async function authentifier(workers, server) {
                         return resolve(true)
                     }
                     // Sleep
-                    if(i<2) await new Promise(resolve=>()=>setTimeout(resolve, 1_500))
+                    if(i<2) await new Promise(resolveSleep=>setTimeout(resolveSleep, 1_500))
                 }
                 return resolve(false)
             } catch(err) {
@@ -394,6 +394,8 @@ export async function addEventListener(server, serviceUuid, characteristicUuid, 
     if(c) {
         characteristic.addEventListener('characteristicvaluechanged', callback)
         console.debug("addEventListener Characteristic %O notification active", characteristic)
+    } else {
+        throw new Error("addEventListener erreur startNotifications")
     }
 }
 
