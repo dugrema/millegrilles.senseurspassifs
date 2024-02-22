@@ -45,8 +45,8 @@ function BluetoothNonSupporte(props) {
     const workers = useWorkers(),
           usager = useUsager()
 
-    useEffect(()=>{
-        if(!usager) return
+    const genererCleHandler = useCallback(async () => {
+        if(!usager) return ''
 
         // console.debug("Usager ", usager)
 
@@ -66,7 +66,7 @@ function BluetoothNonSupporte(props) {
         // console.debug("Keypair : %O, private: %s, public %s", keyPair, privateString, publicString)
 
         const now = Math.floor(new Date().getTime()/1000)
-        const duree = 3 * 3600  // 3 h
+        const duree = 12 * 3600  // 12 h
         const expiration = now + duree
 
         const commande = {
@@ -75,18 +75,31 @@ function BluetoothNonSupporte(props) {
             "exp": expiration,
         }
 
-        workers.chiffrage.formatterMessage(
+        const messageSigne = await workers.chiffrage.formatterMessage(
             commande, 'SenseursPassifs',
             {kind: MESSAGE_KINDS.KIND_COMMANDE, action: 'authentifier'}
         )
-            .then(messageSigne=>{
-                messageSigne.millegrille = caPem
-                messageSigne.attachements = {'privateKey': privateString}
-                // setJsonConfiguration(JSON.stringify(messageSigne, null, 2))                
-                setJsonConfiguration(JSON.stringify(messageSigne))
-            })
-            .catch(err=>console.error("Erreur signature configuration ", err))
-    }, [workers, usager, setJsonConfiguration])
+        messageSigne.millegrille = caPem
+        messageSigne.attachements = {'privateKey': privateString}
+        // setJsonConfiguration(JSON.stringify(messageSigne, null, 2))                
+        return JSON.stringify(messageSigne)
+    }, [workers, usager])
+
+    useEffect(()=>{
+        const cb = () => {
+            genererCleHandler()
+                .then(setJsonConfiguration)
+                .catch(err=>console.error("Erreur preparation cle auth", err))
+        }
+        cb()  // Generer cle
+        
+        // Regenerer cle a toutes les 5 minutes
+        const interval = setInterval(cb, 300_000)
+        return () => {
+            clearInterval(interval)
+        }
+    }, [genererCleHandler, setJsonConfiguration])
+
 
     return (
         <div>
@@ -129,10 +142,6 @@ function ConfigurationJson(props) {
         setCopieOk(true)
         setTimeout(()=>setCopieOk(false), 5_000)
     }, [jsonConfiguration, setCopieOk])
-
-    useEffect(()=>{
-        
-    }, [])
 
     if(!props.show) return ''
 
