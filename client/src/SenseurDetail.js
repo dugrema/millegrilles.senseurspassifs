@@ -111,6 +111,11 @@ function StatistiquesSenseur(props) {
 
     const groupingHandler = useCallback(e=>setGrouping(e.currentTarget.value), [setGrouping])
 
+    const afficherStatistiques = useMemo(()=>{
+        const decimals = getUnite(typeValeur)[0]
+        return decimals !== null
+    }, [typeValeur])
+
     useEffect(()=>{
         if(!uuid_appareil || !senseurId) return
         console.debug("Charger statistiques senseur %s appareil %s", senseurId, uuid_appareil)
@@ -133,7 +138,7 @@ function StatistiquesSenseur(props) {
             .catch(err=>console.error("Erreur chargement statistiques ", err))
     }, [workers, uuid_appareil, senseurId, setStats, timezone, grouping, minDate, maxDate])
 
-    if(!appareil || !senseurId) return ''
+    if(!appareil || !senseurId || !afficherStatistiques) return ''
 
     return (
         <div>
@@ -463,7 +468,7 @@ function FormatterValeur(props) {
     let [decimals, unite] = getUnite(typeValeur)
     if(hideType) unite = ''
 
-    if(!isNaN(Number.parseFloat(decimals))) {
+    if(valeur !== null && decimals !== null) {
         return <span>{valeur.toFixed(decimals)} {unite}</span>
     } else {
         return <span>{`${valeur + unite}`}</span>
