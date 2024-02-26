@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, lazy } from 'react'
 
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
@@ -11,6 +11,10 @@ import PYTZ_TIMEZONES from '@dugrema/millegrilles.utiljs/res/pytz_timezones.json
 import { FormatterDate } from '@dugrema/millegrilles.reactjs'
 
 import useWorkers from './WorkerContext'
+
+const ChartTemperatures = lazy( () => import('./ChartTemperatures') )
+const ChartHumidite = lazy( () => import('./ChartHumidite') )
+const ChartPression = lazy( () => import('./ChartPression') )
 
 const DATETIME_DATE_FORMAT = 'YYYY-MM-DD'
 const DATETIME_TIME_FORMAT = 'HH:mm:ss'
@@ -177,18 +181,40 @@ function StatistiquesSenseur(props) {
     )
 }
 
+function typeChart(typeValeur) {
+    let TypeChart = null
+    switch(typeValeur) {
+        case 'temperature': TypeChart = ChartTemperatures; break
+        case 'humidite': TypeChart = ChartHumidite; break
+        case 'pression': TypeChart = ChartPression; break
+        case 'pression_tendance': TypeChart = ChartPression; break
+        default: 
+            TypeChart = NoChart
+    }
+    return TypeChart
+}
+
+function NoChart(props) {
+    return ''
+}
+
 function StatistiquesTable72h(props) {
     const {liste, typeValeur} = props
-
-    if(!liste) return ''
 
     let jour = ''
 
     const [_, unite] = getUnite(typeValeur)
 
+    const TypeChart = useMemo(()=>typeChart(typeValeur), [typeValeur])
+
+    if(!liste) return ''
+
     return (
         <div>
             <h3>Table statistiques 3 jours</h3>
+            <Row>
+                <Col><TypeChart className='chart' value={liste} unite='heures' /></Col>
+            </Row>
             <Row className='table-header'>
                 <Col xs={4} md={2} className='text-overflow-clip'>
                     Date
@@ -209,11 +235,16 @@ function StatistiquesTable72h(props) {
 function StatistiquesTable31j(props) {
     const {liste, typeValeur} = props
 
+    const TypeChart = useMemo(()=>typeChart(typeValeur), [typeValeur])
+
     if(!liste) return ''
 
     return (
         <div>
             <h3>Table statistiques 31 jours</h3>
+            <Row>
+                <Col><TypeChart className='chart' value={liste} unite='jours' /></Col>
+            </Row>
             <Row className='table-header'>
                 <Col xs={4} md={4} xl={3} className='text-overflow-clip'>Jour</Col>
                 <Col xs={2} xl={1} className='text-overflow-clip val-numerique'>Moyenne</Col>
@@ -363,6 +394,8 @@ function StatistiquesTableCustom(props) {
     }, [setMinDate])
     const dateMaxChangeHandler = useCallback(e=>setMaxDate(e.toDate()), [setMaxDate])
 
+    const TypeChart = useMemo(()=>typeChart(typeValeur), [typeValeur])
+
     if(!liste) return ''
 
     return (
@@ -392,6 +425,10 @@ function StatistiquesTableCustom(props) {
                                 dateFormat={DATETIME_DATE_FORMAT}
                                 timeFormat={DATETIME_TIME_FORMAT} />
                         </Col>
+                    </Row>
+
+                    <Row>
+                        <Col><TypeChart className='chart' value={liste} unite={grouping} /></Col>
                     </Row>
 
                     <Row>
@@ -426,7 +463,7 @@ function FormatterValeur(props) {
     let [decimals, unite] = getUnite(typeValeur)
     if(hideType) unite = ''
 
-    if(!isNaN(decimals)) {
+    if(!isNaN(Number.parseFloat(decimals))) {
         return <span>{valeur.toFixed(decimals)} {unite}</span>
     } else {
         return <span>{`${valeur + unite}`}</span>
