@@ -9,7 +9,7 @@ import useWorkers from './WorkerContext'
 
 function AfficherSenseurs(props) {
     const { appareil, editMode, cacherSenseurs, setCacherSenseurs, setDescriptifSenseurs, ouvrirDetailSenseur, afficherTous } = props
-    const { senseurs, lectures_disponibles } = appareil
+    const { senseurs, types_donnees } = appareil
     const configuration = useMemo(()=>appareil.configuration || {}, [appareil])
     const cacherSenseursNonEdit = configuration.cacher_senseurs || []
     const descriptifSenseurs = useMemo(()=>{
@@ -17,28 +17,28 @@ function AfficherSenseurs(props) {
     }, [props, configuration])
 
     const liste = useMemo(()=>{
-      if(!senseurs && !lectures_disponibles) return
+      if(!senseurs && !types_donnees) return
 
-    //   console.debug("Preparer liste senseurs pour appareil %O (senseurs : %O, lectures_disponibles: %O)", 
-    //     appareil, senseurs, lectures_disponibles)
+      console.debug("Preparer liste senseurs pour appareil %O (senseurs : %O, types_donnees: %O)", 
+        appareil, senseurs, types_donnees)
 
-      const lecturesDisponibles = new Set(lectures_disponibles)
+      const setLecturesDisponibles = new Set(Object.keys(types_donnees))
       const liste = []
       if(senseurs) {
         for (const senseurId of Object.keys(senseurs)) {
             const contenu = senseurs[senseurId]
             liste.push({...contenu, senseurId})
-            lecturesDisponibles.delete(senseurId)
+            setLecturesDisponibles.delete(senseurId)
         }
       }
-      for (const senseurId of lecturesDisponibles) {
+      for (const senseurId of setLecturesDisponibles) {
         liste.push({senseurId})
       }
       liste.sort(sortSenseurs(appareil))
       // console.debug("Liste senseurs triee : %O", liste)
   
       return liste
-    }, [appareil, senseurs, lectures_disponibles])
+    }, [appareil, senseurs, types_donnees])
 
     const toggleCacherHandler = useCallback(event=>{
         const { checked, value } = event.currentTarget
