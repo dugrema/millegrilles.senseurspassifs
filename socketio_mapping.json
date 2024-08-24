@@ -1,0 +1,35 @@
+{
+  "defaults": {
+    "domain": "SenseursPassifs",
+    "exchange": "2.prive"
+  },
+  "requests": {
+    "getAppareilsUsager": {"action": "getAppareilsUsager"},
+    "getAppareilsEnAttente": {"action": "getAppareilsEnAttente"},
+    "getStatistiquesSenseur": {"action": "getStatistiquesSenseur"},
+    "getConfigurationUsager": {"action": "getConfigurationUsager"}
+  },
+  "commands": {
+    "challengeAppareil": {"action": "challengeAppareil"},
+    "signerAppareil": {"action": "signerAppareil"},
+    "majAppareil": {"action": "majAppareil"},
+    "sauvegarderProgramme": {"action": "sauvegarderProgramme"},
+    "commandeAppareil": {"domain": "senseurspassifs_relai", "action": "commandeAppareil", "nowait": true},
+    "supprimerAppareil": {"action": "supprimerAppareil"},
+    "restaurerAppareil": {"action": "restaurerAppareil"},
+    "majConfigurationUsager": {"action": "majConfigurationUsager"},
+    "resetCertificatsAppareils": {"action": "resetCertificatsAppareils"}
+  },
+  "subscriptions": [
+    {
+      "subscribe": "ecouterEvenementsAppareilsUsager",
+      "unsubscribe": "retirerEvenementsAppareilsUsager",
+      "exchanges": ["2.prive"],
+      "routingKeys": [
+        "evenement.SenseursPassifs.{user_id}.lectureConfirmee",
+        "evenement.SenseursPassifs.{user_id}.majAppareil",
+        "evenement.SenseursPassifs.{user_id}.presenceAppareil"
+      ]
+    }
+  ]
+}

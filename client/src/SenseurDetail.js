@@ -28,11 +28,15 @@ function SenseurDetail(props) {
     const descriptifAppareil = configuration.descriptif || uuid_appareil
     const descriptif_senseurs = configuration.descriptif_senseurs || {}
     const descriptifSenseur = descriptif_senseurs[senseurId] || senseurId
-    const typeValeur = appareil.types_donnees[senseurId]
     const senseurs = appareil.senseurs || {}
     const senseurLectureCourante = senseurs[senseurId] || {}
     const timestampCourant = senseurLectureCourante.timestamp || ''
     // const typeValeur = senseurLectureCourante.type
+
+    let typeValeur = null;
+    if(appareil.types_donnees) {
+        typeValeur = appareil.types_donnees[senseurId]
+    }
 
     return (
         <div>
