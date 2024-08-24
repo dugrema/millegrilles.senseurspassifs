@@ -22,7 +22,9 @@ function AfficherSenseurs(props) {
       console.debug("Preparer liste senseurs pour appareil %O (senseurs : %O, types_donnees: %O)", 
         appareil, senseurs, types_donnees)
 
-      const setLecturesDisponibles = new Set(Object.keys(types_donnees))
+      let setLecturesDisponibles;
+      if(types_donnees) setLecturesDisponibles = new Set(Object.keys(types_donnees));
+      else setLecturesDisponibles = new Set();
       const liste = []
       if(senseurs) {
         for (const senseurId of Object.keys(senseurs)) {
